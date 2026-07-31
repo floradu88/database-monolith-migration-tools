@@ -27,7 +27,8 @@ The kit is structurally complete as an implementation and planning starter, subj
 - Added PowerShell setup/run scripts under `src-templates/DbIntelligence/scripts/` and root [`HOW-TO-USE.md`](HOW-TO-USE.md) (all local commands in PowerShell).
 - Graphify importer accepts NetworkX `links` and numeric `community` fields from `graphify extract … --code-only`.
 - Added `FindingsMigration` template: package JSON maps into draft domain manifests + scaffold DataService from Customer template (`docs/FUTURE-FEATURES.md`).
-
+- Added parent-folder batch indexing: each child project analyzed sequentially with artifacts written to that project's root (`Invoke-DbIntelligenceBatchIndex.ps1`, `/api/index/batch`).
+- Documented in-memory map storage (no catalog DB yet); durable output remains JSON/MD export.
 
 ## Still requires environment-specific decisions
 

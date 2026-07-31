@@ -1,8 +1,10 @@
-{
-  "version": "V5-reviewed",
-  "file_count": 273,
-  "folder_count": 74,
-  "issues": [],
-  "status": "pass",
-  "notes": "Checksums regenerated after DbIntelligence Codegraph/Graphify/Angular implementation."
+﻿{
+    "version":  "V5-reviewed",
+    "notes":  "Checksums regenerated after DbIntelligence batch parent-folder indexing and FindingsMigration template.",
+    "folder_count":  82,
+    "file_count":  298,
+    "status":  "pass",
+    "issues":  [
+
+               ]
 }
