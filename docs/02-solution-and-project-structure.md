@@ -6,12 +6,17 @@ DatabaseModernization/
 ├── src/
 │   ├── DbIntelligence/
 │   │   ├── DbIntelligence.Api/
+│   │   ├── DbIntelligence.Cli/
 │   │   ├── DbIntelligence.Worker/
 │   │   ├── DbIntelligence.RepositoryScanner/
-│   │   ├── DbIntelligence.SqlServer/
+│   │   ├── DbIntelligence.SqlScanner/
 │   │   ├── DbIntelligence.Domain/
 │   │   ├── DbIntelligence.Infrastructure/
-│   │   └── DbIntelligence.Contracts/
+│   │   ├── DbIntelligence.Contracts/
+│   │   ├── DbIntelligence.Web/
+│   │   ├── DbIntelligence.Tests/
+│   │   └── scripts/                 # PowerShell setup/run (see HOW-TO-USE.md)
+
 │   │
 │   ├── MigrationControlPlane/
 │   │   ├── MigrationControlPlane.Api/

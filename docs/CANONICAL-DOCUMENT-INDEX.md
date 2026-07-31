@@ -1,5 +1,12 @@
 # Canonical Document Index
 
+## How to run / operate locally
+
+- `../HOW-TO-USE.md` — PowerShell setup, run, and index for DbIntelligence and kit overview
+- `../src-templates/DbIntelligence/README.md` — DbIntelligence project how-to
+- `dbintelligence-runbook.md` — short PowerShell runbook + plan snapshot
+- `FUTURE-FEATURES.md` — findings → domain project roadmap (FindingsMigration template)
+
 ## Canonical plan
 
 1. `00-master-plan.md`
@@ -13,6 +20,7 @@
 9. `08-performance-monitoring-and-scaling.md`
 10. `09-rbac-security-and-change-control.md`
 11. `10-execution-roadmap.md`
+
 
 ## Supplemental references retained from earlier iterations
 

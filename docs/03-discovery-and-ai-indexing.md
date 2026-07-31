@@ -91,3 +91,26 @@ A practical weighted model:
 ```
 
 Read frequency alone does not establish ownership.
+
+## DbIntelligence implementation (kit)
+
+Concrete .NET 8 stack lives under `src-templates/DbIntelligence/`:
+
+- Codegraph + Graphify CLI orchestration by **repository path**
+- Roslyn `RepositoryScanner` for code→SQL/SP edges
+- Optional read-only `SqlScanner`
+- Graphify-shaped `graph.json` + `code-to-db-map.json` + `stored-procedure-map.json`
+- ASP.NET API + Angular (vis-network) UI
+
+### PowerShell (local)
+
+```powershell
+cd src-templates\DbIntelligence
+.\scripts\Setup-DbIntelligence.ps1 -Yes
+.\scripts\Start-DbIntelligence.ps1 -Force
+.\scripts\Start-DbIntelligenceWeb.ps1
+.\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
+```
+
+Full command reference: [`../HOW-TO-USE.md`](../HOW-TO-USE.md) and [`../src-templates/DbIntelligence/README.md`](../src-templates/DbIntelligence/README.md).
+

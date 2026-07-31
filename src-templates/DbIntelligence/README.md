@@ -1,0 +1,163 @@
+# DbIntelligence — How to use (PowerShell)
+
+.NET 8 evidence-graph stack: runs **Codegraph** and **Graphify** against a repository path, merges Roslyn code→SQL/SP scans, exports Graphify-shaped JSON, and serves an Angular graph UI.
+
+> Full kit guide: [`../../HOW-TO-USE.md`](../../HOW-TO-USE.md)
+
+## Storage model (current)
+
+| What | Where |
+|------|--------|
+| Live graph + maps served by API | **In memory** (`FileIntelligenceStore`) for the running process |
+| Index job status | **In memory** (lost on API restart) |
+| Durable snapshot | **JSON/MD files** only when export runs (`artifacts/db-intelligence/`) |
+
+There is **no database** for mappings yet. Restarting the API clears the live graph until you re-index or load from exported files (re-index is the supported path today). A catalog DB is a future feature — see [`docs/FUTURE-FEATURES.md`](../../docs/FUTURE-FEATURES.md).
+
+## Operating model
+
+1. Install `codegraph` and `graphify` on `PATH`.
+2. Point DbIntelligence at a **repository folder**.
+3. Index that path (scripts, API, or UI).
+
+## One-shot setup
+
+```powershell
+cd src-templates\DbIntelligence
+.\scripts\Setup-DbIntelligence.ps1 -Yes
+```
+
+## Run
+
+```powershell
+# Terminal 1 — API http://localhost:5088
+.\scripts\Start-DbIntelligence.ps1 -Force
+
+# Terminal 2 — UI http://localhost:4200
+.\scripts\Start-DbIntelligenceWeb.ps1
+
+# Terminal 3 — index
+.\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
+
+# Parent folder: each subfolder is a project; results written to each project root
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\path\to\parent"
+```
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `Setup-DbIntelligence.ps1` | Prereqs + build + test + health |
+| `Install-DbIntelligencePrereqs.ps1` | Python / pip / graphifyy / codegraph (`-Yes`) |
+| `Build-DbIntelligence.ps1` | Restore / build / test (`-SkipWeb`, `-SkipTests`) |
+| `Test-DbIntelligenceHealth.ps1` | CLI health |
+| `Start-DbIntelligence.ps1` | API (`-Force`, `-Port`, `-RepositoryPath`) |
+| `Start-DbIntelligenceWeb.ps1` | Angular |
+| `Invoke-DbIntelligenceIndex.ps1` | Index job against a path |
+
+```powershell
+.\scripts\Install-DbIntelligencePrereqs.ps1 -Yes
+.\scripts\Build-DbIntelligence.ps1 -SkipWeb
+.\scripts\Test-DbIntelligenceHealth.ps1
+```
+
+CLI equivalents:
+
+```powershell
+dotnet run --project .\DbIntelligence.Cli -- --health
+dotnet run --project .\DbIntelligence.Cli -- --install-preqs --yes
+```
+
+## Prerequisites
+
+- .NET 8 SDK, Node.js 18+, Python 3.10+
+- Graphify: `python -m pip install graphifyy` → `graphify` on PATH
+- Codegraph: `codegraph -V` on PATH
+- Optional SQL connection string for inventory scan (user secrets / env)
+
+Health:
+
+- `GET /api/health` → **200** healthy / **503** unhealthy  
+- `GET /api/tools` → detailed report  
+
+## Index job pipeline
+
+1. Verify Python / Graphify / Codegraph  
+2. Codegraph init/sync on the target path  
+3. `graphify extract <path> --code-only` and import `graphify-out/graph.json` (supports numeric `community` and NetworkX `links`)  
+4. Roslyn repository SQL/SP scan  
+5. Optional SQL inventory  
+6. Merge + export maps  
+
+Artifacts: `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`.
+
+### Index via API (PowerShell)
+
+```powershell
+$body = @{
+  targetRepositoryPath = "D:\path\to\repo"
+  runCodegraph         = $true
+  runGraphify          = $true
+  runRepositoryScan    = $true
+  runSqlScan           = $false
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:5088/api/index/jobs" `
+  -Method Post -Body $body -ContentType "application/json"
+```
+
+## Solution projects
+
+Open [`../DatabaseModernization.sln`](../DatabaseModernization.sln).
+
+| Project | Role |
+|---------|------|
+| `DbIntelligence.Api` | HTTP API + optional SPA host |
+| `DbIntelligence.Cli` | `--health` / `--install-preqs` |
+| `DbIntelligence.Infrastructure` | CLI runners, merge, store, export |
+| `DbIntelligence.RepositoryScanner` | Roslyn code→SQL/SP mapper |
+| `DbIntelligence.SqlScanner` | Read-only SQL inventory |
+| `DbIntelligence.Web` | Angular + vis-network |
+| `DbIntelligence.Worker` | Optional background indexing |
+| `DbIntelligence.Domain` / `Contracts` | Graph model + DTOs |
+| `DbIntelligence.Tests` | Unit / import fixtures |
+
+## Configure
+
+```json
+{
+  "DbIntelligence": {
+    "TargetRepositoryPath": "",
+    "ArtifactsDirectory": "artifacts/db-intelligence",
+    "CodegraphExecutable": "codegraph",
+    "GraphifyExecutable": "graphify",
+    "SqlConnectionString": "",
+    "ProcessTimeoutSeconds": 300
+  }
+}
+```
+
+```powershell
+$env:DbIntelligence__TargetRepositoryPath = "D:\path\to\repo"
+cd DbIntelligence.Api
+dotnet user-secrets set "DbIntelligence:SqlConnectionString" "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True"
+```
+
+## API surface (summary)
+
+| Endpoint | Behavior |
+|----------|----------|
+| `POST /api/index/jobs` | Start index |
+| `GET /api/index/jobs/{id}` | Status |
+| `GET /api/search?q=` | Search |
+| `GET /api/explore?q=` | Neighborhood |
+| `GET /api/graphs/unified` | Graph JSON |
+| `GET /api/maps/code-to-db` | Code→DB map |
+| `GET /api/maps/stored-procedures` | SP map |
+| `POST /api/export` | Write artifacts |
+
+## Safety
+
+- SqlScanner is **read-only**.
+- Never commit real connection strings.
+- Dynamic SQL edges are `AMBIGUOUS` for human review.

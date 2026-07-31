@@ -25,6 +25,8 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `02-project-structure.md`
 - `02-solution-and-project-structure.md`
 - `03-discovery-and-ai-indexing.md`
+- `dbintelligence-runbook.md`
+- `FUTURE-FEATURES.md`
 - `03-source-monolith-split.md`
 - `04-target-database-project-strategy.md`
 - `04-usage-tracking-strategy.md`

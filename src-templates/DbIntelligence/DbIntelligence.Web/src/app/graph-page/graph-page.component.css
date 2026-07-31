@@ -1,0 +1,200 @@
+:host {
+  --ink: #1b1f24;
+  --muted: #5b6570;
+  --paper: #f3efe6;
+  --panel: #fffdf8;
+  --line: #d7d0c4;
+  --accent: #0f4c5c;
+  --accent-2: #c45c26;
+  display: block;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(15, 76, 92, 0.12), transparent 42%),
+    linear-gradient(160deg, #f7f2e8 0%, #ebe4d7 55%, #e4ddd0 100%);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+.shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 2rem;
+}
+
+.hero {
+  padding: 1.5rem 0 1rem;
+}
+
+.brand {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.tagline {
+  margin: 0.6rem 0 1.1rem;
+  color: var(--muted);
+  max-width: 42rem;
+}
+
+.search-row {
+  display: flex;
+  gap: 0.6rem;
+  max-width: 44rem;
+}
+
+.search-row input,
+.jobs input,
+select {
+  flex: 1;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 0.35rem;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+}
+
+button {
+  border: 0;
+  background: var(--accent);
+  color: #f8fafc;
+  border-radius: 0.35rem;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.active {
+  background: var(--accent-2);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: end;
+  margin-bottom: 0.85rem;
+}
+
+.toolbar label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.check {
+  display: flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.45rem;
+}
+
+.view-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0.85rem;
+  min-height: 62vh;
+}
+
+.workspace.table-mode {
+  grid-template-columns: 1fr 320px;
+}
+
+.canvas,
+.table-panel,
+.detail {
+  background: color-mix(in srgb, var(--panel) 92%, white);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.network {
+  height: 62vh;
+  width: 100%;
+}
+
+.detail {
+  padding: 1rem;
+  overflow: auto;
+}
+
+.detail h2,
+.detail h3,
+.detail h4 {
+  font-family: "Fraunces", Georgia, serif;
+  margin: 0 0 0.45rem;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.jobs {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 0.5rem;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+pre {
+  white-space: pre-wrap;
+  font-size: 0.75rem;
+  background: #f0ebe1;
+  padding: 0.5rem;
+  border-radius: 0.35rem;
+}
+
+.table-panel {
+  padding: 0.75rem;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  padding: 0.45rem 0.35rem;
+  vertical-align: top;
+}
+
+.proc-card {
+  border-bottom: 1px solid var(--line);
+  padding: 0.75rem 0;
+}
+
+.proc-card h3 {
+  margin: 0 0 0.35rem;
+  font-family: "Fraunces", Georgia, serif;
+}
+
+@media (max-width: 960px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .network {
+    height: 50vh;
+  }
+}

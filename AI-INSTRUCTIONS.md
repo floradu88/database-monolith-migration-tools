@@ -27,11 +27,13 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `AGENTS.md`
 - `AI-INSTRUCTION-INDEX.md`
 - `CLAUDE.md`
+- `HOW-TO-USE.md` — PowerShell setup/run guide (prefer this for local ops)
 - `LICENSE`
 - `README.md`
 - `REVIEW-REPORT.md`
 - `SOURCES.md`
 - `V2-ADDENDUM.md`
+
 
 ## Agent tooling
 

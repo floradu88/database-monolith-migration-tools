@@ -18,12 +18,14 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `BuildingBlocks/`
 - `DataServices/`
 - `DbIntelligence/`
+- `FindingsMigration/`
 - `MigrationControlPlane/`
 - `SourceMonolith/`
 - `Tests/`
 
 ## Current files
 
+- `DatabaseModernization.sln`
 - `Directory.Build.props`
 - `migration-manifest.example.yml`
 - `solution-tree.txt`

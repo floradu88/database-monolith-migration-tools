@@ -1,3 +1,5 @@
 # DbIntelligence.Api
 
-Scaffold for `DbIntelligence.Api`. Read this folder's `AI-INSTRUCTIONS.md` before adding implementation. The project is intentionally minimal and must be wired into the final solution with approved package versions and references.
+ASP.NET Core 8 host for DbIntelligence APIs and (optionally) the Angular SPA from `wwwroot`.
+
+See [`../README.md`](../README.md) for prerequisites, configuration, and run instructions.

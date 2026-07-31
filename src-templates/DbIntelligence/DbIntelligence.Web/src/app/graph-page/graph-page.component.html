@@ -1,0 +1,149 @@
+<div class="shell">
+  <header class="hero">
+    <div class="brand">DbIntelligence</div>
+    <p class="tagline">Codegraph + Graphify evidence graphs for code-to-database mapping</p>
+    <div class="search-row">
+      <input
+        type="search"
+        [(ngModel)]="query"
+        placeholder="Search or explore a symbol / procedure"
+        (keyup.enter)="reloadGraph()"
+      />
+      <button type="button" (click)="reloadGraph()">Explore</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <label>
+      Kind
+      <select [(ngModel)]="kindFilter" (change)="reloadGraph()">
+        <option value="">All</option>
+        <option>Method</option>
+        <option>StoredProcedure</option>
+        <option>Table</option>
+        <option>View</option>
+        <option>Function</option>
+        <option>Type</option>
+      </select>
+    </label>
+    <label>
+      Confidence
+      <select [(ngModel)]="confidenceFilter" (change)="reloadGraph()">
+        <option value="">All</option>
+        <option>Extracted</option>
+        <option>Inferred</option>
+        <option>Ambiguous</option>
+      </select>
+    </label>
+    <label class="check">
+      <input type="checkbox" [(ngModel)]="codeToDbOnly" (change)="reloadGraph()" />
+      Code↔DB only
+    </label>
+    <div class="view-tabs">
+      <button type="button" [class.active]="view === 'graph'" (click)="setView('graph')">Graph</button>
+      <button type="button" [class.active]="view === 'code-to-db'" (click)="setView('code-to-db')">Code→DB</button>
+      <button type="button" [class.active]="view === 'procedures'" (click)="setView('procedures')">Procedures</button>
+    </div>
+  </div>
+
+  <div class="workspace" [class.table-mode]="view !== 'graph'">
+    <section class="canvas" *ngIf="view === 'graph'">
+      <div #networkHost class="network"></div>
+    </section>
+
+    <section class="table-panel" *ngIf="view === 'code-to-db'">
+      <table *ngIf="codeMap">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>DB object</th>
+            <th>Relation</th>
+            <th>Confidence</th>
+            <th>File</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of codeMap.entries">
+            <td>{{ e.codeLabel }}</td>
+            <td>{{ e.dbObject }}</td>
+            <td>{{ e.relation }}</td>
+            <td>{{ e.confidence }}</td>
+            <td>{{ e.sourceFile }}:{{ e.line }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="table-panel" *ngIf="view === 'procedures'">
+      <article class="proc-card" *ngFor="let p of spMap?.procedures || []">
+        <h3>{{ p.name }}</h3>
+        <p>Callers (code): {{ p.codeCallers.join(', ') || '—' }}</p>
+        <p>Callers (SQL): {{ p.sqlCallers.join(', ') || '—' }}</p>
+        <p>Reads: {{ p.reads.join(', ') || '—' }}</p>
+        <p>Writes: {{ p.writes.join(', ') || '—' }}</p>
+      </article>
+    </section>
+
+    <aside class="detail">
+      <h2>Detail</h2>
+      <ng-container *ngIf="selected; else emptyDetail">
+        <h3>{{ selected.label }}</h3>
+        <p class="meta">{{ selected.kind }} · {{ selected.community || 'no community' }}</p>
+        <p *ngIf="selected.source_file">{{ selected.source_file }} {{ selected.source_location }}</p>
+        <h4>Callers</h4>
+        <ul>
+          <li *ngFor="let c of selectedCallers">{{ c | json }}</li>
+        </ul>
+        <h4>Callees</h4>
+        <ul>
+          <li *ngFor="let c of selectedCallees">{{ c | json }}</li>
+        </ul>
+      </ng-container>
+      <ng-template #emptyDetail>
+        <p>Select a node on the graph.</p>
+      </ng-template>
+
+      <div class="jobs">
+        <h2>Index</h2>
+        <p class="meta">Requires Python + <code>graphify</code> + <code>codegraph</code> on PATH.</p>
+        <p class="status">{{ toolStatus }}</p>
+        <div class="view-tabs">
+          <button type="button" [class.active]="indexMode === 'single'" (click)="indexMode = 'single'">
+            One repo
+          </button>
+          <button type="button" [class.active]="indexMode === 'batch'" (click)="indexMode = 'batch'">
+            Parent folder
+          </button>
+        </div>
+
+        <ng-container *ngIf="indexMode === 'single'">
+          <input type="text" [(ngModel)]="repoPath" placeholder="D:\path\to\repo" />
+          <button type="button" (click)="checkTools()">Check health</button>
+          <button type="button" (click)="startIndex()">Index repository</button>
+        </ng-container>
+
+        <ng-container *ngIf="indexMode === 'batch'">
+          <p class="meta">
+            Each subfolder is a project. Results are written to that project's root
+            (<code>graph.json</code>, maps, report).
+          </p>
+          <input type="text" [(ngModel)]="parentFolderPath" placeholder="D:\path\to\parent" />
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="requireProjectMarkers" />
+            Only folders with project markers
+          </label>
+          <button type="button" (click)="discoverProjects()">Discover projects</button>
+          <button type="button" (click)="checkTools()">Check health</button>
+          <button type="button" (click)="startBatchIndex()">Index all projects</button>
+          <p class="meta" *ngIf="discoveredNames.length">Projects: {{ discoveredNames.join(', ') }}</p>
+        </ng-container>
+
+        <button type="button" (click)="exportArtifacts()">Export JSON</button>
+        <p class="status">{{ statusMessage }}</p>
+        <pre *ngIf="job?.log?.length">{{ job?.log?.slice(-8)?.join('\n') }}</pre>
+        <pre *ngIf="batchJob">{{ batchJob.completedProjects }}/{{ batchJob.totalProjects }} failed={{ batchJob.failedProjects }}
+{{ batchJob.projects | json }}</pre>
+      </div>
+    </aside>
+  </div>
+</div>

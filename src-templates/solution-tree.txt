@@ -6,6 +6,13 @@ DatabaseModernization.sln
   DbIntelligence.Domain
   DbIntelligence.Infrastructure
   DbIntelligence.Contracts
+  DbIntelligence.Web
+  DbIntelligence.Cli
+  DbIntelligence.Tests
+  FindingsMigration.Cli
+  FindingsMigration.Core
+  FindingsMigration.Contracts
+  FindingsMigration.Tests
   DbMigration.Api
   DbMigration.Worker
   DbMigration.Domain

@@ -34,17 +34,58 @@ It includes:
 
 ## Start here
 
-1. `docs/00-master-plan.md`
-2. `docs/01-target-architecture.md`
-3. `docs/02-solution-and-project-structure.md`
-4. `docs/03-source-monolith-split.md`
-5. `docs/04-target-database-project-strategy.md`
-6. `docs/05-migration-control-plane.md`
-7. `docs/06-usage-tracking-and-audit.md`
-8. `docs/07-data-access-strategy.md`
-9. `docs/08-performance-monitoring-and-scaling.md`
-10. `docs/09-rbac-security-and-change-control.md`
-11. `docs/10-execution-roadmap.md`
+1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + kit overview)
+2. **[`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)** — findings → domain project roadmap + template
+3. `docs/00-master-plan.md`
+4. `docs/01-target-architecture.md`
+5. `docs/02-solution-and-project-structure.md`
+6. `docs/03-source-monolith-split.md`
+7. `docs/04-target-database-project-strategy.md`
+8. `docs/05-migration-control-plane.md`
+9. `docs/06-usage-tracking-and-audit.md`
+10. `docs/07-data-access-strategy.md`
+11. `docs/08-performance-monitoring-and-scaling.md`
+12. `docs/09-rbac-security-and-change-control.md`
+13. `docs/10-execution-roadmap.md`
+
+### Run DbIntelligence locally (PowerShell)
+
+```powershell
+cd src-templates\DbIntelligence
+.\scripts\Setup-DbIntelligence.ps1 -Yes
+.\scripts\Start-DbIntelligence.ps1 -Force          # API :5088
+.\scripts\Start-DbIntelligenceWeb.ps1              # UI  :4200
+.\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
+```
+
+Details: [`HOW-TO-USE.md`](HOW-TO-USE.md) and [`src-templates/DbIntelligence/README.md`](src-templates/DbIntelligence/README.md).
+
+### Promote JSON findings to a domain project (PowerShell)
+
+```powershell
+cd src-templates\FindingsMigration
+.\scripts\Invoke-FindingsMigration.ps1 `
+  -CodeToDbMap "D:\path\to\artifacts\db-intelligence\code-to-db-map.json" `
+  -DomainName "Insight"
+.\scripts\New-DomainFromFindings.ps1 `
+  -DomainName "Insight" `
+  -PackageDirectory ".\out\Insight"
+```
+
+See [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md).
+
+### Promote findings to a domain project (PowerShell)
+
+```powershell
+cd src-templates\FindingsMigration
+.\scripts\Invoke-FindingsMigration.ps1 `
+  -CodeToDbMap "D:\path\to\artifacts\db-intelligence\code-to-db-map.json" `
+  -DomainName "Insight"
+.\scripts\New-DomainFromFindings.ps1 -DomainName "Insight" -PackageDirectory ".\out\Insight"
+```
+
+See [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md) and [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md).
+
 
 ## Cursor and Claude support
 

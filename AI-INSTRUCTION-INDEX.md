@@ -45,11 +45,19 @@
 - `src-templates/DataServices/CustomerDataService/CustomerDataService.Tests/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/DbIntelligence.Api/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.Cli/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/DbIntelligence.Contracts/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/DbIntelligence.Domain/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/DbIntelligence.Infrastructure/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/DbIntelligence.RepositoryScanner/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.SqlScanner/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.Tests/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.Web/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/DbIntelligence.Worker/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/scripts/AI-INSTRUCTIONS.md`
+- `src-templates/FindingsMigration/AI-INSTRUCTIONS.md`
+- `src-templates/FindingsMigration/scripts/AI-INSTRUCTIONS.md`
+
 - `src-templates/MigrationControlPlane/AI-INSTRUCTIONS.md`
 - `src-templates/MigrationControlPlane/MigrationControlPlane.Api/AI-INSTRUCTIONS.md`
 - `src-templates/MigrationControlPlane/MigrationControlPlane.Contracts/AI-INSTRUCTIONS.md`

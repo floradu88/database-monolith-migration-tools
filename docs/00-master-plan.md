@@ -32,6 +32,9 @@ Build the catalog of:
 - performance baselines;
 - ownership and target-domain suggestions.
 
+**Local implementation:** `src-templates/DbIntelligence/` (API + Angular + scanners + PowerShell scripts). See root [`HOW-TO-USE.md`](../HOW-TO-USE.md).
+
+
 ### Workstream B — Split the existing database project
 
 Create a source-of-truth database solution that represents the current monolith verbatim, but split into manageable domain projects.

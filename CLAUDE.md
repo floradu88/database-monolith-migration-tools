@@ -4,9 +4,10 @@ Use this repository as a production-grade kit for decomposing a SQL Server monol
 
 ## Before any change
 
-1. Read `README.md`, `REVIEW-REPORT.md`, and `docs/CANONICAL-DOCUMENT-INDEX.md`.
+1. Read `README.md`, `HOW-TO-USE.md`, `REVIEW-REPORT.md`, and `docs/CANONICAL-DOCUMENT-INDEX.md`.
 2. Read the nearest `AI-INSTRUCTIONS.md` for the folder you will edit (see `AI-INSTRUCTION-INDEX.md`).
 3. Prefer canonical docs listed in the root README “Start here” section over supplemental/legacy docs.
+
 
 ## Safety rules
 

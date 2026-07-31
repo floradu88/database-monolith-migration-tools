@@ -23,6 +23,11 @@ The kit is structurally complete as an implementation and planning starter, subj
 - Added Cursor project rules under `.cursor/rules/` and Claude/shared agent entrypoints (`CLAUDE.md`, `AGENTS.md`).
 - Updated the root README and AI instruction index for Cursor + Claude Code usage.
 - Regenerated validation checksums and summary after agent-tooling files were added.
+- Implemented DbIntelligence (.NET 8): Codegraph/Graphify CLI orchestration, Roslyn code→SQL/SP scanning, Graphify-shaped JSON exports, ASP.NET API, and Angular/vis-network UI.
+- Added PowerShell setup/run scripts under `src-templates/DbIntelligence/scripts/` and root [`HOW-TO-USE.md`](HOW-TO-USE.md) (all local commands in PowerShell).
+- Graphify importer accepts NetworkX `links` and numeric `community` fields from `graphify extract … --code-only`.
+- Added `FindingsMigration` template: package JSON maps into draft domain manifests + scaffold DataService from Customer template (`docs/FUTURE-FEATURES.md`).
+
 
 ## Still requires environment-specific decisions
 

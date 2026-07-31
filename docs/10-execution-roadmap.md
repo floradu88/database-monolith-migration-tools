@@ -15,9 +15,10 @@
 - export source schema verbatim;
 - inventory objects and permissions;
 - collect procedure/function statistics;
-- scan repositories;
-- build application-object graph;
+- scan repositories with **DbIntelligence** (`src-templates/DbIntelligence/scripts/*.ps1` — see [`HOW-TO-USE.md`](../HOW-TO-USE.md));
+- build application-object graph (`graph.json`, code→DB and stored-procedure maps);
 - establish performance baselines.
+
 
 ## Phase 2 — Split the source project
 

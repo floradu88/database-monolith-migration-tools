@@ -7,12 +7,16 @@ DatabaseModernization.sln
 ├── src/
 │   ├── DbIntelligence/
 │   │   ├── DbIntelligence.Api/
+│   │   ├── DbIntelligence.Cli/
 │   │   ├── DbIntelligence.Worker/
 │   │   ├── DbIntelligence.RepositoryScanner/
 │   │   ├── DbIntelligence.SqlScanner/
 │   │   ├── DbIntelligence.Domain/
 │   │   ├── DbIntelligence.Infrastructure/
-│   │   └── DbIntelligence.Contracts/
+│   │   ├── DbIntelligence.Contracts/
+│   │   ├── DbIntelligence.Web/
+│   │   ├── DbIntelligence.Tests/
+│   │   └── scripts/
 │   ├── DbMigrationControlPlane/
 │   │   ├── DbMigration.Api/
 │   │   ├── DbMigration.Worker/
