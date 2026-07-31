@@ -1,0 +1,25 @@
+# Production Cutover Checklist
+
+- [ ] Source schema captured and hashed
+- [ ] Source permissions captured
+- [ ] All callers identified
+- [ ] Unknown identity traffic resolved
+- [ ] Target SQL project deployed
+- [ ] EF migrations reviewed and applied
+- [ ] No overlapping object ownership
+- [ ] RBAC validated
+- [ ] Query Store enabled
+- [ ] SQL Audit enabled
+- [ ] OpenTelemetry traces visible
+- [ ] Performance baseline recorded
+- [ ] Backfill complete
+- [ ] Synchronization lag within threshold
+- [ ] Reconciliation passed
+- [ ] Shadow-read mismatch zero for critical fields
+- [ ] Canary SLOs passed
+- [ ] Capacity and connection budget passed
+- [ ] Backup restore tested
+- [ ] Rollback rehearsed
+- [ ] On-call owner confirmed
+- [ ] Cutover approved
+- [ ] Legacy-call alert enabled

@@ -1,0 +1,26 @@
+---
+description: Core kit rules for SQL Server monolith decomposition
+alwaysApply: true
+---
+
+# SQL DB Modernization Kit
+
+This repository is the V5-reviewed SQL Server monolith-decomposition kit.
+
+## Before editing
+
+1. Read `README.md`, `REVIEW-REPORT.md`, and the nearest `AI-INSTRUCTIONS.md`.
+2. Prefer canonical docs listed under “Start here” in the root README.
+3. Use `AI-INSTRUCTION-INDEX.md` to find folder-specific agent instructions.
+
+## Safety
+
+- Prefer additive, reversible changes; preserve ownership boundaries.
+- Do not invent credentials, approvals, platform capabilities, or production values.
+- Never execute destructive SQL automatically; treat `sql/` as DBA-review material.
+- Keep SQL database projects and EF Core migrations projects non-overlapping.
+- When behavior changes, update docs, manifests, tests, RBAC, observability, and rollback together.
+
+## Completion
+
+Report changed files, assumptions, validation, unresolved risks, and required approvals.

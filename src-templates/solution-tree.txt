@@ -1,0 +1,16 @@
+DatabaseModernization.sln
+  DbIntelligence.Api
+  DbIntelligence.Worker
+  DbIntelligence.RepositoryScanner
+  DbIntelligence.SqlScanner
+  DbIntelligence.Domain
+  DbIntelligence.Infrastructure
+  DbIntelligence.Contracts
+  DbMigration.Api
+  DbMigration.Worker
+  DbMigration.Domain
+  DbMigration.Infrastructure
+  DbMigration.Contracts
+  CustomerDataService.*
+  BillingDataService.*
+  BuildingBlocks.*

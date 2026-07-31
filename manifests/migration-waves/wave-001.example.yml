@@ -1,0 +1,24 @@
+wave: WAVE-001
+domain: customer
+state: OwnershipApproved
+source_commit: REPLACE
+source_schema_hash: REPLACE
+target_artifact_version: 1.0.0
+strategies:
+  schema: sql_project
+  tables: ef_migrations
+  procedures: sql_project
+  synchronization: snapshot_plus_delta
+  reads: shadow
+  writes: canary
+gates:
+  unknown_callers: 0
+  critical_mismatch_rate: 0
+  read_p95_ms: 250
+  timeout_rate_percent: 0.1
+  rollback_tested: true
+approvals:
+  application_owner: pending
+  dba: pending
+  security: pending
+  operations: pending

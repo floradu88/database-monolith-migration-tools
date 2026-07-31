@@ -1,0 +1,38 @@
+source:
+  server: source-sql
+  database: MonolithDb
+  schema: dbo
+  object: usp_GetCustomerProfile
+  type: StoredProcedure
+
+usage:
+  observationWindowDays: 90
+  applications:
+    - CustomerPortal.Api
+    - CustomerSupport.Worker
+  unknownCallers: false
+  lastSeenUtc: 2026-07-31T06:42:11Z
+
+ownership:
+  targetService: CustomerDataService
+  targetSchema: customer
+  confidence: 0.97
+  approvedBy: customer-platform-owner
+
+migration:
+  strategy: FacadeThenMove
+  targetObject: customer.GetCustomerProfile
+  apiOperation: GET /internal/customers/{customerId}/profile
+  synchronization: CDC
+  rollback: SwitchFacadeToLegacy
+
+validation:
+  - ResultSetComparison
+  - NullSemanticsComparison
+  - AggregateComparison
+  - PerformanceThreshold
+
+deprecation:
+  alertOnLegacyExecution: true
+  minimumObservationDaysAfterCutover: 30
+  archiveDefinitionAndGrants: true

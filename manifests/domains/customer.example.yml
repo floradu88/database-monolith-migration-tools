@@ -1,0 +1,26 @@
+domain: customer
+owner_team: Customer Platform
+source_database: MonolithDb
+source_projects:
+  - Monolith.Database.Customer
+target_service: CustomerDataService
+target_database: CustomerDb
+target_schema: customer
+database_change_model: hybrid
+sql_project_owns:
+  - schemas
+  - stored_procedures
+  - functions
+  - views
+  - security
+ef_migrations_own:
+  - customer.Customer
+  - customer.CustomerAddress
+runtime_identity: CustomerDataService.Runtime
+migration_identity: CustomerDataService.Migration
+read_scaling:
+  replica_safe_operations:
+    - GetCustomerSummary
+sharding:
+  enabled: false
+  candidate_key: TenantId

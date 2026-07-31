@@ -1,0 +1,13 @@
+---
+description: Rules when editing documentation under docs/
+globs: docs/**
+alwaysApply: false
+---
+
+# Docs
+
+- Read `docs/AI-INSTRUCTIONS.md` and `docs/CANONICAL-DOCUMENT-INDEX.md` first.
+- Prefer editing canonical numbered docs from the root README “Start here” list.
+- Keep supplemental/legacy docs marked as such; do not silently promote them.
+- Cross-link related runbooks, checklists, and manifests when guidance changes.
+- Do not invent environment-specific SLO/RPO/RTO, retention, or platform values—call them out as decisions.

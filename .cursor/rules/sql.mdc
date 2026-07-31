@@ -1,0 +1,14 @@
+---
+description: Rules when editing SQL scripts under sql/
+globs: sql/**
+alwaysApply: false
+---
+
+# SQL scripts
+
+- Read `sql/AI-INSTRUCTIONS.md` and platform-specific instructions (`azure-sql-db`, `sql-server-mi`, `common`).
+- Scripts are for DBA review — never auto-run destructive DDL/DML against live systems.
+- Prefer additive scripts; document rollback and permission requirements in comments or companion docs.
+- Do not hard-code production credentials, server names, or environment-specific retention.
+- Keep Azure SQL DB and SQL Server MI scripts separated by capability differences.
+- Update usage-tracking / audit docs when new telemetry or audit objects are introduced.

@@ -1,0 +1,14 @@
+---
+description: Rules when editing .NET templates under src-templates/
+globs: src-templates/**
+alwaysApply: false
+---
+
+# Source templates
+
+- Read `src-templates/AI-INSTRUCTIONS.md` and the nearest project `AI-INSTRUCTIONS.md`.
+- Treat scaffolds as templates, not production apps—avoid inventing real connection strings or secrets.
+- Keep SourceMonolith domain project boundaries intact.
+- EF migrations belong in dedicated `*.Migrations` projects; do not mix with SQL `.sqlproj` ownership of the same objects.
+- Prefer BuildingBlocks abstractions over duplicating data-access or observability code.
+- Update matching test project READMEs/instructions when contracts or layering rules change.

@@ -1,0 +1,69 @@
+# AI Instruction Index
+
+## Tool entrypoints
+
+- `AGENTS.md`
+- `CLAUDE.md`
+- `.cursor/rules/` (Cursor project rules)
+
+## Folder instructions
+
+- `AI-INSTRUCTIONS.md`
+- `checklists/AI-INSTRUCTIONS.md`
+- `docs/AI-INSTRUCTIONS.md`
+- `manifests/AI-INSTRUCTIONS.md`
+- `manifests/domains/AI-INSTRUCTIONS.md`
+- `manifests/migration-waves/AI-INSTRUCTIONS.md`
+- `sql/AI-INSTRUCTIONS.md`
+- `sql/azure-sql-db/AI-INSTRUCTIONS.md`
+- `sql/common/AI-INSTRUCTIONS.md`
+- `sql/sql-server-mi/AI-INSTRUCTIONS.md`
+- `src-templates/AI-INSTRUCTIONS.md`
+- `src-templates/BuildingBlocks/AI-INSTRUCTIONS.md`
+- `src-templates/BuildingBlocks/DataAccess.Abstractions/AI-INSTRUCTIONS.md`
+- `src-templates/BuildingBlocks/DataAccess.Dapper/AI-INSTRUCTIONS.md`
+- `src-templates/BuildingBlocks/DataAccess.EfCore/AI-INSTRUCTIONS.md`
+- `src-templates/BuildingBlocks/Migration/AI-INSTRUCTIONS.md`
+- `src-templates/BuildingBlocks/Observability/AI-INSTRUCTIONS.md`
+- `src-templates/BuildingBlocks/Security/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Api/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Application/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Contracts/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Database/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Domain/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Infrastructure/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Infrastructure/DataAccess/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Migrations/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/CustomerDataService/CustomerDataService.Tests/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.Api/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.Contracts/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.Domain/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.Infrastructure/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.RepositoryScanner/AI-INSTRUCTIONS.md`
+- `src-templates/DbIntelligence/DbIntelligence.Worker/AI-INSTRUCTIONS.md`
+- `src-templates/MigrationControlPlane/AI-INSTRUCTIONS.md`
+- `src-templates/MigrationControlPlane/MigrationControlPlane.Api/AI-INSTRUCTIONS.md`
+- `src-templates/MigrationControlPlane/MigrationControlPlane.Contracts/AI-INSTRUCTIONS.md`
+- `src-templates/MigrationControlPlane/MigrationControlPlane.Database/AI-INSTRUCTIONS.md`
+- `src-templates/MigrationControlPlane/MigrationControlPlane.Domain/AI-INSTRUCTIONS.md`
+- `src-templates/MigrationControlPlane/MigrationControlPlane.Infrastructure/AI-INSTRUCTIONS.md`
+- `src-templates/MigrationControlPlane/MigrationControlPlane.Worker/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Billing/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Composite/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Customer/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Foundation/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Integration/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Legacy/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Ordering/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Reference/AI-INSTRUCTIONS.md`
+- `src-templates/SourceMonolith/Monolith.Database.Reporting/AI-INSTRUCTIONS.md`
+- `src-templates/Tests/AI-INSTRUCTIONS.md`
+- `src-templates/Tests/Architecture.Tests/AI-INSTRUCTIONS.md`
+- `src-templates/Tests/DatabaseContract.Tests/AI-INSTRUCTIONS.md`
+- `src-templates/Tests/Migration.Tests/AI-INSTRUCTIONS.md`
+- `src-templates/Tests/Performance.Tests/AI-INSTRUCTIONS.md`
+- `src-templates/Tests/Reconciliation.Tests/AI-INSTRUCTIONS.md`

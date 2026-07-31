@@ -1,0 +1,13 @@
+---
+description: Rules when editing domain and migration manifests
+globs: manifests/**
+alwaysApply: false
+---
+
+# Manifests
+
+- Read `manifests/AI-INSTRUCTIONS.md` and the relevant subfolder instructions.
+- Preserve ownership fields; do not reassign domains without an explicit request.
+- Keep `domains/` and `migration-waves/` examples consistent with docs and checklists.
+- Prefer extending example YAML over inventing production domain lists.
+- When wave order or dependencies change, update related cutover checklist guidance.
