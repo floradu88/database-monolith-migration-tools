@@ -52,7 +52,7 @@ This kit is wired for AI-assisted work in **Cursor** and **Claude Code**:
 
 | Tool | What to use |
 |------|-------------|
-| **Cursor** | Project rules in `.cursor/rules/` (always-on kit core + scoped rules for `docs/`, `sql/`, `manifests/`, `src-templates/`) |
+| **Cursor** | Project rules in `.cursor/rules/` (always-on kit core + scoped rules for `docs/`, `sql/`, `manifests/`, `src-templates/`, `checklists/`, `validation/`) |
 | **Claude Code** | Root `CLAUDE.md` |
 | **Any agent** | `AGENTS.md`, plus the nearest folder `AI-INSTRUCTIONS.md` |
 

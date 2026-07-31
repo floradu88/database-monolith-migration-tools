@@ -1,0 +1,13 @@
+---
+description: Rules when editing validation checksums and summaries
+globs: validation/**
+alwaysApply: false
+---
+
+# Validation
+
+- Treat `validation/SHA256SUMS.txt` and `validation/validation-summary.json` as the kit integrity ledger.
+- After material kit file adds/changes, regenerate checksums and refresh the summary counts/status.
+- Do not invent a passing status when mismatches remain; record issues instead.
+- Prefer regenerating the full checksum set over hand-editing individual hashes.
+- Keep validation artifacts free of credentials and environment-specific secrets.

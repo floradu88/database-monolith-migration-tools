@@ -4,7 +4,13 @@
 
 - `AGENTS.md`
 - `CLAUDE.md`
-- `.cursor/rules/` (Cursor project rules)
+- `.cursor/rules/kit-core.mdc`
+- `.cursor/rules/docs.mdc`
+- `.cursor/rules/sql.mdc`
+- `.cursor/rules/manifests.mdc`
+- `.cursor/rules/src-templates.mdc`
+- `.cursor/rules/checklists.mdc`
+- `.cursor/rules/validation.mdc`
 
 ## Folder instructions
 

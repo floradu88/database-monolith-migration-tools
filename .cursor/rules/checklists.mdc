@@ -1,0 +1,13 @@
+---
+description: Rules when editing cutover and split checklists
+globs: checklists/**
+alwaysApply: false
+---
+
+# Checklists
+
+- Read `checklists/AI-INSTRUCTIONS.md` before editing.
+- Keep checklist items aligned with canonical docs, manifests, and runbooks.
+- Prefer additive checkbox items; do not remove gates without an explicit request.
+- Do not invent production approvers, windows, or environment-specific values—mark them as required inputs.
+- When cutover or split steps change, update related docs and migration-wave guidance together.

@@ -20,12 +20,14 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `manifests/`
 - `sql/`
 - `src-templates/`
+- `validation/`
 
 ## Current files
 
 - `AGENTS.md`
 - `AI-INSTRUCTION-INDEX.md`
 - `CLAUDE.md`
+- `LICENSE`
 - `README.md`
 - `REVIEW-REPORT.md`
 - `SOURCES.md`
@@ -33,7 +35,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 
 ## Agent tooling
 
-- Cursor: `.cursor/rules/`
+- Cursor: `.cursor/rules/` (`kit-core`, `docs`, `sql`, `manifests`, `src-templates`, `checklists`, `validation`)
 - Claude Code: `CLAUDE.md`
 - Shared entry: `AGENTS.md`
 

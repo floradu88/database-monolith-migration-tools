@@ -1,7 +1,8 @@
 {
   "version": "V5-reviewed",
-  "file_count": 209,
-  "folder_count": 58,
+  "file_count": 221,
+  "folder_count": 61,
   "issues": [],
-  "status": "pass"
+  "status": "pass",
+  "notes": "Checksums regenerated after Cursor/Claude agent tooling integration."
 }

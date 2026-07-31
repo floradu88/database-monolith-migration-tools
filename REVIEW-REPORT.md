@@ -17,6 +17,13 @@ The kit is structurally complete as an implementation and planning starter, subj
 - Regenerated AI instructions for every folder.
 - Added machine-readable validation output and checksums.
 
+## Repository integration (post-V5)
+
+- Imported the reviewed kit into this git repository while preserving the zip layout.
+- Added Cursor project rules under `.cursor/rules/` and Claude/shared agent entrypoints (`CLAUDE.md`, `AGENTS.md`).
+- Updated the root README and AI instruction index for Cursor + Claude Code usage.
+- Regenerated validation checksums and summary after agent-tooling files were added.
+
 ## Still requires environment-specific decisions
 
 - exact SQL hosting model;
