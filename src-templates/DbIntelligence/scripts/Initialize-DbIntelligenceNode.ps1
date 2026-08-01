@@ -8,8 +8,9 @@
   Prefer Fast Node Manager (fnm) installed for the current user. Does not require elevation.
   Dot-source to mutate PATH in the caller; or invoke with -Install to provision fnm + Node LTS.
   When -InstallCodegraph is set (or with -Install), Codegraph is installed with:
-    fnm exec -- npm i -g @colbymchenry/codegraph
-  falling back to PATH npm only if fnm is unavailable.
+    fnm exec --using=<NodeVersion> -- npm i -g @colbymchenry/codegraph
+  (bare "fnm exec --" fails without a .node-version/.nvmrc even when a default exists).
+  Falls back to PATH npm only if fnm is unavailable.
 
 .PARAMETER Install
   If node/npm (or fnm) are missing, install Schniz.fnm via winget --scope user and Node LTS via fnm.
@@ -145,6 +146,26 @@ function Confirm-DbIntelligenceNodeInstall([string]$Question) {
     return $answer -match '^(y|yes)$'
 }
 
+function Ensure-DbIntelligenceFnmNodeVersion([string]$Version) {
+    if (-not (Test-DbIntelligenceCommand "fnm")) {
+        return $false
+    }
+
+    # Idempotent: installs alias/version if missing so --using= always resolves.
+    & fnm install $Version
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "fnm install $Version failed (exit $LASTEXITCODE)."
+        return $false
+    }
+
+    & fnm default $Version
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "fnm default $Version returned exit $LASTEXITCODE (continuing)."
+    }
+
+    return $true
+}
+
 function Install-DbIntelligenceCodegraph {
     Update-DbIntelligenceSessionPath
     $null = Enable-DbIntelligenceFnm
@@ -162,19 +183,25 @@ function Install-DbIntelligenceCodegraph {
 
     $fnmOk = Test-DbIntelligenceCommand "fnm"
     if ($fnmOk) {
-        Write-NodeInfo "fnm detected — installing Codegraph with: fnm exec -- npm i -g $CodegraphPackage"
-        & fnm exec -- npm i -g $CodegraphPackage
-        if ($LASTEXITCODE -eq 0) {
-            Update-DbIntelligenceSessionPath
-            $null = Enable-DbIntelligenceFnm
-            if (Test-DbIntelligenceCommand "codegraph") {
-                Write-NodeInfo "Codegraph installed via fnm exec. Verify: codegraph -V" "Green"
+        if (-not (Ensure-DbIntelligenceFnmNodeVersion -Version $NodeVersion)) {
+            Write-Warning "Could not provision Node via fnm; falling back to PATH npm..."
+        }
+        else {
+            $fnmExecCmd = "fnm exec --using=$NodeVersion -- npm i -g $CodegraphPackage"
+            Write-NodeInfo "fnm detected - installing Codegraph with: $fnmExecCmd"
+            & fnm exec --using=$NodeVersion -- npm i -g $CodegraphPackage
+            if ($LASTEXITCODE -eq 0) {
+                Update-DbIntelligenceSessionPath
+                $null = Enable-DbIntelligenceFnm
+                if (Test-DbIntelligenceCommand "codegraph") {
+                    Write-NodeInfo "Codegraph installed via fnm exec. Verify: codegraph -V" "Green"
+                    return $true
+                }
+                Write-Warning "fnm exec npm reported success but codegraph is not on PATH yet; reopen the shell or run: . .\Initialize-DbIntelligenceNode.ps1"
                 return $true
             }
-            Write-Warning "fnm exec npm reported success but codegraph is not on PATH yet; reopen the shell or ensure fnm env is loaded."
-            return $true
+            Write-Warning "fnm exec npm install failed (exit $LASTEXITCODE). Falling back to PATH npm..."
         }
-        Write-Warning "fnm exec npm install failed (exit $LASTEXITCODE). Falling back to PATH npm..."
     }
 
     if (-not (Test-DbIntelligenceCommand "npm")) {

@@ -37,7 +37,7 @@ cd src-templates\DbIntelligence
 
 ## Node without admin
 
-Prefer **fnm** via `winget --scope user` + Node LTS in the user profile. **Codegraph** installs with `fnm exec -- npm i -g @colbymchenry/codegraph` when fnm is present. See `Initialize-DbIntelligenceNode.ps1` (`-Install` / `-InstallCodegraph`) and [`../HOW-TO-USE.md`](../HOW-TO-USE.md) § “Node.js without admin (fnm)”.
+Prefer **fnm** via `winget --scope user` + Node LTS in the user profile. **Codegraph** installs with `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` when fnm is present. See `Initialize-DbIntelligenceNode.ps1` (`-Install` / `-InstallCodegraph`) and [`../HOW-TO-USE.md`](../HOW-TO-USE.md) § “Node.js without admin (fnm)”.
 
 ## Graphify CLI contract
 

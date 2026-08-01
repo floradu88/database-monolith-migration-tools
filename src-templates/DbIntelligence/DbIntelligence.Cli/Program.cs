@@ -20,7 +20,7 @@ static void PrintHelp()
 
         Graphify requires Python. If Python is missing, --health reports unhealthy and
         --install-preqs can install Python (winget on Windows), pip, graphifyy, and codegraph.
-        Codegraph is installed with fnm when available: fnm exec -- npm i -g @colbymchenry/codegraph
+        Codegraph is installed with fnm when available: fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph
         (otherwise plain npm i -g, then the official install script).
         """);
 }

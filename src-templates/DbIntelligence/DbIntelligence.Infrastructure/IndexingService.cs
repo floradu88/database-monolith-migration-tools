@@ -271,7 +271,7 @@ public sealed class IndexingService : IIndexingService
                 {
                     throw new InvalidOperationException(
                         $"Required CLI '{_options.CodegraphExecutable}' was not found on PATH. " +
-                        "Prefer: fnm exec -- npm i -g @colbymchenry/codegraph  " +
+                        "Prefer: fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph  " +
                         "(or scripts/Install-DbIntelligencePrereqs.ps1 -Yes / DbIntelligence.Cli --install-preqs).");
                 }
 

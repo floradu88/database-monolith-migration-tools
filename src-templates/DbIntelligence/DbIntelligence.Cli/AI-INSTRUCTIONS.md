@@ -4,7 +4,7 @@
 
 Command-line entry for prerequisite health checks and interactive installs (`--install-preqs`).
 
-Node.js/npm for Angular are provisioned by PowerShell `../scripts/Initialize-DbIntelligenceNode.ps1` (fnm, user scope, no admin). **Codegraph** must be installed with **fnm when present**: `fnm exec -- npm i -g @colbymchenry/codegraph` (C# `--install-preqs` and the PowerShell helper both prefer this). Prefer that path over documenting admin Node MSI installs or bare system npm.
+Node.js/npm for Angular are provisioned by PowerShell `../scripts/Initialize-DbIntelligenceNode.ps1` (fnm, user scope, no admin). **Codegraph** must be installed with **fnm when present**: `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` (C# `--install-preqs` and the PowerShell helper both prefer this). Prefer that path over documenting admin Node MSI installs or bare system npm.
 
 ## Mandatory workflow
 

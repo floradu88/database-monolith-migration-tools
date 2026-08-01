@@ -17,6 +17,6 @@ Prerequisites (Python / Graphify / Codegraph / user-scoped Node via fnm):
 .\scripts\Install-DbIntelligencePrereqs.ps1 -Yes
 ```
 
-Codegraph prefers **fnm** when present: `fnm exec -- npm i -g @colbymchenry/codegraph`.
+Codegraph prefers **fnm** when present: `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph`.
 
 See [`../README.md`](../README.md) and root [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md).

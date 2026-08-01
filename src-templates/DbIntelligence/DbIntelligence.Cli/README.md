@@ -17,7 +17,7 @@ Or via script (also provisions user-scoped Node + Codegraph via fnm first):
 When installing Codegraph, **fnm is preferred** if on PATH:
 
 ```text
-fnm exec -- npm i -g @colbymchenry/codegraph
+fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph
 ```
 
 Fallback: PATH `npm i -g`, then the official Codegraph install script.

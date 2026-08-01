@@ -23,9 +23,12 @@ $NodeInit = Join-Path $PSScriptRoot "Initialize-DbIntelligenceNode.ps1"
 . $NodeInit -Quiet
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     Write-Host "npm not found — installing user-scoped Node via fnm (no admin)..." -ForegroundColor Yellow
-    $installArgs = @("-Install")
-    if ($Yes) { $installArgs += "-Yes" }
-    & $NodeInit @installArgs
+    if ($Yes) {
+        & $NodeInit -Install -Yes
+    }
+    else {
+        & $NodeInit -Install
+    }
     if ($LASTEXITCODE -ne 0) {
         throw "npm is required. Run .\Initialize-DbIntelligenceNode.ps1 -Install -Yes"
     }

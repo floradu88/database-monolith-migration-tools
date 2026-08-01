@@ -16,19 +16,29 @@ There is **no database** for mappings yet. Restarting the API clears the live gr
 
 ## Operating model
 
-1. Provision tools with PowerShell (`Setup-DbIntelligence.ps1` / `Initialize-DbIntelligenceNode.ps1`): **fnm** Node (no admin), Graphify, Codegraph via `fnm exec` when fnm is present.
-2. Point DbIntelligence at a **repository folder** (or batch parent such as `D:\code\projects` / `C:\code`).
-3. Index that path (scripts, API, or UI).
+1. Prefer **one command** with only the project path: `Invoke-DbIntelligenceReady.ps1` (fnm Node no admin, Graphify, Codegraph, build, health, API, index).
+2. Or provision tools with `Setup-DbIntelligence.ps1` / `Initialize-DbIntelligenceNode.ps1`, then start API and index separately.
+3. Point DbIntelligence at a **repository folder** (or batch parent such as `D:\code\projects` / `C:\code`).
 
-## One-shot setup
+## One command (path only)
+
+```powershell
+cd src-templates\DbIntelligence
+.\scripts\Invoke-DbIntelligenceReady.ps1 "D:\path\to\your\app"
+```
+
+Does: prereqs (no admin) → build → health → start API → index → print map counts.
+
+## One-shot kit setup (no index)
 
 ```powershell
 cd src-templates\DbIntelligence
 .\scripts\Setup-DbIntelligence.ps1 -Yes
 ```
 
-Node/npm without admin (fnm, user scope) — also run automatically by setup/prereqs/build/web scripts.
-**Codegraph** installs with `fnm exec -- npm i -g @colbymchenry/codegraph` when fnm is present:
+Node/npm without admin (fnm, user scope) — also run automatically by Ready/setup/prereqs/build/web scripts.
+**Codegraph** installs with `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` when fnm is present
+(`.node-version` in this folder is `lts-latest` so bare `fnm exec` also resolves here; no admin required):
 
 ```powershell
 .\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
@@ -36,7 +46,7 @@ Node/npm without admin (fnm, user scope) — also run automatically by setup/pre
 . .\scripts\Initialize-DbIntelligenceNode.ps1
 ```
 
-## Run
+## Run (manual)
 
 ```powershell
 # Terminal 1 — API http://localhost:5088
@@ -57,14 +67,15 @@ Node/npm without admin (fnm, user scope) — also run automatically by setup/pre
 
 | Script | Purpose |
 |--------|---------|
-| `Setup-DbIntelligence.ps1` | Prereqs + build + test + health |
-| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm; Codegraph via `fnm exec` when present |
-| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Codegraph (`fnm exec`) + Python / pip / graphifyy (`-Yes`) |
+| `Invoke-DbIntelligenceReady.ps1` | **One command:** path only → prereqs → build → health → API → index |
+| `Setup-DbIntelligence.ps1` | Prereqs + build + test + health (no index) |
+| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm; Codegraph via `fnm exec --using=lts-latest` when present |
+| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Codegraph (`fnm exec --using=lts-latest`) + Python / pip / graphifyy (`-Yes`) |
 | `Build-DbIntelligence.ps1` | Restore / build / test (`-SkipWeb`, `-SkipTests`) |
 | `Test-DbIntelligenceHealth.ps1` | CLI health |
 | `Start-DbIntelligence.ps1` | API (`-Force`, `-Port`, `-RepositoryPath`) |
 | `Start-DbIntelligenceWeb.ps1` | Angular (activates/installs fnm Node if needed) |
-| `Invoke-DbIntelligenceIndex.ps1` | Index job against a path |
+| `Invoke-DbIntelligenceIndex.ps1` | Index job against a path (API must already be up) |
 | `Invoke-DbIntelligenceBatchIndex.ps1` | Batch-index children under a parent (`D:\code\projects` or `C:\code`) |
 
 ```powershell
@@ -85,7 +96,7 @@ dotnet run --project .\DbIntelligence.Cli -- --install-preqs --yes
 - .NET 8 SDK, Node.js 18+ / npm, Python 3.10+
 - Prefer **fnm** user install (no admin): `.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes`
 - Graphify: `python -m pip install graphifyy` → `graphify` on PATH
-- Codegraph: prefer `fnm exec -- npm i -g @colbymchenry/codegraph` (PATH `npm` / official script only as fallback); verify `codegraph -V`
+- Codegraph: prefer `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` (PATH `npm` / official script only as fallback); verify `codegraph -V`
 - Optional SQL connection string for inventory scan (user secrets / env)
 
 Health:

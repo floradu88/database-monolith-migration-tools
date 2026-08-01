@@ -34,7 +34,7 @@ public sealed class PrerequisiteHealthService : IPrerequisiteHealthService
             _options.CodegraphExecutable,
             ["-V"],
             "codegraph",
-            "Install with: fnm exec -- npm i -g @colbymchenry/codegraph   (or npm i -g … / DbIntelligence.Cli --install-preqs)",
+            "Install with: .\\scripts\\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes   (or: fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph)",
             cancellationToken);
 
         var graphify = await DetectGraphifyAsync(cancellationToken);
@@ -290,7 +290,7 @@ public sealed class PrerequisiteInstaller : IPrerequisiteInstaller
         {
             var preferFnm = await IsFnmAvailableAsync(cancellationToken);
             var prompt = preferFnm
-                ? "Install Codegraph now (`fnm exec -- npm i -g @colbymchenry/codegraph`)?"
+                ? "Install Codegraph now (`fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph`)?"
                 : "Install Codegraph now (`npm i -g @colbymchenry/codegraph`)?";
 
             if (await ConfirmAsync(input, output, assumeYes, prompt))
@@ -373,10 +373,33 @@ public sealed class PrerequisiteInstaller : IPrerequisiteInstaller
 
         if (preferFnm)
         {
-            await output.WriteLineAsync($"fnm detected — installing Codegraph with: fnm exec -- npm i -g {package}");
+            // Bare `fnm exec --` fails without .node-version/.nvmrc even when a default is set.
+            const string fnmNode = "lts-latest";
+            await output.WriteLineAsync($"Ensuring Node {fnmNode} via fnm...");
+            var ensureNode = await _runner.RunAsync(
+                "fnm",
+                ["install", fnmNode],
+                timeoutSeconds: 600,
+                cancellationToken: cancellationToken);
+            if (!ensureNode.Succeeded)
+            {
+                await output.WriteLineAsync(
+                    $"fnm install {fnmNode} failed: {FirstLine(ensureNode.StandardError + ensureNode.StandardOutput)}");
+            }
+            else
+            {
+                _ = await _runner.RunAsync(
+                    "fnm",
+                    ["default", fnmNode],
+                    timeoutSeconds: 60,
+                    cancellationToken: cancellationToken);
+            }
+
+            var fnmCmd = $"fnm exec --using={fnmNode} -- npm i -g {package}";
+            await output.WriteLineAsync($"fnm detected — installing Codegraph with: {fnmCmd}");
             var viaFnm = await _runner.RunAsync(
                 "fnm",
-                ["exec", "--", "npm", "i", "-g", package],
+                ["exec", $"--using={fnmNode}", "--", "npm", "i", "-g", package],
                 timeoutSeconds: 600,
                 cancellationToken: cancellationToken);
             if (viaFnm.Succeeded)

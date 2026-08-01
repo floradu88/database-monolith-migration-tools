@@ -29,4 +29,4 @@ Full guide: [`../README.md`](../README.md) · root [`../../../HOW-TO-USE.md`](..
 
 - Do not hard-code production repository paths or secrets in the UI.
 - Prefer `Start-DbIntelligenceWeb.ps1` over inventing install steps.
-- Codegraph (used by the API indexer) is installed with `fnm exec -- npm i -g @colbymchenry/codegraph` when fnm is present — not via this Angular project.
+- Codegraph (used by the API indexer) is installed with `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` when fnm is present — not via this Angular project.

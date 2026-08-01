@@ -4,7 +4,7 @@ Roadmap for turning **JSON mapping findings** (`code-to-db-map.json`, `stored-pr
 
 Operational how-to today: [`HOW-TO-USE.md`](../HOW-TO-USE.md) · generator: [`src-templates/FindingsMigration/`](../src-templates/FindingsMigration/).
 
-Prerequisites for indexing (Angular UI + Codegraph): user-scoped Node via [`Initialize-DbIntelligenceNode.ps1`](../src-templates/DbIntelligence/scripts/Initialize-DbIntelligenceNode.ps1) (fnm, no admin). Install Codegraph with **fnm when present**: `fnm exec -- npm i -g @colbymchenry/codegraph`. Batch parent folders: `D:\code\projects` or `C:\code`.
+Prerequisites for indexing (Angular UI + Codegraph): user-scoped Node via [`Initialize-DbIntelligenceNode.ps1`](../src-templates/DbIntelligence/scripts/Initialize-DbIntelligenceNode.ps1) (fnm, no admin). Install Codegraph with **fnm when present**: `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph`. Batch parent folders: `D:\code\projects` or `C:\code`.
 
 ---
 

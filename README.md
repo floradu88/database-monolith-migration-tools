@@ -69,14 +69,24 @@ Node without admin (integrated into setup scripts; Codegraph prefers fnm):
 
 ```powershell
 cd src-templates\DbIntelligence
-.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes          # fnm + Node + Codegraph via fnm exec
-.\scripts\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes # Codegraph only (fnm exec if present)
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes          # fnm + Node + Codegraph via fnm exec --using=lts-latest
+.\scripts\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes # Codegraph only (fnm exec --using=lts-latest if present)
 . .\scripts\Initialize-DbIntelligenceNode.ps1   # activate in current session
 ```
 
-### 1. Setup DbIntelligence (one-shot)
+### 1. Ready (one command — path only)
 
 From this repo root (example path `D:\code\projects\database-monolith-migration-tools`):
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\src-templates\DbIntelligence
+
+.\scripts\Invoke-DbIntelligenceReady.ps1 "D:\path\to\your\app"
+```
+
+Installs/checks tools (fnm Node + Codegraph, no admin), builds, health-checks, starts API, indexes the path.
+
+### 2. Setup kit only (no index)
 
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools\src-templates\DbIntelligence
@@ -270,14 +280,15 @@ start src-templates\DatabaseModernization.sln
 
 | Script | Purpose |
 |--------|---------|
-| `Setup-DbIntelligence.ps1` | Prereqs → build → test → health |
-| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm; Codegraph via `fnm exec` when present |
-| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Codegraph (`fnm exec`) + Python / pip / graphifyy / codegraph |
+| `Invoke-DbIntelligenceReady.ps1` | **One command:** path only → prereqs → build → health → API → index |
+| `Setup-DbIntelligence.ps1` | Prereqs → build → test → health (no index) |
+| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm; Codegraph via `fnm exec --using=lts-latest` when present |
+| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Codegraph (`fnm exec --using=lts-latest`) + Python / pip / graphifyy / codegraph |
 | `Build-DbIntelligence.ps1` | `dotnet restore/build/test` (+ optional Angular) |
 | `Test-DbIntelligenceHealth.ps1` | CLI `--health` |
 | `Start-DbIntelligence.ps1` | API on `:5088` (`-Force` replaces listener) |
 | `Start-DbIntelligenceWeb.ps1` | Angular on `:4200` |
-| `Invoke-DbIntelligenceIndex.ps1` | Index one repo path |
+| `Invoke-DbIntelligenceIndex.ps1` | Index one repo path (API already up) |
 | `Invoke-DbIntelligenceBatchIndex.ps1` | Index every child under a parent (`D:\code\projects` or `C:\code`) |
 | `Invoke-FindingsMigration.ps1` | Package JSON maps → draft domain package |
 | `New-DomainFromFindings.ps1` | Scaffold DataService from Customer template |

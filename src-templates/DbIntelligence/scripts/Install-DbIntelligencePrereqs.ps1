@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
   Install / verify DbIntelligence CLI prerequisites (Python, Graphify, Codegraph)
-  and user-scoped Node.js/npm via fnm (no admin). Codegraph prefers fnm exec.
+  and user-scoped Node.js/npm via fnm (no admin). Codegraph prefers fnm exec --using=lts-latest.
 
 .PARAMETER Yes
   Auto-confirm install prompts (non-interactive).
@@ -27,9 +27,12 @@ function Test-Command([string]$Name) {
 }
 
 Write-Host "=== Node.js / npm / Codegraph (prefer fnm) ===" -ForegroundColor Cyan
-$nodeArgs = @("-Install", "-InstallCodegraph")
-if ($Yes) { $nodeArgs += "-Yes" }
-& $NodeInit @nodeArgs
+if ($Yes) {
+    & $NodeInit -Install -InstallCodegraph -Yes
+}
+else {
+    & $NodeInit -Install -InstallCodegraph
+}
 if ($LASTEXITCODE -ne 0) {
     Write-Warning "Node/fnm/Codegraph setup exited $LASTEXITCODE. Angular UI and codegraph may fail until fixed."
 }
