@@ -48,7 +48,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-# Never `exit` when dot-sourced — that would kill the caller's shell.
+# Never `exit` when dot-sourced - that would kill the caller's shell.
 $script:IsDotSourced = ($MyInvocation.InvocationName -eq '.')
 $CodegraphPackage = "@colbymchenry/codegraph"
 
@@ -87,7 +87,7 @@ function Enable-DbIntelligenceFnm {
     }
 
     try {
-        # Whole script (not line-by-line) — fnm emits multi-line functions.
+        # Whole script (not line-by-line) - fnm emits multi-line functions.
         Invoke-Expression (& fnm env --use-on-cd --shell powershell | Out-String)
         return $true
     }

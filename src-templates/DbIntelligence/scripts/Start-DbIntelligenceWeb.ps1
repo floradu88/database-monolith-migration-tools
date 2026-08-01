@@ -5,7 +5,7 @@
 
 .DESCRIPTION
   Activates user-scoped fnm Node/npm when present. If missing, installs via
-  Initialize-DbIntelligenceNode.ps1 (winget fnm --scope user — no admin).
+  Initialize-DbIntelligenceNode.ps1 (winget fnm --scope user - no admin).
 
 .EXAMPLE
   .\Start-DbIntelligenceWeb.ps1
@@ -22,7 +22,7 @@ $NodeInit = Join-Path $PSScriptRoot "Initialize-DbIntelligenceNode.ps1"
 
 . $NodeInit -Quiet
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-    Write-Host "npm not found — installing user-scoped Node via fnm (no admin)..." -ForegroundColor Yellow
+    Write-Host "npm not found - installing user-scoped Node via fnm (no admin)..." -ForegroundColor Yellow
     if ($Yes) {
         & $NodeInit -Install -Yes
     }
