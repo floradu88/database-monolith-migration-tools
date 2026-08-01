@@ -12,7 +12,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 4. Update docs, manifests, tests, RBAC, observability, and rollback guidance when behavior changes.
 5. Never execute destructive SQL automatically.
 6. Validate SQL-project and EF-migration ownership do not overlap.
-7. Keep local DbIntelligence ops docs aligned with `HOW-TO-USE.md` (fnm Node, batch parents `D:\code\projects` / `C:\code`).
+7. Keep local DbIntelligence ops docs aligned with `HOW-TO-USE.md` (fnm Node, Codegraph via `fnm exec`, batch parents `D:\code\projects` / `C:\code`).
 
 ## Current subfolders
 

@@ -1,5 +1,22 @@
 # DbIntelligence.Api
 
-ASP.NET Core 8 host for DbIntelligence APIs and (optionally) the Angular SPA from `wwwroot`.
+ASP.NET Core 8 host for DbIntelligence HTTP APIs (`:5088`) and optional SPA hosting from `wwwroot`.
 
-See [`../README.md`](../README.md) and root [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md) for prerequisites, configuration, and PowerShell run instructions (including user-scoped Node via fnm).
+## Run (PowerShell)
+
+```powershell
+cd ..
+.\scripts\Start-DbIntelligence.ps1 -Force
+# health
+Invoke-RestMethod http://localhost:5088/api/health
+```
+
+Prerequisites (Python / Graphify / Codegraph / user-scoped Node via fnm):
+
+```powershell
+.\scripts\Install-DbIntelligencePrereqs.ps1 -Yes
+```
+
+Codegraph prefers **fnm** when present: `fnm exec -- npm i -g @colbymchenry/codegraph`.
+
+See [`../README.md`](../README.md) and root [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md).

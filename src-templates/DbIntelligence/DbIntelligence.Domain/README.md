@@ -1,3 +1,7 @@
 # DbIntelligence.Domain
 
-Scaffold for `DbIntelligence.Domain`. Read this folder's `AI-INSTRUCTIONS.md` before adding implementation. The project is intentionally minimal and must be wired into the final solution with approved package versions and references.
+Evidence-graph domain model (`EvidenceGraph`, node/edge kinds, confidence labels) shared by scanners, merge, API, and exports.
+
+Keep Graphify-compatible shapes stable for the Angular UI. Prefer additive changes.
+
+Parent how-to: [`../README.md`](../README.md) · [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md).

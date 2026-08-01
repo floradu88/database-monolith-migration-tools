@@ -16,8 +16,8 @@ There is **no database** for mappings yet. Restarting the API clears the live gr
 
 ## Operating model
 
-1. Install `codegraph` and `graphify` on `PATH`.
-2. Point DbIntelligence at a **repository folder**.
+1. Provision tools with PowerShell (`Setup-DbIntelligence.ps1` / `Initialize-DbIntelligenceNode.ps1`): **fnm** Node (no admin), Graphify, Codegraph via `fnm exec` when fnm is present.
+2. Point DbIntelligence at a **repository folder** (or batch parent such as `D:\code\projects` / `C:\code`).
 3. Index that path (scripts, API, or UI).
 
 ## One-shot setup
@@ -59,7 +59,7 @@ Node/npm without admin (fnm, user scope) — also run automatically by setup/pre
 |--------|---------|
 | `Setup-DbIntelligence.ps1` | Prereqs + build + test + health |
 | `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm; Codegraph via `fnm exec` when present |
-| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Python / pip / graphifyy / codegraph (`-Yes`) |
+| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Codegraph (`fnm exec`) + Python / pip / graphifyy (`-Yes`) |
 | `Build-DbIntelligence.ps1` | Restore / build / test (`-SkipWeb`, `-SkipTests`) |
 | `Test-DbIntelligenceHealth.ps1` | CLI health |
 | `Start-DbIntelligence.ps1` | API (`-Force`, `-Port`, `-RepositoryPath`) |

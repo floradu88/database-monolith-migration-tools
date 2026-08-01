@@ -9,7 +9,7 @@ Cursor implementation plan (completed): `dbintelligence_graph_stack` — all tod
 ```powershell
 cd src-templates\DbIntelligence
 
-# User-scoped Node/npm (fnm, no admin) — also invoked by Setup/Prereqs/Build/Web
+# User-scoped Node/npm + Codegraph via fnm exec (no admin) — also invoked by Setup/Prereqs/Build/Web
 .\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
 
 .\scripts\Setup-DbIntelligence.ps1 -Yes
@@ -32,7 +32,7 @@ cd src-templates\DbIntelligence
 | Angular UI | `DbIntelligence.Web` · `:4200` |
 | CLI health/install | `DbIntelligence.Cli` |
 | Scanners | `RepositoryScanner`, `SqlScanner` |
-| Scripts | `scripts/*.ps1` (includes `Initialize-DbIntelligenceNode.ps1` for fnm) |
+| Scripts | `scripts/*.ps1` (fnm Node + Codegraph via `fnm exec`, setup/run/index/batch) |
 | Docs | Root `HOW-TO-USE.md`, `README.md`, this runbook |
 
 ## Node without admin

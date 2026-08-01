@@ -2,16 +2,13 @@
 
 ## Purpose
 
-This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-a-Service kit. Its role is determined by its path and local README/documentation.
+Evidence-graph domain model for DbIntelligence (nodes, edges, confidence). Keep Graphify-compatible shapes stable.
 
 ## Mandatory workflow
 
-1. Read the root `README.md`, `REVIEW-REPORT.md`, and nearest parent instructions.
-2. Preserve ownership boundaries and prefer additive, reversible changes.
-3. Do not invent credentials, approvals, platform capabilities, or production values.
-4. Update docs, manifests, tests, RBAC, observability, and rollback guidance when behavior changes.
-5. Never execute destructive SQL automatically.
-6. Validate SQL-project and EF-migration ownership do not overlap.
+1. Read parent `DbIntelligence/AI-INSTRUCTIONS.md`, `DbIntelligence/README.md`, and root `HOW-TO-USE.md`.
+2. Prefer additive changes; do not invent production values.
+3. Preserve confidence labels used by exports and the Angular UI.
 
 ## Current subfolders
 
@@ -20,7 +17,9 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 ## Current files
 
 - `DbIntelligence.Domain.csproj`
+- `EvidenceGraph.cs` (and related domain types)
 - `README.md`
+- `AI-INSTRUCTIONS.md`
 
 ## Completion report
 

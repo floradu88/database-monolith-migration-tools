@@ -32,7 +32,7 @@ Build the catalog of:
 - performance baselines;
 - ownership and target-domain suggestions.
 
-**Local implementation:** `src-templates/DbIntelligence/` (API + Angular + scanners + PowerShell scripts). See root [`HOW-TO-USE.md`](../HOW-TO-USE.md). Node/npm for the Angular UI is provisioned user-scoped via `scripts/Initialize-DbIntelligenceNode.ps1` (fnm, no admin).
+**Local implementation:** `src-templates/DbIntelligence/` (API + Angular + scanners + PowerShell scripts). See root [`HOW-TO-USE.md`](../HOW-TO-USE.md). Prefer user-scoped **fnm** for Node/npm (`scripts/Initialize-DbIntelligenceNode.ps1`); install **Codegraph** with `fnm exec -- npm i -g @colbymchenry/codegraph` when fnm is present.
 
 
 ### Workstream B — Split the existing database project

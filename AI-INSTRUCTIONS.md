@@ -27,7 +27,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `AGENTS.md`
 - `AI-INSTRUCTION-INDEX.md`
 - `CLAUDE.md`
-- `HOW-TO-USE.md` — PowerShell setup/run guide (DbIntelligence, fnm Node, batch index, findings)
+- `HOW-TO-USE.md` — PowerShell setup/run guide (DbIntelligence, fnm Node, Codegraph via `fnm exec`, batch index, findings)
 - `LICENSE`
 - `README.md`
 - `REVIEW-REPORT.md`

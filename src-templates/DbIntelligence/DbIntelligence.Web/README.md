@@ -1,27 +1,32 @@
-# DbIntelligenceWeb
+# DbIntelligence.Web
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+Angular 18 + vis-network SPA for the evidence graph, code→DB maps, and index job controls.
 
-## Development server
+Proxies `/api` → `http://localhost:5088` in development.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Run (PowerShell)
 
-## Code scaffolding
+Prefer kit scripts (activates/installs **fnm** Node if needed; no admin):
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+```powershell
+cd ..
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes   # once
+.\scripts\Start-DbIntelligence.ps1 -Force                   # API :5088
+.\scripts\Start-DbIntelligenceWeb.ps1                       # UI  :4200
+```
 
-## Build
+Equivalent:
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```powershell
+. ..\scripts\Initialize-DbIntelligenceNode.ps1
+npm install
+npm start
+```
 
-## Running unit tests
+Full guide: [`../README.md`](../README.md) · root [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md).
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Notes
 
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Do not hard-code production repository paths or secrets in the UI.
+- Prefer `Start-DbIntelligenceWeb.ps1` over inventing install steps.
+- Codegraph (used by the API indexer) is installed with `fnm exec -- npm i -g @colbymchenry/codegraph` when fnm is present — not via this Angular project.

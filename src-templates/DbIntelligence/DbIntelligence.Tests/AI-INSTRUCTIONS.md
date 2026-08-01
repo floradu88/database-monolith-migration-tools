@@ -2,18 +2,21 @@
 
 ## Purpose
 
-Unit/fixture tests for repository scanning, SQL inventory helpers, and Graphify-shaped exports.
+Unit tests for Graphify import, repository scanning, and project-folder discovery.
 
 ## Mandatory workflow
 
-1. Prefer fixture repos over live SQL Server connections.
-2. Keep tests free of credentials.
-3. Update tests when export schemas or scanner patterns change.
+1. Read parent `DbIntelligence/AI-INSTRUCTIONS.md` and `DbIntelligence/README.md`.
+2. Prefer `../scripts/Build-DbIntelligence.ps1` (or `dotnet test` on this project) for local validation.
+3. Do not invent production credentials in fixtures.
 
 ## Current files
 
 - `DbIntelligence.Tests.csproj`
+- `GraphifyImportTests.cs`
 - `RepositoryScannerTests.cs`
+- `ProjectFolderDiscoveryTests.cs`
+- `README.md`
 
 ## Completion report
 

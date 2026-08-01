@@ -16,13 +16,13 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 
 ## Current subfolders
 
-- `BuildingBlocks/`
-- `DataServices/`
-- `DbIntelligence/`
-- `FindingsMigration/`
-- `MigrationControlPlane/`
-- `SourceMonolith/`
-- `Tests/`
+- `BuildingBlocks/` — shared abstractions (see folder README)
+- `DataServices/` — CustomerDataService reference + FindingsMigration scaffolds
+- `DbIntelligence/` — runnable discovery stack (PowerShell scripts; fnm Node; Codegraph via `fnm exec`)
+- `FindingsMigration/` — JSON maps → domain packages
+- `MigrationControlPlane/` — cutover/control-plane templates
+- `SourceMonolith/` — split SQL projects for the current monolith
+- `Tests/` — cross-cutting test templates
 
 ## Current files
 

@@ -1,3 +1,12 @@
 # DbIntelligence.Worker
 
-Scaffold for `DbIntelligence.Worker`. Read this folder's `AI-INSTRUCTIONS.md` before adding implementation. The project is intentionally minimal and must be wired into the final solution with approved package versions and references.
+Optional background worker host for indexing / long-running jobs. Shares configuration section `DbIntelligence` with the API.
+
+For day-to-day local use, prefer the API + PowerShell scripts:
+
+```powershell
+cd ..
+.\scripts\Start-DbIntelligence.ps1 -Force
+```
+
+See [`../README.md`](../README.md) · [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md).

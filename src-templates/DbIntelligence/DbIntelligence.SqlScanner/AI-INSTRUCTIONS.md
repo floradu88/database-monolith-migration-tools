@@ -15,6 +15,8 @@ Read-only SQL Server object inventory and dependency extraction for the evidence
 
 - `DbIntelligence.SqlScanner.csproj`
 - `SqlScannerService.cs`
+- `README.md`
+- `AI-INSTRUCTIONS.md`
 
 ## Completion report
 

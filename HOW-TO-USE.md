@@ -84,7 +84,7 @@ All scripts live in `src-templates/DbIntelligence/scripts/`.
 |--------|---------|
 | `Setup-DbIntelligence.ps1` | Master: prereqs → build → test → health |
 | `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm; Codegraph via `fnm exec` when present |
-| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Python / pip / graphifyy / codegraph |
+| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Codegraph (`fnm exec`) + Python / pip / graphifyy / codegraph |
 | `Build-DbIntelligence.ps1` | `dotnet restore/build/test` (+ optional Angular) |
 | `Test-DbIntelligenceHealth.ps1` | CLI `--health` |
 | `Start-DbIntelligence.ps1` | API on `:5088` (`-Force` replaces listener) |

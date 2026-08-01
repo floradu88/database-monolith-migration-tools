@@ -1,9 +1,12 @@
 # DbIntelligence.Infrastructure
 
-CLI runners (Codegraph/Graphify), evidence merge, in-memory store, prerequisite health/install, and indexing orchestration.
+CLI runners (Codegraph / Graphify), evidence merge, in-memory store, prerequisite health/install, project discovery, and indexing orchestration.
 
-Local ops (including user-scoped Node via fnm) are documented in:
+## Operator notes
 
-- [`../README.md`](../README.md)
-- root [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md)
-- [`../scripts/`](../scripts/)
+- Local setup is PowerShell-first under [`../scripts/`](../scripts/).
+- Node/npm: user-scoped **fnm** via `Initialize-DbIntelligenceNode.ps1` (no admin).
+- Codegraph: prefer `fnm exec -- npm i -g @colbymchenry/codegraph` when fnm is present (`PrerequisiteInstaller` follows the same order).
+- Live graph/maps are **in memory**; durable output is JSON/MD export.
+
+Docs: [`../README.md`](../README.md) · root [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md).

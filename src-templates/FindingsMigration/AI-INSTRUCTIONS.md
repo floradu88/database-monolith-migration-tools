@@ -11,7 +11,7 @@ Turn DbIntelligence JSON maps into draft domain manifests and scaffold DataServi
 3. Never treat AMBIGUOUS findings as owned without human review.
 4. Keep SQL project ownership and EF migrations ownership non-overlapping in generated YAML.
 5. Prefer additive changes; do not silently overwrite kit `manifests/` without `-CopyManifestsToKit` intent.
-6. Indexing prerequisites (Node/fnm, API) live under `../DbIntelligence/scripts/` — do not invent alternate install paths.
+6. Indexing prerequisites (Node/fnm, Codegraph via `fnm exec`, API) live under `../DbIntelligence/scripts/` — do not invent alternate install paths.
 
 ## Current contents
 
