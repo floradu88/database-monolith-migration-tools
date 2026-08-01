@@ -6,11 +6,12 @@ Turn DbIntelligence JSON maps into draft domain manifests and scaffold DataServi
 
 ## Mandatory workflow
 
-1. Read `README.md` and `docs/FUTURE-FEATURES.md`.
+1. Read `README.md`, root `HOW-TO-USE.md`, and `docs/FUTURE-FEATURES.md`.
 2. Prefer PowerShell scripts under `scripts/` for operator flows.
 3. Never treat AMBIGUOUS findings as owned without human review.
 4. Keep SQL project ownership and EF migrations ownership non-overlapping in generated YAML.
 5. Prefer additive changes; do not silently overwrite kit `manifests/` without `-CopyManifestsToKit` intent.
+6. Indexing prerequisites (Node/fnm, API) live under `../DbIntelligence/scripts/` — do not invent alternate install paths.
 
 ## Current contents
 

@@ -4,6 +4,8 @@ Template + CLI that **migrates DbIntelligence JSON mapping findings** into a **s
 
 Reads **exported JSON files** (not a database). The API’s live graph is in-memory only; always point this tool at `artifacts/db-intelligence/*.json` (or another export path).
 
+Index first with DbIntelligence (see root [`HOW-TO-USE.md`](../../HOW-TO-USE.md); Node/npm without admin via `Initialize-DbIntelligenceNode.ps1`).
+
 Future roadmap: [`../../docs/FUTURE-FEATURES.md`](../../docs/FUTURE-FEATURES.md).
 
 ## What it does

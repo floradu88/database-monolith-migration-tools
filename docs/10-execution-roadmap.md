@@ -15,7 +15,7 @@
 - export source schema verbatim;
 - inventory objects and permissions;
 - collect procedure/function statistics;
-- scan repositories with **DbIntelligence** (`src-templates/DbIntelligence/scripts/*.ps1` — see [`HOW-TO-USE.md`](../HOW-TO-USE.md));
+- scan repositories with **DbIntelligence** (`src-templates/DbIntelligence/scripts/*.ps1` — see [`HOW-TO-USE.md`](../HOW-TO-USE.md)); use `Initialize-DbIntelligenceNode.ps1` for user-scoped Node/npm (fnm, no admin) and `Invoke-DbIntelligenceBatchIndex.ps1` for parent folders such as `D:\code\projects` or `C:\code`;
 - build application-object graph (`graph.json`, code→DB and stored-procedure maps);
 - establish performance baselines.
 

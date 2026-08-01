@@ -3,18 +3,37 @@
 .SYNOPSIS
   Start Angular DbIntelligence.Web (http://localhost:4200, proxies /api -> :5088).
 
+.DESCRIPTION
+  Activates user-scoped fnm Node/npm when present. If missing, installs via
+  Initialize-DbIntelligenceNode.ps1 (winget fnm --scope user — no admin).
+
 .EXAMPLE
   .\Start-DbIntelligenceWeb.ps1
 #>
 [CmdletBinding()]
-param()
+param(
+    [switch]$Yes
+)
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $Web = Join-Path $Root "DbIntelligence.Web"
+$NodeInit = Join-Path $PSScriptRoot "Initialize-DbIntelligenceNode.ps1"
+
+. $NodeInit -Quiet
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    Write-Host "npm not found — installing user-scoped Node via fnm (no admin)..." -ForegroundColor Yellow
+    $installArgs = @("-Install")
+    if ($Yes) { $installArgs += "-Yes" }
+    & $NodeInit @installArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "npm is required. Run .\Initialize-DbIntelligenceNode.ps1 -Install -Yes"
+    }
+    . $NodeInit -Quiet
+}
 
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-    throw "npm is required. Install Node.js 18+."
+    throw "npm is required. Run .\Initialize-DbIntelligenceNode.ps1 -Install -Yes"
 }
 
 Push-Location $Web
@@ -26,6 +45,7 @@ try {
     }
 
     Write-Host "Starting Angular on http://localhost:4200 ..." -ForegroundColor Cyan
+    Write-Host "Using npm: $((Get-Command npm).Source)" -ForegroundColor DarkGray
     npm start
 }
 finally {

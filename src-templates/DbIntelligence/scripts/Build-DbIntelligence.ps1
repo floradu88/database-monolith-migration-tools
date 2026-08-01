@@ -29,6 +29,7 @@ $Root = Split-Path -Parent $PSScriptRoot
 $Sln = Join-Path $Root "..\DatabaseModernization.sln"
 $Web = Join-Path $Root "DbIntelligence.Web"
 $Tests = Join-Path $Root "DbIntelligence.Tests\DbIntelligence.Tests.csproj"
+$NodeInit = Join-Path $PSScriptRoot "Initialize-DbIntelligenceNode.ps1"
 
 if (-not (Test-Path $Sln)) {
     throw "Solution not found: $Sln"
@@ -62,8 +63,15 @@ if (-not $SkipTests) {
 }
 
 if (-not $SkipWeb) {
+    . $NodeInit -Quiet
     if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-        Write-Warning "npm not found; skipping Angular restore. Install Node.js or pass -SkipWeb."
+        Write-Warning "npm not found; attempting user-scoped fnm Node install..."
+        & $NodeInit -Install -Yes
+        . $NodeInit -Quiet
+    }
+
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        Write-Warning "npm not found; skipping Angular restore. Run .\Initialize-DbIntelligenceNode.ps1 -Install -Yes or pass -SkipWeb."
     }
     else {
         Write-Host "Installing Angular dependencies ..." -ForegroundColor Cyan

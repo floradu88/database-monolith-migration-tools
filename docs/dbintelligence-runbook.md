@@ -8,10 +8,18 @@ Cursor implementation plan (completed): `dbintelligence_graph_stack` — all tod
 
 ```powershell
 cd src-templates\DbIntelligence
+
+# User-scoped Node/npm (fnm, no admin) — also invoked by Setup/Prereqs/Build/Web
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+
 .\scripts\Setup-DbIntelligence.ps1 -Yes
 .\scripts\Start-DbIntelligence.ps1 -Force
 .\scripts\Start-DbIntelligenceWeb.ps1
 .\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
+
+# Batch: one project per child folder (artifacts written to each project root)
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
 ```
 
 ## Delivered
@@ -20,12 +28,16 @@ cd src-templates\DbIntelligence
 |------|----------|
 | API + health | `DbIntelligence.Api` · `:5088` |
 | Live maps | **In memory** (`FileIntelligenceStore`) — no DB yet |
-| Durable export | `artifacts/db-intelligence/*.json` |
+| Durable export | `artifacts/db-intelligence/*.json` (or project root for batch) |
 | Angular UI | `DbIntelligence.Web` · `:4200` |
 | CLI health/install | `DbIntelligence.Cli` |
 | Scanners | `RepositoryScanner`, `SqlScanner` |
-| Scripts | `scripts/*.ps1` |
-| Docs | Root `HOW-TO-USE.md`, this folder `README.md` |
+| Scripts | `scripts/*.ps1` (includes `Initialize-DbIntelligenceNode.ps1` for fnm) |
+| Docs | Root `HOW-TO-USE.md`, `README.md`, this runbook |
+
+## Node without admin
+
+Prefer **fnm** via `winget --scope user` + Node LTS in the user profile. See `Initialize-DbIntelligenceNode.ps1` and [`../HOW-TO-USE.md`](../HOW-TO-USE.md) § “Node.js without admin (fnm)”.
 
 ## Graphify CLI contract
 

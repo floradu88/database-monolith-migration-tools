@@ -1,7 +1,8 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Install / verify DbIntelligence CLI prerequisites (Python, Graphify, Codegraph).
+  Install / verify DbIntelligence CLI prerequisites (Python, Graphify, Codegraph)
+  and user-scoped Node.js/npm via fnm (no admin).
 
 .PARAMETER Yes
   Auto-confirm install prompts (non-interactive).
@@ -19,18 +20,33 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $CliProject = Join-Path $Root "DbIntelligence.Cli\DbIntelligence.Cli.csproj"
+$NodeInit = Join-Path $PSScriptRoot "Initialize-DbIntelligenceNode.ps1"
 
 function Test-Command([string]$Name) {
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
-Write-Host "Checking local toolchain..." -ForegroundColor Cyan
+Write-Host "=== Node.js / npm (user-scoped fnm) ===" -ForegroundColor Cyan
+$nodeArgs = @("-Install")
+if ($Yes) { $nodeArgs += "-Yes" }
+& $NodeInit @nodeArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Node/npm setup exited $LASTEXITCODE. Angular UI and global npm tools (codegraph) may fail until fixed."
+}
+else {
+    # Activate fnm Node in this session for subsequent npm/codegraph steps.
+    . $NodeInit -Quiet
+}
+
+Write-Host "`nChecking local toolchain..." -ForegroundColor Cyan
 $dotnetOk = Test-Command "dotnet"
 $nodeOk = Test-Command "node"
 $npmOk = Test-Command "npm"
 $pythonOk = (Test-Command "python") -or (Test-Command "py")
+$fnmOk = Test-Command "fnm"
 
 Write-Host "  dotnet : $(if ($dotnetOk) { 'OK' } else { 'MISSING' })"
+Write-Host "  fnm    : $(if ($fnmOk) { 'OK' } else { 'MISSING' })"
 Write-Host "  node   : $(if ($nodeOk) { 'OK' } else { 'MISSING' })"
 Write-Host "  npm    : $(if ($npmOk) { 'OK' } else { 'MISSING' })"
 Write-Host "  python : $(if ($pythonOk) { 'OK' } else { 'MISSING' })"

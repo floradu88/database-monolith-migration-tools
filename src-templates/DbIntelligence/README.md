@@ -27,6 +27,13 @@ cd src-templates\DbIntelligence
 .\scripts\Setup-DbIntelligence.ps1 -Yes
 ```
 
+Node/npm without admin (fnm, user scope) — also run automatically by setup/prereqs/build/web scripts:
+
+```powershell
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+. .\scripts\Initialize-DbIntelligenceNode.ps1
+```
+
 ## Run
 
 ```powershell
@@ -49,11 +56,12 @@ cd src-templates\DbIntelligence
 | Script | Purpose |
 |--------|---------|
 | `Setup-DbIntelligence.ps1` | Prereqs + build + test + health |
-| `Install-DbIntelligencePrereqs.ps1` | Python / pip / graphifyy / codegraph (`-Yes`) |
+| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm (no admin) |
+| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Python / pip / graphifyy / codegraph (`-Yes`) |
 | `Build-DbIntelligence.ps1` | Restore / build / test (`-SkipWeb`, `-SkipTests`) |
 | `Test-DbIntelligenceHealth.ps1` | CLI health |
 | `Start-DbIntelligence.ps1` | API (`-Force`, `-Port`, `-RepositoryPath`) |
-| `Start-DbIntelligenceWeb.ps1` | Angular |
+| `Start-DbIntelligenceWeb.ps1` | Angular (activates/installs fnm Node if needed) |
 | `Invoke-DbIntelligenceIndex.ps1` | Index job against a path |
 | `Invoke-DbIntelligenceBatchIndex.ps1` | Batch-index children under a parent (`D:\code\projects` or `C:\code`) |
 
@@ -72,9 +80,10 @@ dotnet run --project .\DbIntelligence.Cli -- --install-preqs --yes
 
 ## Prerequisites
 
-- .NET 8 SDK, Node.js 18+, Python 3.10+
+- .NET 8 SDK, Node.js 18+ / npm, Python 3.10+
+- Prefer **fnm** user install (no admin): `.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes`
 - Graphify: `python -m pip install graphifyy` → `graphify` on PATH
-- Codegraph: `codegraph -V` on PATH
+- Codegraph: `codegraph -V` on PATH (often via `npm i -g` after fnm Node is active)
 - Optional SQL connection string for inventory scan (user secrets / env)
 
 Health:

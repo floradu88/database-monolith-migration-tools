@@ -16,7 +16,7 @@ DatabaseModernization.sln
 │   │   ├── DbIntelligence.Contracts/
 │   │   ├── DbIntelligence.Web/
 │   │   ├── DbIntelligence.Tests/
-│   │   └── scripts/
+│   │   └── scripts/   # PowerShell; Initialize-DbIntelligenceNode.ps1 (fnm) + setup/run/index/batch
 │   ├── DbMigrationControlPlane/
 │   │   ├── DbMigration.Api/
 │   │   ├── DbMigration.Worker/

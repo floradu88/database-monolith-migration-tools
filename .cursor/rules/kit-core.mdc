@@ -9,9 +9,10 @@ This repository is the V5-reviewed SQL Server monolith-decomposition kit.
 
 ## Before editing
 
-1. Read `README.md`, `REVIEW-REPORT.md`, and the nearest `AI-INSTRUCTIONS.md`.
+1. Read `README.md`, `HOW-TO-USE.md`, `REVIEW-REPORT.md`, and the nearest `AI-INSTRUCTIONS.md`.
 2. Prefer canonical docs listed under “Start here” in the root README.
 3. Use `AI-INSTRUCTION-INDEX.md` to find folder-specific agent instructions.
+4. For DbIntelligence local setup, prefer `src-templates/DbIntelligence/scripts/` (including user-scoped Node via fnm).
 
 ## Safety
 

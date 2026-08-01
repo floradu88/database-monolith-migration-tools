@@ -106,10 +106,18 @@ Concrete .NET 8 stack lives under `src-templates/DbIntelligence/`:
 
 ```powershell
 cd src-templates\DbIntelligence
+
+# Node/npm without admin (fnm) — also run by Setup / Prereqs / Build / Web scripts
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+
 .\scripts\Setup-DbIntelligence.ps1 -Yes
 .\scripts\Start-DbIntelligence.ps1 -Force
 .\scripts\Start-DbIntelligenceWeb.ps1
 .\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
+
+# Parent folder of projects (D:\code\projects or C:\code)
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
 ```
 
 Full command reference: [`../HOW-TO-USE.md`](../HOW-TO-USE.md) and [`../src-templates/DbIntelligence/README.md`](../src-templates/DbIntelligence/README.md).

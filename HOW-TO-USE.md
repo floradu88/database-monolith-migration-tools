@@ -12,6 +12,9 @@ All setup and run commands below are **PowerShell**.
 # From the repository root
 cd D:\code\projects\database-monolith-migration-tools\src-templates\DbIntelligence
 
+# User-scoped Node/npm (fnm, no admin) — also part of Setup
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+
 # One-shot: install tools (prompts), restore, build, test, health
 .\scripts\Setup-DbIntelligence.ps1 -Yes
 
@@ -23,6 +26,10 @@ cd D:\code\projects\database-monolith-migration-tools\src-templates\DbIntelligen
 
 # Terminal 3 — index a repository folder
 .\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\your\app"
+
+# Or batch-index every child under a parent folder
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
 ```
 
 Then open http://localhost:4200 — search the graph, filter code↔DB edges, or trigger **Index repository** from the UI.
@@ -34,13 +41,34 @@ Then open http://localhost:4200 — search the graph, filter code↔DB edges, or
 | Tool | Why | Check |
 |------|-----|--------|
 | .NET 8 SDK | API, CLI, scanners, tests | `dotnet --list-sdks` |
-| Node.js 18+ | Angular UI | `node -v` |
+| Node.js 18+ / npm | Angular UI (+ optional `npm i -g` codegraph) | `node -v` / `npm -v` |
+| fnm (recommended) | User-scoped Node/npm **without admin** | `fnm --version` |
 | Python 3.10+ | Graphify | `python --version` |
 | `graphify` on PATH | Corpus graph | `graphify --help` |
 | `codegraph` on PATH | Symbol index | `codegraph -V` |
 | PowerShell 5.1+ | Setup scripts | `$PSVersionTable.PSVersion` |
+| winget (Windows) | Install fnm / Python without admin elevation | `winget --version` |
 
 Optional: SQL Server connection string (user secrets / env) only if you enable SQL inventory scan.
+
+### Node.js without admin (fnm)
+
+DbIntelligence PowerShell prefers **fnm** installed for the current user (`winget --scope user`), then Node LTS into your profile:
+
+```powershell
+cd src-templates\DbIntelligence
+
+# One-shot: install fnm + Node LTS for this user (no elevation)
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+
+# Activate fnm Node in the *current* session (dot-source)
+. .\scripts\Initialize-DbIntelligenceNode.ps1
+
+node -v
+npm -v
+```
+
+`Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, and `Start-DbIntelligenceWeb.ps1` call this helper automatically.
 
 ---
 
@@ -51,7 +79,8 @@ All scripts live in `src-templates/DbIntelligence/scripts/`.
 | Script | Purpose |
 |--------|---------|
 | `Setup-DbIntelligence.ps1` | Master: prereqs → build → test → health |
-| `Install-DbIntelligencePrereqs.ps1` | Python / pip / graphifyy / codegraph |
+| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm (no admin) |
+| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Python / pip / graphifyy / codegraph |
 | `Build-DbIntelligence.ps1` | `dotnet restore/build/test` (+ optional Angular) |
 | `Test-DbIntelligenceHealth.ps1` | CLI `--health` |
 | `Start-DbIntelligence.ps1` | API on `:5088` (`-Force` replaces listener) |
@@ -64,8 +93,11 @@ All scripts live in `src-templates/DbIntelligence/scripts/`.
 ```powershell
 cd src-templates\DbIntelligence
 
-# Auto-confirm prereq installs
+# Auto-confirm prereq installs (includes user-scoped fnm Node if needed)
 .\scripts\Setup-DbIntelligence.ps1 -Yes
+
+# Node/npm only (no admin)
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
 
 # Skip prereq installer; still build/test/health
 .\scripts\Setup-DbIntelligence.ps1 -SkipPrereqs
@@ -93,12 +125,14 @@ dotnet run --project .\DbIntelligence.Cli -- --health
 dotnet run --project .\DbIntelligence.Cli -- --install-preqs --yes
 ```
 
-What `--install-preqs` tries (Windows):
+What `Install-DbIntelligencePrereqs.ps1` does (Windows):
 
-1. Python via `winget` if missing  
-2. Ensure `pip`  
-3. `python -m pip install graphifyy`  
-4. `npm i -g @colbymchenry/codegraph` (fallback install script)
+0. **Node/npm** via `Initialize-DbIntelligenceNode.ps1` (fnm + `winget --scope user`, no admin)  
+1. Then `DbIntelligence.Cli --install-preqs`:  
+   - Python via `winget` if missing  
+   - Ensure `pip`  
+   - `python -m pip install graphifyy`  
+   - `npm i -g @colbymchenry/codegraph` (fallback install script) — uses the fnm Node just activated when possible
 
 ### Health
 
@@ -151,6 +185,9 @@ cd src-templates\DbIntelligence
 Equivalent:
 
 ```powershell
+# Ensure user-scoped Node is active (fnm)
+. .\scripts\Initialize-DbIntelligenceNode.ps1
+
 cd src-templates\DbIntelligence\DbIntelligence.Web
 npm install
 npm start
@@ -406,6 +443,7 @@ Live API graph remains **in memory** (last completed project). Durable results a
 |---------|-----|
 | Port 5088 in use / DLL locked | `.\scripts\Start-DbIntelligence.ps1 -Force` or stop `DbIntelligence.Api` before `Build-DbIntelligence.ps1` |
 | Health unhealthy | `.\scripts\Install-DbIntelligencePrereqs.ps1 -Yes` then reopen the terminal so PATH refreshes |
+| `node` / `npm` missing (no admin) | `.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes` then `. .\scripts\Initialize-DbIntelligenceNode.ps1` or open a new shell |
 | `graphify` not found / wrong CLI | Install package `graphifyy`; help text must mention `extract` / `graphify-out` |
 | Index fails on Graphify JSON | Ensure you are on the fixed importer (numeric `community`, `links` edges) — rebuild API and restart with `-Force` |
 | Angular cannot reach API | Start API first; confirm http://localhost:5088/api/health |

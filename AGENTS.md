@@ -17,7 +17,8 @@ This repo is the **SQL Server Monolith Decomposition and DB-as-a-Service Kit (V5
 3. Use canonical docs from the README “Start here” list; treat other numbered docs as supplemental unless the canonical index says otherwise.
 4. Prefer additive, reversible changes; never invent production values or credentials.
 5. Never execute destructive SQL automatically.
-6. End with a completion report: files changed, assumptions, validation, risks, approvals needed.
+6. For DbIntelligence local setup, prefer PowerShell scripts under `src-templates/DbIntelligence/scripts/` (including user-scoped Node via `Initialize-DbIntelligenceNode.ps1` / fnm — no admin).
+7. End with a completion report: files changed, assumptions, validation, risks, approvals needed.
 
 
 ## Do not

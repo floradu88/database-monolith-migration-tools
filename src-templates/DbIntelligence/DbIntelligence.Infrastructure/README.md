@@ -1,3 +1,9 @@
 # DbIntelligence.Infrastructure
 
-Scaffold for `DbIntelligence.Infrastructure`. Read this folder's `AI-INSTRUCTIONS.md` before adding implementation. The project is intentionally minimal and must be wired into the final solution with approved package versions and references.
+CLI runners (Codegraph/Graphify), evidence merge, in-memory store, prerequisite health/install, and indexing orchestration.
+
+Local ops (including user-scoped Node via fnm) are documented in:
+
+- [`../README.md`](../README.md)
+- root [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md)
+- [`../scripts/`](../scripts/)

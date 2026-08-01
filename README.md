@@ -56,11 +56,21 @@ All runnable local ops below are **PowerShell**. Full detail: [`HOW-TO-USE.md`](
 
 ```powershell
 dotnet --list-sdks          # .NET 8 SDK
-node -v                     # Node.js 18+
+node -v                     # Node.js 18+ (prefer fnm user install)
+npm -v
+fnm --version               # optional but recommended (no-admin Node)
 python --version            # Python 3.10+
 graphify --help             # Graphify (pip package graphifyy)
 codegraph -V                # Codegraph on PATH
 $PSVersionTable.PSVersion   # PowerShell 5.1+
+```
+
+Node without admin (integrated into setup scripts):
+
+```powershell
+cd src-templates\DbIntelligence
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+. .\scripts\Initialize-DbIntelligenceNode.ps1   # activate in current session
 ```
 
 ### 1. Setup DbIntelligence (one-shot)
@@ -260,7 +270,8 @@ start src-templates\DatabaseModernization.sln
 | Script | Purpose |
 |--------|---------|
 | `Setup-DbIntelligence.ps1` | Prereqs → build → test → health |
-| `Install-DbIntelligencePrereqs.ps1` | Python / pip / graphifyy / codegraph |
+| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm (no admin) |
+| `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Python / pip / graphifyy / codegraph |
 | `Build-DbIntelligence.ps1` | `dotnet restore/build/test` (+ optional Angular) |
 | `Test-DbIntelligenceHealth.ps1` | CLI `--health` |
 | `Start-DbIntelligence.ps1` | API on `:5088` (`-Force` replaces listener) |

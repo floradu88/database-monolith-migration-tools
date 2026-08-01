@@ -6,12 +6,13 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 
 ## Mandatory workflow
 
-1. Read the root `README.md`, `REVIEW-REPORT.md`, and nearest parent instructions.
+1. Read the root `README.md`, `HOW-TO-USE.md`, `REVIEW-REPORT.md`, and nearest parent instructions.
 2. Preserve ownership boundaries and prefer additive, reversible changes.
 3. Do not invent credentials, approvals, platform capabilities, or production values.
 4. Update docs, manifests, tests, RBAC, observability, and rollback guidance when behavior changes.
 5. Never execute destructive SQL automatically.
 6. Validate SQL-project and EF-migration ownership do not overlap.
+7. Keep local DbIntelligence ops docs aligned with `HOW-TO-USE.md` (fnm Node, batch parents `D:\code\projects` / `C:\code`).
 
 ## Current subfolders
 

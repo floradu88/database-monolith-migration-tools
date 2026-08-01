@@ -15,7 +15,8 @@ DatabaseModernization/
 │   │   ├── DbIntelligence.Contracts/
 │   │   ├── DbIntelligence.Web/
 │   │   ├── DbIntelligence.Tests/
-│   │   └── scripts/                 # PowerShell setup/run (see HOW-TO-USE.md)
+│   │   └── scripts/                 # PowerShell setup/run (HOW-TO-USE.md)
+│   │                                # incl. Initialize-DbIntelligenceNode.ps1 (fnm, no admin)
 
 │   │
 │   ├── MigrationControlPlane/

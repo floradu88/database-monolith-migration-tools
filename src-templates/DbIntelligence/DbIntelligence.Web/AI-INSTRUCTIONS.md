@@ -10,6 +10,7 @@ Angular SPA for Graphify-like interactive evidence graphs (vis-network), code→
 2. Keep API contracts aligned with `DbIntelligence.Contracts` / Api endpoints.
 3. Do not hard-code secrets or production repository paths in the UI.
 4. Prefer additive UI changes that preserve search + canvas + detail composition.
+5. Start locally via `../scripts/Start-DbIntelligenceWeb.ps1` (activates/installs user-scoped fnm Node if needed). Do not require admin Node installers.
 
 ## Current files
 
