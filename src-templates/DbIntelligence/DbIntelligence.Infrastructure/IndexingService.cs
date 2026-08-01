@@ -271,7 +271,8 @@ public sealed class IndexingService : IIndexingService
                 {
                     throw new InvalidOperationException(
                         $"Required CLI '{_options.CodegraphExecutable}' was not found on PATH. " +
-                        "Run DbIntelligence.Cli with --install-preqs, or install Codegraph manually.");
+                        "Prefer: fnm exec -- npm i -g @colbymchenry/codegraph  " +
+                        "(or scripts/Install-DbIntelligencePrereqs.ps1 -Yes / DbIntelligence.Cli --install-preqs).");
                 }
 
                 if (request.RunGraphify && !tools.GraphifyAvailable)

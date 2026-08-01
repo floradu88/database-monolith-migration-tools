@@ -59,6 +59,6 @@ Write-Host "  .\scripts\Start-DbIntelligenceWeb.ps1"
 Write-Host "  .\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath `"D:\path\to\repo`""
 Write-Host "  .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath `"D:\code\projects`""
 Write-Host "  .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath `"C:\code`""
-Write-Host "Node tip: user-scoped install (no admin) → .\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes"
+Write-Host "Node tip: .\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes  (fnm Node + Codegraph via fnm exec)"
 
 exit $healthExit

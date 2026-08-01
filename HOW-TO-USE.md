@@ -41,8 +41,8 @@ Then open http://localhost:4200 — search the graph, filter code↔DB edges, or
 | Tool | Why | Check |
 |------|-----|--------|
 | .NET 8 SDK | API, CLI, scanners, tests | `dotnet --list-sdks` |
-| Node.js 18+ / npm | Angular UI (+ optional `npm i -g` codegraph) | `node -v` / `npm -v` |
-| fnm (recommended) | User-scoped Node/npm **without admin** | `fnm --version` |
+| Node.js 18+ / npm | Angular UI + Codegraph npm package | `node -v` / `npm -v` |
+| fnm (recommended) | User-scoped Node/npm **and** preferred Codegraph install (`fnm exec -- npm …`) | `fnm --version` |
 | Python 3.10+ | Graphify | `python --version` |
 | `graphify` on PATH | Corpus graph | `graphify --help` |
 | `codegraph` on PATH | Symbol index | `codegraph -V` |
@@ -53,22 +53,26 @@ Optional: SQL Server connection string (user secrets / env) only if you enable S
 
 ### Node.js without admin (fnm)
 
-DbIntelligence PowerShell prefers **fnm** installed for the current user (`winget --scope user`), then Node LTS into your profile:
+DbIntelligence PowerShell prefers **fnm** installed for the current user (`winget --scope user`), then Node LTS into your profile. **Codegraph** is installed with **fnm exec** when fnm is present (not bare system npm):
 
 ```powershell
 cd src-templates\DbIntelligence
 
-# One-shot: install fnm + Node LTS for this user (no elevation)
+# One-shot: install fnm + Node LTS + Codegraph for this user (no elevation)
 .\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+
+# Codegraph only (prefers: fnm exec -- npm i -g @colbymchenry/codegraph)
+.\scripts\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes
 
 # Activate fnm Node in the *current* session (dot-source)
 . .\scripts\Initialize-DbIntelligenceNode.ps1
 
 node -v
 npm -v
+codegraph -V
 ```
 
-`Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, and `Start-DbIntelligenceWeb.ps1` call this helper automatically.
+`Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, and `Start-DbIntelligenceWeb.ps1` call the Node helper automatically. The C# CLI installer also prefers `fnm exec` for Codegraph when fnm is on PATH.
 
 ---
 
@@ -79,7 +83,7 @@ All scripts live in `src-templates/DbIntelligence/scripts/`.
 | Script | Purpose |
 |--------|---------|
 | `Setup-DbIntelligence.ps1` | Master: prereqs → build → test → health |
-| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm (no admin) |
+| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm; Codegraph via `fnm exec` when present |
 | `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Python / pip / graphifyy / codegraph |
 | `Build-DbIntelligence.ps1` | `dotnet restore/build/test` (+ optional Angular) |
 | `Test-DbIntelligenceHealth.ps1` | CLI `--health` |
@@ -96,8 +100,9 @@ cd src-templates\DbIntelligence
 # Auto-confirm prereq installs (includes user-scoped fnm Node if needed)
 .\scripts\Setup-DbIntelligence.ps1 -Yes
 
-# Node/npm only (no admin)
+# Node/npm only (no admin); -Install also installs Codegraph via fnm exec when fnm exists
 .\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+.\scripts\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes
 
 # Skip prereq installer; still build/test/health
 .\scripts\Setup-DbIntelligence.ps1 -SkipPrereqs
@@ -128,11 +133,12 @@ dotnet run --project .\DbIntelligence.Cli -- --install-preqs --yes
 What `Install-DbIntelligencePrereqs.ps1` does (Windows):
 
 0. **Node/npm** via `Initialize-DbIntelligenceNode.ps1` (fnm + `winget --scope user`, no admin)  
-1. Then `DbIntelligence.Cli --install-preqs`:  
+1. **Codegraph** preferring **fnm** when present: `fnm exec -- npm i -g @colbymchenry/codegraph` (else PATH `npm i -g`)  
+2. Then `DbIntelligence.Cli --install-preqs` (same Codegraph preference in C#):  
    - Python via `winget` if missing  
    - Ensure `pip`  
    - `python -m pip install graphifyy`  
-   - `npm i -g @colbymchenry/codegraph` (fallback install script) — uses the fnm Node just activated when possible
+   - Codegraph again if still missing (`fnm exec -- npm …`, else `npm`, else official install script)
 
 ### Health
 
@@ -444,6 +450,7 @@ Live API graph remains **in memory** (last completed project). Durable results a
 | Port 5088 in use / DLL locked | `.\scripts\Start-DbIntelligence.ps1 -Force` or stop `DbIntelligence.Api` before `Build-DbIntelligence.ps1` |
 | Health unhealthy | `.\scripts\Install-DbIntelligencePrereqs.ps1 -Yes` then reopen the terminal so PATH refreshes |
 | `node` / `npm` missing (no admin) | `.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes` then `. .\scripts\Initialize-DbIntelligenceNode.ps1` or open a new shell |
+| `codegraph` missing | Prefer `fnm exec -- npm i -g @colbymchenry/codegraph` or `.\scripts\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes` |
 | `graphify` not found / wrong CLI | Install package `graphifyy`; help text must mention `extract` / `graphify-out` |
 | Index fails on Graphify JSON | Ensure you are on the fixed importer (numeric `community`, `links` edges) — rebuild API and restart with `-Force` |
 | Angular cannot reach API | Start API first; confirm http://localhost:5088/api/health |

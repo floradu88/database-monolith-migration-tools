@@ -34,7 +34,7 @@ public sealed class PrerequisiteHealthService : IPrerequisiteHealthService
             _options.CodegraphExecutable,
             ["-V"],
             "codegraph",
-            "Install with: npm i -g @colbymchenry/codegraph   OR DbIntelligence.Cli --install-preqs",
+            "Install with: fnm exec -- npm i -g @colbymchenry/codegraph   (or npm i -g … / DbIntelligence.Cli --install-preqs)",
             cancellationToken);
 
         var graphify = await DetectGraphifyAsync(cancellationToken);
@@ -219,7 +219,7 @@ public sealed class PrerequisiteInstaller : IPrerequisiteInstaller
         output ??= Console.Out;
 
         await output.WriteLineAsync("DbIntelligence prerequisite installer");
-        await output.WriteLineAsync("Checks: python, pip, graphify (PyPI graphifyy), codegraph");
+        await output.WriteLineAsync("Checks: python, pip, graphify (PyPI graphifyy), codegraph (fnm exec npm when fnm is present)");
         await output.WriteLineAsync();
 
         var before = await _health.CheckAsync(cancellationToken);
@@ -288,17 +288,15 @@ public sealed class PrerequisiteInstaller : IPrerequisiteInstaller
         var healthMid = await _health.CheckAsync(cancellationToken);
         if (!healthMid.Codegraph.Available)
         {
-            if (await ConfirmAsync(input, output, assumeYes, "Install Codegraph now (`npm i -g @colbymchenry/codegraph`)?"))
+            var preferFnm = await IsFnmAvailableAsync(cancellationToken);
+            var prompt = preferFnm
+                ? "Install Codegraph now (`fnm exec -- npm i -g @colbymchenry/codegraph`)?"
+                : "Install Codegraph now (`npm i -g @colbymchenry/codegraph`)?";
+
+            if (await ConfirmAsync(input, output, assumeYes, prompt))
             {
-                var npm = await _runner.RunAsync(
-                    "npm",
-                    ["i", "-g", "@colbymchenry/codegraph"],
-                    timeoutSeconds: 600,
-                    cancellationToken: cancellationToken);
-                await output.WriteLineAsync(npm.Succeeded
-                    ? "Codegraph installed via npm. Verify with: codegraph -V"
-                    : $"Codegraph npm install failed: {FirstLine(npm.StandardError + npm.StandardOutput)}");
-                if (!npm.Succeeded)
+                var npmOk = await InstallCodegraphViaNpmAsync(output, preferFnm, cancellationToken);
+                if (!npmOk)
                 {
                     await output.WriteLineAsync("Falling back to official install.ps1...");
                     var ok = await InstallCodegraphAsync(output, cancellationToken);
@@ -349,6 +347,59 @@ public sealed class PrerequisiteInstaller : IPrerequisiteInstaller
         await output.WriteLineAsync(result.Succeeded
             ? $"OK: {pythonExe} -m {string.Join(' ', moduleArgs)}"
             : $"Failed: {FirstLine(result.StandardError)}");
+    }
+
+    private async Task<bool> IsFnmAvailableAsync(CancellationToken cancellationToken)
+    {
+        var probe = await _runner.RunAsync(
+            "fnm",
+            ["--version"],
+            timeoutSeconds: 30,
+            cancellationToken: cancellationToken);
+        if (!probe.Succeeded)
+            return false;
+
+        var text = $"{probe.StandardOutput}\n{probe.StandardError}";
+        return !text.Contains("Failed to start", StringComparison.OrdinalIgnoreCase)
+               && !text.Contains("cannot find the file", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<bool> InstallCodegraphViaNpmAsync(
+        TextWriter output,
+        bool preferFnm,
+        CancellationToken cancellationToken)
+    {
+        const string package = "@colbymchenry/codegraph";
+
+        if (preferFnm)
+        {
+            await output.WriteLineAsync($"fnm detected — installing Codegraph with: fnm exec -- npm i -g {package}");
+            var viaFnm = await _runner.RunAsync(
+                "fnm",
+                ["exec", "--", "npm", "i", "-g", package],
+                timeoutSeconds: 600,
+                cancellationToken: cancellationToken);
+            if (viaFnm.Succeeded)
+            {
+                await output.WriteLineAsync("Codegraph installed via fnm exec + npm. Verify with: codegraph -V");
+                return true;
+            }
+
+            await output.WriteLineAsync(
+                $"fnm exec npm install failed: {FirstLine(viaFnm.StandardError + viaFnm.StandardOutput)}");
+            await output.WriteLineAsync("Retrying with PATH npm...");
+        }
+
+        await output.WriteLineAsync($"Installing Codegraph with: npm i -g {package}");
+        var npm = await _runner.RunAsync(
+            "npm",
+            ["i", "-g", package],
+            timeoutSeconds: 600,
+            cancellationToken: cancellationToken);
+        await output.WriteLineAsync(npm.Succeeded
+            ? "Codegraph installed via npm. Verify with: codegraph -V"
+            : $"Codegraph npm install failed: {FirstLine(npm.StandardError + npm.StandardOutput)}");
+        return npm.Succeeded;
     }
 
     private async Task<bool> InstallCodegraphAsync(TextWriter output, CancellationToken cancellationToken)

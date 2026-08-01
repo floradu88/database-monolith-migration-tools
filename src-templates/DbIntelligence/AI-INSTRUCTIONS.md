@@ -15,7 +15,8 @@ Concrete DbIntelligence implementation: orchestrate Codegraph/Graphify CLIs, sca
 7. Keep Graphify-compatible export shapes (`graph.json`, confidence labels) stable for the Angular UI.
 8. Prefer `scripts/*.ps1` for local setup/run documentation (PowerShell-first).
 9. Prefer user-scoped Node via `scripts/Initialize-DbIntelligenceNode.ps1` (fnm + winget `--scope user`) over admin Node installers.
-10. Treat the live store as **in-memory only** (`FileIntelligenceStore`); do not assume a database catalog exists. Durable output is JSON/MD export under artifacts.
+10. Prefer Codegraph via `fnm exec -- npm i -g @colbymchenry/codegraph` whenever fnm is present.
+11. Treat the live store as **in-memory only** (`FileIntelligenceStore`); do not assume a database catalog exists. Durable output is JSON/MD export under artifacts.
 
 
 ## Current subfolders

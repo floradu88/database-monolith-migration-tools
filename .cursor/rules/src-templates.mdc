@@ -12,4 +12,4 @@ alwaysApply: false
 - EF migrations belong in dedicated `*.Migrations` projects; do not mix with SQL `.sqlproj` ownership of the same objects.
 - Prefer BuildingBlocks abstractions over duplicating data-access or observability code.
 - Update matching test project READMEs/instructions when contracts or layering rules change.
-- For DbIntelligence local ops, prefer `scripts/*.ps1` and user-scoped Node via `Initialize-DbIntelligenceNode.ps1` (fnm, no admin).
+- For DbIntelligence local ops, prefer `scripts/*.ps1` and user-scoped Node via `Initialize-DbIntelligenceNode.ps1` (fnm, no admin). Prefer Codegraph via `fnm exec -- npm i -g @colbymchenry/codegraph` when fnm is present.

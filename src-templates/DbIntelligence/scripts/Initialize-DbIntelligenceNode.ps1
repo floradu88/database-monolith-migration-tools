@@ -2,13 +2,24 @@
 <#
 .SYNOPSIS
   Ensure Node.js + npm are available in this PowerShell session via user-scoped fnm (no admin).
+  Optionally install Codegraph preferring fnm exec over bare npm.
 
 .DESCRIPTION
   Prefer Fast Node Manager (fnm) installed for the current user. Does not require elevation.
   Dot-source to mutate PATH in the caller; or invoke with -Install to provision fnm + Node LTS.
+  When -InstallCodegraph is set (or with -Install), Codegraph is installed with:
+    fnm exec -- npm i -g @colbymchenry/codegraph
+  falling back to PATH npm only if fnm is unavailable.
 
 .PARAMETER Install
   If node/npm (or fnm) are missing, install Schniz.fnm via winget --scope user and Node LTS via fnm.
+  Also installs Codegraph unless -SkipCodegraph is passed.
+
+.PARAMETER InstallCodegraph
+  Install @colbymchenry/codegraph via fnm exec (preferred) or npm.
+
+.PARAMETER SkipCodegraph
+  With -Install, skip Codegraph provisioning.
 
 .PARAMETER Yes
   Auto-confirm install steps (non-interactive). With -Install, always proceeds.
@@ -20,15 +31,15 @@
   Reduce informational output.
 
 .EXAMPLE
-  # Activate fnm Node in the current session (no install)
   . .\Initialize-DbIntelligenceNode.ps1
-
-  # Provision user-scoped Node/npm if missing
   .\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+  .\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes
 #>
 [CmdletBinding()]
 param(
     [switch]$Install,
+    [switch]$InstallCodegraph,
+    [switch]$SkipCodegraph,
     [Alias("AssumeYes")]
     [switch]$Yes,
     [string]$NodeVersion = "lts-latest",
@@ -38,6 +49,7 @@ param(
 $ErrorActionPreference = "Stop"
 # Never `exit` when dot-sourced — that would kill the caller's shell.
 $script:IsDotSourced = ($MyInvocation.InvocationName -eq '.')
+$CodegraphPackage = "@colbymchenry/codegraph"
 
 function Complete-DbIntelligenceNode([bool]$Ok, [int]$ExitCode) {
     if ($script:IsDotSourced) {
@@ -124,8 +136,8 @@ function Install-DbIntelligenceNodeViaFnm([string]$Version) {
 }
 
 function Confirm-DbIntelligenceNodeInstall([string]$Question) {
-    if ($Yes -or $Install) {
-        Write-NodeInfo "$Question [Y] (-Yes/-Install)"
+    if ($Yes -or $Install -or $InstallCodegraph) {
+        Write-NodeInfo "$Question [Y] (-Yes/-Install/-InstallCodegraph)"
         return $true
     }
 
@@ -133,55 +145,135 @@ function Confirm-DbIntelligenceNodeInstall([string]$Question) {
     return $answer -match '^(y|yes)$'
 }
 
-# --- main ---
-Update-DbIntelligenceSessionPath
-$null = Enable-DbIntelligenceFnm
+function Install-DbIntelligenceCodegraph {
+    Update-DbIntelligenceSessionPath
+    $null = Enable-DbIntelligenceFnm
 
-$nodeOk = Test-DbIntelligenceCommand "node"
-$npmOk = Test-DbIntelligenceCommand "npm"
-$fnmOk = Test-DbIntelligenceCommand "fnm"
+    if (Test-DbIntelligenceCommand "codegraph") {
+        $ver = (& codegraph -V 2>$null) | Select-Object -First 1
+        Write-NodeInfo "codegraph already available: $ver" "Green"
+        return $true
+    }
 
-if ($nodeOk -and $npmOk) {
-    $nodeVer = (& node -v 2>$null)
-    $npmVer = (& npm -v 2>$null)
-    Write-NodeInfo "Node/npm ready: node $nodeVer / npm $npmVer ($(if ($fnmOk) { 'fnm' } else { 'PATH' }))" "Green"
-    return (Complete-DbIntelligenceNode -Ok $true -ExitCode 0)
+    if (-not (Confirm-DbIntelligenceNodeInstall "Install Codegraph ($CodegraphPackage)?")) {
+        Write-Warning "Skipped Codegraph install."
+        return $false
+    }
+
+    $fnmOk = Test-DbIntelligenceCommand "fnm"
+    if ($fnmOk) {
+        Write-NodeInfo "fnm detected — installing Codegraph with: fnm exec -- npm i -g $CodegraphPackage"
+        & fnm exec -- npm i -g $CodegraphPackage
+        if ($LASTEXITCODE -eq 0) {
+            Update-DbIntelligenceSessionPath
+            $null = Enable-DbIntelligenceFnm
+            if (Test-DbIntelligenceCommand "codegraph") {
+                Write-NodeInfo "Codegraph installed via fnm exec. Verify: codegraph -V" "Green"
+                return $true
+            }
+            Write-Warning "fnm exec npm reported success but codegraph is not on PATH yet; reopen the shell or ensure fnm env is loaded."
+            return $true
+        }
+        Write-Warning "fnm exec npm install failed (exit $LASTEXITCODE). Falling back to PATH npm..."
+    }
+
+    if (-not (Test-DbIntelligenceCommand "npm")) {
+        Write-Warning "npm not available; cannot install Codegraph. Run with -Install first."
+        return $false
+    }
+
+    Write-NodeInfo "Installing Codegraph with PATH npm: npm i -g $CodegraphPackage"
+    & npm i -g $CodegraphPackage
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "npm i -g $CodegraphPackage failed (exit $LASTEXITCODE)."
+        return $false
+    }
+
+    Update-DbIntelligenceSessionPath
+    $null = Enable-DbIntelligenceFnm
+    Write-NodeInfo "Codegraph installed via npm. Verify: codegraph -V" "Green"
+    return $true
 }
 
-if (-not $Install) {
-    $hint = "Run: .\Initialize-DbIntelligenceNode.ps1 -Install -Yes   (user-scoped fnm Node, no admin)"
-    if ($Quiet) {
-        Write-Warning "node/npm missing. $hint"
+function Ensure-DbIntelligenceNodeReady {
+    Update-DbIntelligenceSessionPath
+    $null = Enable-DbIntelligenceFnm
+
+    $nodeOk = Test-DbIntelligenceCommand "node"
+    $npmOk = Test-DbIntelligenceCommand "npm"
+    $fnmOk = Test-DbIntelligenceCommand "fnm"
+
+    if ($nodeOk -and $npmOk) {
+        $nodeVer = (& node -v 2>$null)
+        $npmVer = (& npm -v 2>$null)
+        Write-NodeInfo "Node/npm ready: node $nodeVer / npm $npmVer ($(if ($fnmOk) { 'fnm' } else { 'PATH' }))" "Green"
+        return $true
     }
-    else {
-        Write-Host "node/npm not found on PATH." -ForegroundColor Yellow
-        Write-Host "  $hint" -ForegroundColor Yellow
+
+    if (-not $Install) {
+        $hint = "Run: .\Initialize-DbIntelligenceNode.ps1 -Install -Yes   (user-scoped fnm Node, no admin)"
+        if ($Quiet) {
+            Write-Warning "node/npm missing. $hint"
+        }
+        else {
+            Write-Host "node/npm not found on PATH." -ForegroundColor Yellow
+            Write-Host "  $hint" -ForegroundColor Yellow
+        }
+        return $false
     }
+
+    if (-not $fnmOk) {
+        if (-not (Confirm-DbIntelligenceNodeInstall "Install fnm for this user (winget --scope user, no admin)?")) {
+            throw "Skipped fnm install. Node/npm remain unavailable."
+        }
+        Install-DbIntelligenceFnm
+        $fnmOk = $true
+    }
+
+    if (-not (Test-DbIntelligenceCommand "node") -or -not (Test-DbIntelligenceCommand "npm")) {
+        if (-not (Confirm-DbIntelligenceNodeInstall "Install Node.js ($NodeVersion) via fnm into your user profile?")) {
+            throw "Skipped Node install. node/npm remain unavailable."
+        }
+        Install-DbIntelligenceNodeViaFnm -Version $NodeVersion
+    }
+
+    $nodeOk = Test-DbIntelligenceCommand "node"
+    $npmOk = Test-DbIntelligenceCommand "npm"
+    if (-not ($nodeOk -and $npmOk)) {
+        throw "node/npm still missing after install. Open a new terminal and re-run."
+    }
+
+    $nodeVer = (& node -v 2>$null)
+    $npmVer = (& npm -v 2>$null)
+    Write-NodeInfo "Node/npm ready (user-scoped): node $nodeVer / npm $npmVer" "Green"
+    return $true
+}
+
+# --- main ---
+$wantCodegraph = $InstallCodegraph -or ($Install -and -not $SkipCodegraph)
+$nodeReady = Ensure-DbIntelligenceNodeReady
+
+if (-not $nodeReady -and -not $wantCodegraph) {
     return (Complete-DbIntelligenceNode -Ok $false -ExitCode 1)
 }
 
-if (-not $fnmOk) {
-    if (-not (Confirm-DbIntelligenceNodeInstall "Install fnm for this user (winget --scope user, no admin)?")) {
-        throw "Skipped fnm install. Node/npm remain unavailable."
+if ($wantCodegraph) {
+    if (-not $nodeReady -and $Install) {
+        # Ensure-DbIntelligenceNodeReady already attempted install when -Install.
+        $nodeReady = Ensure-DbIntelligenceNodeReady
     }
-    Install-DbIntelligenceFnm
-    $fnmOk = $true
-}
-
-if (-not (Test-DbIntelligenceCommand "node") -or -not (Test-DbIntelligenceCommand "npm")) {
-    if (-not (Confirm-DbIntelligenceNodeInstall "Install Node.js ($NodeVersion) via fnm into your user profile?")) {
-        throw "Skipped Node install. node/npm remain unavailable."
+    if (-not (Test-DbIntelligenceCommand "npm") -and -not (Test-DbIntelligenceCommand "fnm")) {
+        Write-Warning "Cannot install Codegraph without fnm or npm."
+        return (Complete-DbIntelligenceNode -Ok $false -ExitCode 1)
     }
-    Install-DbIntelligenceNodeViaFnm -Version $NodeVersion
+    $cgOk = Install-DbIntelligenceCodegraph
+    if (-not $cgOk) {
+        return (Complete-DbIntelligenceNode -Ok $false -ExitCode 1)
+    }
 }
 
-$nodeOk = Test-DbIntelligenceCommand "node"
-$npmOk = Test-DbIntelligenceCommand "npm"
-if (-not ($nodeOk -and $npmOk)) {
-    throw "node/npm still missing after install. Open a new terminal and re-run."
+if (-not $nodeReady) {
+    return (Complete-DbIntelligenceNode -Ok $false -ExitCode 1)
 }
 
-$nodeVer = (& node -v 2>$null)
-$npmVer = (& npm -v 2>$null)
-Write-NodeInfo "Node/npm ready (user-scoped): node $nodeVer / npm $npmVer" "Green"
 return (Complete-DbIntelligenceNode -Ok $true -ExitCode 0)

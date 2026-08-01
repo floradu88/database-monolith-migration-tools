@@ -107,7 +107,7 @@ Concrete .NET 8 stack lives under `src-templates/DbIntelligence/`:
 ```powershell
 cd src-templates\DbIntelligence
 
-# Node/npm without admin (fnm) — also run by Setup / Prereqs / Build / Web scripts
+# Node/npm / Codegraph without admin (fnm) — also run by Setup / Prereqs / Build / Web scripts
 .\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
 
 .\scripts\Setup-DbIntelligence.ps1 -Yes

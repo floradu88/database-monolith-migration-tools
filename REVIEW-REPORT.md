@@ -26,6 +26,7 @@ The kit is structurally complete as an implementation and planning starter, subj
 - Implemented DbIntelligence (.NET 8): Codegraph/Graphify CLI orchestration, Roslyn code→SQL/SP scanning, Graphify-shaped JSON exports, ASP.NET API, and Angular/vis-network UI.
 - Added PowerShell setup/run scripts under `src-templates/DbIntelligence/scripts/` and root [`HOW-TO-USE.md`](HOW-TO-USE.md) (all local commands in PowerShell).
 - Added user-scoped Node/npm provisioning via **fnm** (`Initialize-DbIntelligenceNode.ps1`, `winget --scope user` — no admin); wired into Setup / Prereqs / Build / Start-Web.
+- Codegraph install prefers **fnm** when present (`fnm exec -- npm i -g @colbymchenry/codegraph`) in both PowerShell and `DbIntelligence.Cli --install-preqs`; bare npm / official script are fallbacks.
 - Graphify importer accepts NetworkX `links` and numeric `community` fields from `graphify extract … --code-only`.
 - Added `FindingsMigration` template: package JSON maps into draft domain manifests + scaffold DataService from Customer template (`docs/FUTURE-FEATURES.md`).
 - Added parent-folder batch indexing: each child project analyzed sequentially with artifacts written to that project's root (`Invoke-DbIntelligenceBatchIndex.ps1`, `/api/index/batch`); documented for `D:\code\projects` and `C:\code`.

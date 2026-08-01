@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
   Install / verify DbIntelligence CLI prerequisites (Python, Graphify, Codegraph)
-  and user-scoped Node.js/npm via fnm (no admin).
+  and user-scoped Node.js/npm via fnm (no admin). Codegraph prefers fnm exec.
 
 .PARAMETER Yes
   Auto-confirm install prompts (non-interactive).
@@ -26,12 +26,12 @@ function Test-Command([string]$Name) {
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
-Write-Host "=== Node.js / npm (user-scoped fnm) ===" -ForegroundColor Cyan
-$nodeArgs = @("-Install")
+Write-Host "=== Node.js / npm / Codegraph (prefer fnm) ===" -ForegroundColor Cyan
+$nodeArgs = @("-Install", "-InstallCodegraph")
 if ($Yes) { $nodeArgs += "-Yes" }
 & $NodeInit @nodeArgs
 if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Node/npm setup exited $LASTEXITCODE. Angular UI and global npm tools (codegraph) may fail until fixed."
+    Write-Warning "Node/fnm/Codegraph setup exited $LASTEXITCODE. Angular UI and codegraph may fail until fixed."
 }
 else {
     # Activate fnm Node in this session for subsequent npm/codegraph steps.
@@ -44,18 +44,20 @@ $nodeOk = Test-Command "node"
 $npmOk = Test-Command "npm"
 $pythonOk = (Test-Command "python") -or (Test-Command "py")
 $fnmOk = Test-Command "fnm"
+$codegraphOk = Test-Command "codegraph"
 
-Write-Host "  dotnet : $(if ($dotnetOk) { 'OK' } else { 'MISSING' })"
-Write-Host "  fnm    : $(if ($fnmOk) { 'OK' } else { 'MISSING' })"
-Write-Host "  node   : $(if ($nodeOk) { 'OK' } else { 'MISSING' })"
-Write-Host "  npm    : $(if ($npmOk) { 'OK' } else { 'MISSING' })"
-Write-Host "  python : $(if ($pythonOk) { 'OK' } else { 'MISSING' })"
+Write-Host "  dotnet    : $(if ($dotnetOk) { 'OK' } else { 'MISSING' })"
+Write-Host "  fnm       : $(if ($fnmOk) { 'OK' } else { 'MISSING' })"
+Write-Host "  node      : $(if ($nodeOk) { 'OK' } else { 'MISSING' })"
+Write-Host "  npm       : $(if ($npmOk) { 'OK' } else { 'MISSING' })"
+Write-Host "  codegraph : $(if ($codegraphOk) { 'OK' } else { 'MISSING' })"
+Write-Host "  python    : $(if ($pythonOk) { 'OK' } else { 'MISSING' })"
 
 if (-not $dotnetOk) {
     throw ".NET SDK is required. Install from https://dotnet.microsoft.com/download"
 }
 
-# Prefer the managed CLI installer (prompts per missing tool).
+# Prefer the managed CLI installer (prompts per missing tool; Codegraph uses fnm when present).
 $cliArgs = @("--install-preqs")
 if ($Yes) { $cliArgs += "--yes" }
 

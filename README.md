@@ -65,11 +65,12 @@ codegraph -V                # Codegraph on PATH
 $PSVersionTable.PSVersion   # PowerShell 5.1+
 ```
 
-Node without admin (integrated into setup scripts):
+Node without admin (integrated into setup scripts; Codegraph prefers fnm):
 
 ```powershell
 cd src-templates\DbIntelligence
-.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes          # fnm + Node + Codegraph via fnm exec
+.\scripts\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes # Codegraph only (fnm exec if present)
 . .\scripts\Initialize-DbIntelligenceNode.ps1   # activate in current session
 ```
 
@@ -270,7 +271,7 @@ start src-templates\DatabaseModernization.sln
 | Script | Purpose |
 |--------|---------|
 | `Setup-DbIntelligence.ps1` | Prereqs → build → test → health |
-| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm (no admin) |
+| `Initialize-DbIntelligenceNode.ps1` | User-scoped Node/npm via fnm; Codegraph via `fnm exec` when present |
 | `Install-DbIntelligencePrereqs.ps1` | Node/fnm + Python / pip / graphifyy / codegraph |
 | `Build-DbIntelligence.ps1` | `dotnet restore/build/test` (+ optional Angular) |
 | `Test-DbIntelligenceHealth.ps1` | CLI `--health` |
