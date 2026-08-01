@@ -26,11 +26,19 @@ AMBIGUOUS edges are **not** packaged into ownership candidates unless you pass `
 cd src-templates\FindingsMigration
 
 # 1) Package maps from a DbIntelligence export (example: Personal Insight Analysis)
+#    Paths work the same under D:\code\projects\... or C:\code\...
 .\scripts\Invoke-FindingsMigration.ps1 `
   -CodeToDbMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\code-to-db-map.json" `
   -StoredProcedureMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
   -DomainName "Insight" `
   -OwnerTeam "Personal Insight"
+
+# Same maps if the project was indexed under C:\code:
+# .\scripts\Invoke-FindingsMigration.ps1 `
+#   -CodeToDbMap "C:\code\personalinsightanalysis\artifacts\db-intelligence\code-to-db-map.json" `
+#   -StoredProcedureMap "C:\code\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
+#   -DomainName "Insight" `
+#   -OwnerTeam "Personal Insight"
 
 # 2) Scaffold a new DataService from the Customer template
 .\scripts\New-DomainFromFindings.ps1 `

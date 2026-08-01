@@ -15,6 +15,7 @@
 
 .EXAMPLE
   .\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
+  .\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
 #>
 [CmdletBinding()]
 param(

@@ -57,6 +57,7 @@ All scripts live in `src-templates/DbIntelligence/scripts/`.
 | `Start-DbIntelligence.ps1` | API on `:5088` (`-Force` replaces listener) |
 | `Start-DbIntelligenceWeb.ps1` | Angular on `:4200` |
 | `Invoke-DbIntelligenceIndex.ps1` | POST index job for a repo path |
+| `Invoke-DbIntelligenceBatchIndex.ps1` | Batch-index children under a parent (`D:\code\projects` or `C:\code`) |
 
 ### Setup flags
 
@@ -355,14 +356,30 @@ Roadmap: [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md).
 
 Each immediate child folder is treated as one project; analyzed one-by-one; artifacts written to **that project's root** (`graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`). Parent gets `db-intelligence-batch-summary.json`.
 
+Supported layouts (same commands — swap the parent path):
+
+| Parent folder | Typical use |
+|---------------|-------------|
+| `D:\code\projects` | Projects already under the D: drive layout |
+| `C:\code` | Alternate root: one project per child folder under `C:\code` |
+
 ```powershell
 cd src-templates\DbIntelligence
 .\scripts\Start-DbIntelligence.ps1 -Force   # if API not running
+
+# D:\code\projects
 .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
+
+# C:\code (create first if missing: New-Item -ItemType Directory -Force -Path "C:\code")
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
 
 # Optional: only folders that look like code projects
 .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 `
   -ParentFolderPath "D:\code\projects" `
+  -RequireProjectMarkers
+
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 `
+  -ParentFolderPath "C:\code" `
   -RequireProjectMarkers
 ```
 
@@ -370,7 +387,12 @@ API:
 
 ```powershell
 Invoke-RestMethod "http://localhost:5088/api/index/discover?parentFolderPath=D:\code\projects"
+Invoke-RestMethod "http://localhost:5088/api/index/discover?parentFolderPath=C:\code"
+
 $body = @{ parentFolderPath = "D:\code\projects"; artifactsRelativeDirectory = "" } | ConvertTo-Json
+Invoke-RestMethod "http://localhost:5088/api/index/batch" -Method Post -Body $body -ContentType "application/json"
+
+$body = @{ parentFolderPath = "C:\code"; artifactsRelativeDirectory = "" } | ConvertTo-Json
 Invoke-RestMethod "http://localhost:5088/api/index/batch" -Method Post -Body $body -ContentType "application/json"
 ```
 

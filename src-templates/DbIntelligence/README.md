@@ -36,11 +36,12 @@ cd src-templates\DbIntelligence
 # Terminal 2 — UI http://localhost:4200
 .\scripts\Start-DbIntelligenceWeb.ps1
 
-# Terminal 3 — index
+# Terminal 3 — index one repo
 .\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
 
 # Parent folder: each subfolder is a project; results written to each project root
-.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\path\to\parent"
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"   # alternate root
 ```
 
 ## Scripts
@@ -54,6 +55,7 @@ cd src-templates\DbIntelligence
 | `Start-DbIntelligence.ps1` | API (`-Force`, `-Port`, `-RepositoryPath`) |
 | `Start-DbIntelligenceWeb.ps1` | Angular |
 | `Invoke-DbIntelligenceIndex.ps1` | Index job against a path |
+| `Invoke-DbIntelligenceBatchIndex.ps1` | Batch-index children under a parent (`D:\code\projects` or `C:\code`) |
 
 ```powershell
 .\scripts\Install-DbIntelligencePrereqs.ps1 -Yes

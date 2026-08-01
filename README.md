@@ -48,44 +48,229 @@ It includes:
 12. `docs/09-rbac-security-and-change-control.md`
 13. `docs/10-execution-roadmap.md`
 
-### Run DbIntelligence locally (PowerShell)
+## PowerShell command reference (local run)
+
+All runnable local ops below are **PowerShell**. Full detail: [`HOW-TO-USE.md`](HOW-TO-USE.md).
+
+### 0. Prerequisites check
+
+```powershell
+dotnet --list-sdks          # .NET 8 SDK
+node -v                     # Node.js 18+
+python --version            # Python 3.10+
+graphify --help             # Graphify (pip package graphifyy)
+codegraph -V                # Codegraph on PATH
+$PSVersionTable.PSVersion   # PowerShell 5.1+
+```
+
+### 1. Setup DbIntelligence (one-shot)
+
+From this repo root (example path `D:\code\projects\database-monolith-migration-tools`):
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\src-templates\DbIntelligence
+
+.\scripts\Setup-DbIntelligence.ps1 -Yes
+# Flags: -SkipPrereqs  -SkipWeb
+```
+
+Step-by-step equivalents:
 
 ```powershell
 cd src-templates\DbIntelligence
-.\scripts\Setup-DbIntelligence.ps1 -Yes
-.\scripts\Start-DbIntelligence.ps1 -Force          # API :5088
-.\scripts\Start-DbIntelligenceWeb.ps1              # UI  :4200
-.\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
+.\scripts\Install-DbIntelligencePrereqs.ps1 -Yes
+.\scripts\Build-DbIntelligence.ps1                 # add -SkipWeb / -SkipTests as needed
+.\scripts\Test-DbIntelligenceHealth.ps1
+
+# CLI equivalents
+dotnet run --project .\DbIntelligence.Cli -- --health
+dotnet run --project .\DbIntelligence.Cli -- --install-preqs --yes
 ```
 
-Details: [`HOW-TO-USE.md`](HOW-TO-USE.md) and [`src-templates/DbIntelligence/README.md`](src-templates/DbIntelligence/README.md).
+### 2. Start API + UI
 
-### Promote JSON findings to a domain project (PowerShell)
+```powershell
+cd src-templates\DbIntelligence
+
+# Terminal 1 — API http://localhost:5088 (-Force replaces an existing listener)
+.\scripts\Start-DbIntelligence.ps1 -Force
+# Optional: .\scripts\Start-DbIntelligence.ps1 -Force -Port 5099
+# Optional: .\scripts\Start-DbIntelligence.ps1 -Force -RepositoryPath "D:\code\projects\my-monolith"
+
+# Terminal 2 — Angular UI http://localhost:4200
+.\scripts\Start-DbIntelligenceWeb.ps1
+```
+
+Without scripts:
+
+```powershell
+cd src-templates\DbIntelligence
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+dotnet run --project .\DbIntelligence.Api -c Release --urls "http://localhost:5088"
+
+cd DbIntelligence.Web
+npm install
+npm start
+```
+
+Health once the API is up:
+
+```powershell
+Invoke-RestMethod http://localhost:5088/api/health
+Invoke-RestMethod http://localhost:5088/api/tools
+```
+
+### 3. Index one repository
+
+```powershell
+cd src-templates\DbIntelligence
+
+.\scripts\Invoke-DbIntelligenceIndex.ps1 `
+  -RepositoryPath "D:\code\projects\personalinsightanalysis" `
+  -ApiBase "http://localhost:5088"
+```
+
+Raw API:
+
+```powershell
+$body = @{
+  targetRepositoryPath = "D:\code\projects\personalinsightanalysis"
+  runCodegraph         = $true
+  runGraphify          = $true
+  runRepositoryScan    = $true
+  runSqlScan           = $false
+} | ConvertTo-Json
+
+$job = Invoke-RestMethod -Uri "http://localhost:5088/api/index/jobs" `
+  -Method Post -Body $body -ContentType "application/json"
+
+do {
+  Start-Sleep -Seconds 2
+  $status = Invoke-RestMethod "http://localhost:5088/api/index/jobs/$($job.id)"
+  Write-Host "[$($status.status)] $($status.phase) $($status.message)"
+} while ($status.status -in @("Pending", "Running"))
+
+Invoke-RestMethod "http://localhost:5088/api/maps/code-to-db"
+Invoke-RestMethod "http://localhost:5088/api/maps/stored-procedures"
+```
+
+Typical artifacts (under the target repo / configured artifacts dir): `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`.
+
+### 4. Batch-index a parent folder (`D:\code\projects` or `C:\code`)
+
+Each **immediate child folder** is treated as one project; indexed sequentially; durable artifacts written to **that project's root**. The parent folder gets `db-intelligence-batch-summary.json`.
+
+Works the same for any parent that contains project folders — including **`D:\code\projects`** and **`C:\code`**.
+
+```powershell
+cd src-templates\DbIntelligence
+.\scripts\Start-DbIntelligence.ps1 -Force   # if API not already running
+
+# Option A — projects under D:\code\projects
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
+
+# Option B — projects under C:\code (create the folder first if needed)
+# New-Item -ItemType Directory -Force -Path "C:\code" | Out-Null
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
+
+# Optional: only folders that look like code projects (.git / *.sln / *.csproj / package.json / …)
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 `
+  -ParentFolderPath "D:\code\projects" `
+  -RequireProjectMarkers
+
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 `
+  -ParentFolderPath "C:\code" `
+  -RequireProjectMarkers
+```
+
+Discover / batch via API:
+
+```powershell
+# Discover
+Invoke-RestMethod "http://localhost:5088/api/index/discover?parentFolderPath=D:\code\projects"
+Invoke-RestMethod "http://localhost:5088/api/index/discover?parentFolderPath=C:\code"
+
+# Start batch (D:\code\projects)
+$body = @{ parentFolderPath = "D:\code\projects"; artifactsRelativeDirectory = "" } | ConvertTo-Json
+Invoke-RestMethod "http://localhost:5088/api/index/batch" -Method Post -Body $body -ContentType "application/json"
+
+# Start batch (C:\code)
+$body = @{ parentFolderPath = "C:\code"; artifactsRelativeDirectory = "" } | ConvertTo-Json
+Invoke-RestMethod "http://localhost:5088/api/index/batch" -Method Post -Body $body -ContentType "application/json"
+```
+
+Live API graph stays **in memory** (last completed project). Durable results are on disk per project.
+
+### 5. Promote JSON findings to a domain project
 
 ```powershell
 cd src-templates\FindingsMigration
+
 .\scripts\Invoke-FindingsMigration.ps1 `
-  -CodeToDbMap "D:\path\to\artifacts\db-intelligence\code-to-db-map.json" `
-  -DomainName "Insight"
+  -CodeToDbMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\code-to-db-map.json" `
+  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
+  -DomainName "Insight" `
+  -OwnerTeam "Personal Insight"
+
 .\scripts\New-DomainFromFindings.ps1 `
   -DomainName "Insight" `
-  -PackageDirectory ".\out\Insight"
+  -PackageDirectory ".\out\Insight" `
+  -CopyManifestsToKit
 ```
 
-See [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md).
-
-### Promote findings to a domain project (PowerShell)
+If the indexed project lived under `C:\code` instead:
 
 ```powershell
-cd src-templates\FindingsMigration
 .\scripts\Invoke-FindingsMigration.ps1 `
-  -CodeToDbMap "D:\path\to\artifacts\db-intelligence\code-to-db-map.json" `
-  -DomainName "Insight"
-.\scripts\New-DomainFromFindings.ps1 -DomainName "Insight" -PackageDirectory ".\out\Insight"
+  -CodeToDbMap "C:\code\personalinsightanalysis\artifacts\db-intelligence\code-to-db-map.json" `
+  -StoredProcedureMap "C:\code\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
+  -DomainName "Insight" `
+  -OwnerTeam "Personal Insight"
 ```
 
-See [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md) and [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md).
+CLI equivalent:
 
+```powershell
+dotnet run --project .\FindingsMigration.Cli -c Release -- `
+  --code-to-db "D:\path\to\code-to-db-map.json" `
+  --sp-map "D:\path\to\stored-procedure-map.json" `
+  --domain Insight `
+  --out .\out\Insight `
+  --owner "Personal Insight"
+```
+
+Review `FINDINGS-REVIEW.md` before ownership approval. See [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md) and [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md).
+
+### 6. Restore / build / test the solution
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools
+
+dotnet restore src-templates\DatabaseModernization.sln
+dotnet build src-templates\DatabaseModernization.sln -c Release
+dotnet test src-templates\DbIntelligence\DbIntelligence.Tests\DbIntelligence.Tests.csproj -c Release
+dotnet test src-templates\FindingsMigration\FindingsMigration.Tests\FindingsMigration.Tests.csproj -c Release
+
+start src-templates\DatabaseModernization.sln
+# or: dotnet sln src-templates\DatabaseModernization.sln list
+```
+
+### Script catalog
+
+| Script | Purpose |
+|--------|---------|
+| `Setup-DbIntelligence.ps1` | Prereqs → build → test → health |
+| `Install-DbIntelligencePrereqs.ps1` | Python / pip / graphifyy / codegraph |
+| `Build-DbIntelligence.ps1` | `dotnet restore/build/test` (+ optional Angular) |
+| `Test-DbIntelligenceHealth.ps1` | CLI `--health` |
+| `Start-DbIntelligence.ps1` | API on `:5088` (`-Force` replaces listener) |
+| `Start-DbIntelligenceWeb.ps1` | Angular on `:4200` |
+| `Invoke-DbIntelligenceIndex.ps1` | Index one repo path |
+| `Invoke-DbIntelligenceBatchIndex.ps1` | Index every child under a parent (`D:\code\projects` or `C:\code`) |
+| `Invoke-FindingsMigration.ps1` | Package JSON maps → draft domain package |
+| `New-DomainFromFindings.ps1` | Scaffold DataService from Customer template |
+
+Details: [`HOW-TO-USE.md`](HOW-TO-USE.md), [`src-templates/DbIntelligence/README.md`](src-templates/DbIntelligence/README.md).
 
 ## Cursor and Claude support
 
