@@ -2,24 +2,22 @@
 
 ## Purpose
 
-This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-a-Service kit. Its role is determined by its path and local README/documentation.
+Target data-service templates. **ShowcaseDataService** is the golden, buildable scaffold source. **CustomerDataService** is a thin example only.
 
 ## Mandatory workflow
 
 1. Read the root `README.md`, `REVIEW-REPORT.md`, and nearest parent instructions.
-2. Preserve ownership boundaries and prefer additive, reversible changes.
-3. Do not invent credentials, approvals, platform capabilities, or production values.
-4. Update docs, manifests, tests, RBAC, observability, and rollback guidance when behavior changes.
-5. Never execute destructive SQL automatically.
-6. Validate SQL-project and EF-migration ownership do not overlap.
+2. Prefer Showcase when scaffolding new domains via FindingsMigration.
+3. Preserve ownership boundaries and prefer additive, reversible changes.
+4. Do not invent credentials, approvals, platform capabilities, or production values.
+5. Update docs, manifests, tests, RBAC, observability, and rollback guidance when behavior changes.
+6. Never execute destructive SQL automatically.
+7. Validate SQL-project and EF-migration ownership do not overlap.
 
 ## Current subfolders
 
-- `CustomerDataService/`
-
-## Current files
-
-- None.
+- `ShowcaseDataService/` — golden template (FacadeThenMove, blue/green, SP wrappers)
+- `CustomerDataService/` — thin example only
 
 ## Completion report
 

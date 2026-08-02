@@ -1,10 +1,37 @@
-# BuildingBlocks
+# BuildingBlocks — minimal shared packages for ShowcaseDataService
 
-Shared building-block projects for data access, migration helpers, observability, and security abstractions used by data-service templates.
+Filled only what the golden Showcase template needs:
 
-Prefer these over duplicating cross-cutting code. Do not invent production credentials.
+| Package | Role |
+|---------|------|
+| DataAccess.Abstractions | `IDbConnectionFactory`, fluent `IDataAccessContext` / `IFluentQuery<T>`, timing store |
+| DataAccess.Dapper | `ExecuteSp` / `ExecuteSql` fluent API + connection factory |
+| DataAccess.EfCore | SQL Server + `deployment.__EFMigrationsHistory` convention |
+| Migration | `DataAccessRoute`, `BlueGreenSlot`, shadow compare store |
+| Observability | OpenTelemetry ASP.NET / Http / SqlClient |
+| Security | Least-privilege connection options; reject `db_owner` runtime |
 
-## Related
+## Fluent access (SP + plain SQL)
 
-- Root [`../../HOW-TO-USE.md`](../../HOW-TO-USE.md) · [`../../README.md`](../../README.md)
-- Example consumer: [`../DataServices/CustomerDataService/`](../DataServices/CustomerDataService/)
+```csharp
+// Stored procedure
+var rows = await context.ExecuteSp<MyDto>("showcase.GetShowcaseSummary")
+    .On("Owned")
+    .WithParameters(new { Id = id })
+    .Named("GetShowcaseSummary")
+    .Map(r => r with { Source = "SP" })
+    .ToListAsync();
+
+// Plain SQL
+var one = await context.ExecuteSql<MyDto>("SELECT Id, Name FROM showcase.Items WHERE Id = @Id")
+    .WithParameters(new { Id = id })
+    .Named("GetShowcaseSummary")
+    .FirstOrDefaultAsync();
+
+// Same via factory extensions
+await factory.ExecuteSql<MyDto>("SELECT 1 AS Id").ToListAsync();
+```
+
+Timings land in `IDataAccessTimingStore` (avg / p95) so owners can see which method is faster on the Showcase dashboard / `/api/showcase/items/{id}/benchmark`.
+
+Do not invent credentials. Full MigrationControlPlane remains a later wave.

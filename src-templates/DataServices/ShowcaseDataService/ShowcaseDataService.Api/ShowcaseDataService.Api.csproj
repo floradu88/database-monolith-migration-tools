@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ShowcaseDataService.Api</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ShowcaseDataService.Application\ShowcaseDataService.Application.csproj" />
+    <ProjectReference Include="..\ShowcaseDataService.Infrastructure\ShowcaseDataService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Observability\Observability.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Migration\Migration.csproj" />
+  </ItemGroup>
+</Project>

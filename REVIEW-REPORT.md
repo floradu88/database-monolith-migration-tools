@@ -28,7 +28,9 @@ The kit is structurally complete as an implementation and planning starter, subj
 - Added user-scoped Node/npm provisioning via **fnm** (`Initialize-DbIntelligenceNode.ps1`, `winget --scope user` — no admin); wired into Setup / Prereqs / Build / Start-Web.
 - Codegraph install prefers **fnm** when present (`fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph`) in both PowerShell and `DbIntelligence.Cli --install-preqs`; bare npm / official script are fallbacks.
 - Graphify importer accepts NetworkX `links` and numeric `community` fields from `graphify extract … --code-only`.
-- Added `FindingsMigration` template: package JSON maps into draft domain manifests + scaffold DataService from Customer template (`docs/FUTURE-FEATURES.md`).
+- Added `FindingsMigration` template: package JSON maps into draft domain manifests + scaffold DataService from **ShowcaseDataService** golden template (`docs/FUTURE-FEATURES.md`). CustomerDataService remains a thin example.
+- Added ShowcaseDataService golden template: hybrid EF+Dapper, FacadeThenMove/Shadow routes, blue/green Docker Compose + EKS Helm, owner dashboard, SP wrapper generation, contract/shadow/architecture tests (`SHOWCASE-CUTOVER.md`).
+- Filled minimal BuildingBlocks used by Showcase (DataAccess.*, Observability, Security, Migration).
 - Added parent-folder batch indexing: each child project analyzed sequentially with artifacts written to that project's root (`Invoke-DbIntelligenceBatchIndex.ps1`, `/api/index/batch`); documented for `D:\code\projects` and `C:\code`.
 - Documented in-memory map storage (no catalog DB yet); durable output remains JSON/MD export.
 - Root README expanded with full PowerShell command reference (setup, index, batch, findings, solution build).

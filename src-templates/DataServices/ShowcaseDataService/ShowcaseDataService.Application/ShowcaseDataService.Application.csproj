@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ShowcaseDataService.Application</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ShowcaseDataService.Contracts\ShowcaseDataService.Contracts.csproj" />
+    <ProjectReference Include="..\ShowcaseDataService.Domain\ShowcaseDataService.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Migration\Migration.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\DataAccess.Abstractions\DataAccess.Abstractions.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>

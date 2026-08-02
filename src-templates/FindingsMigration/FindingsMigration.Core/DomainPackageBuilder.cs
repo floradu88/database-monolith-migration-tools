@@ -346,7 +346,7 @@ public sealed class DomainPackageBuilder
         sb.AppendLine();
         sb.AppendLine("## Next step");
         sb.AppendLine();
-        sb.AppendLine("Run `scripts/New-DomainFromFindings.ps1` to scaffold the DataService project from the Customer template, then copy reviewed manifests into kit `manifests/`.");
+        sb.AppendLine("Run `scripts/New-DomainFromFindings.ps1` to scaffold from the **ShowcaseDataService** golden template, then copy reviewed manifests into kit `manifests/`.");
         return sb.ToString();
     }
 
@@ -366,8 +366,11 @@ public sealed class DomainPackageBuilder
           -CopyManifestsToKit
         ```
 
-        This copies `DataServices/CustomerDataService` → `DataServices/{service}` with name replacements.
+        This copies `DataServices/ShowcaseDataService` (golden) → `DataServices/{service}` with name replacements.
+        Pass `-StoredProcedureMap` (or place `stored-procedure-map.json` in the package folder) to emit SQL stubs + Dapper `Sp_*` wrappers.
         It does **not** register ownership or run SQL.
+
+        Agent playbook: given `code-to-db-map.json` / SP map → package → scaffold Showcase → wire façade (SourceFacade/Owned/Shadow) → open blue+green → run shadow → present `/` dashboard.
         """;
 
     private static string SanitizeName(string name)

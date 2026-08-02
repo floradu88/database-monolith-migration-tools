@@ -1,0 +1,30 @@
+# Blue/Green local demo for ShowcaseDataService
+# Usage: docker compose --profile blue --profile green up --build
+services:
+  showcase-blue:
+    profiles: ["blue"]
+    build:
+      context: ../../..
+      dockerfile: DataServices/ShowcaseDataService/deploy/Dockerfile
+    ports:
+      - "5081:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MigrationRouting__Slot: Blue
+      MigrationRouting__DefaultRoute: SourceFacade
+      SqlConnections__SourceFacadeConnectionString: "Server=host.docker.internal,1433;Database=MonolithDb;User Id=app_ro;Password=CHANGE_ME;TrustServerCertificate=True"
+      SqlConnections__OwnedConnectionString: "Server=host.docker.internal,1433;Database=ShowcaseDb;User Id=app_rw;Password=CHANGE_ME;TrustServerCertificate=True"
+
+  showcase-green:
+    profiles: ["green"]
+    build:
+      context: ../../..
+      dockerfile: DataServices/ShowcaseDataService/deploy/Dockerfile
+    ports:
+      - "5082:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      MigrationRouting__Slot: Green
+      MigrationRouting__DefaultRoute: Owned
+      SqlConnections__SourceFacadeConnectionString: "Server=host.docker.internal,1433;Database=MonolithDb;User Id=app_ro;Password=CHANGE_ME;TrustServerCertificate=True"
+      SqlConnections__OwnedConnectionString: "Server=host.docker.internal,1433;Database=ShowcaseDb;User Id=app_rw;Password=CHANGE_ME;TrustServerCertificate=True"

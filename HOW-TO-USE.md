@@ -406,10 +406,26 @@ cd src-templates\FindingsMigration
 .\scripts\New-DomainFromFindings.ps1 `
   -DomainName "Insight" `
   -PackageDirectory ".\out\Insight" `
+  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
   -CopyManifestsToKit
 ```
 
-Produces draft manifests + optional `DataServices\InsightDataService` scaffold from the Customer template. Review `FINDINGS-REVIEW.md` before ownership approval.
+Produces draft manifests + optional `DataServices\InsightDataService` scaffold from the **ShowcaseDataService** golden template (SP stubs/wrappers when a SP map is provided). `CustomerDataService` remains a thin example only. Review `FINDINGS-REVIEW.md` before ownership approval.
+
+Owner blue/green demo: [`src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md).
+
+```powershell
+cd src-templates\DataServices\ShowcaseDataService\deploy
+docker compose --profile blue --profile green up --build
+# Blue :5081 · Green :5082 · dashboard at /
+helm template showcase .\helm\showcase-dataservice --set ingress.greenWeight=20
+```
+
+Also run Showcase tests:
+
+```powershell
+dotnet test src-templates\DataServices\ShowcaseDataService\ShowcaseDataService.Tests\ShowcaseDataService.Tests.csproj -c Release
+```
 
 Roadmap: [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md).
 

@@ -1,0 +1,40 @@
+replicaCountBlue: 1
+replicaCountGreen: 1
+
+image:
+  repository: showcase-dataservice
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  host: showcase.example.local
+  # Traffic weights for canary-style switch (controller-dependent annotations)
+  blueWeight: 100
+  greenWeight: 0
+
+blue:
+  slot: Blue
+  defaultRoute: SourceFacade
+
+green:
+  slot: Green
+  defaultRoute: Owned
+
+# Connection strings via Secret — never commit real credentials
+existingSecretName: showcase-sql-connection
+sourceConnectionKey: source
+ownedConnectionKey: owned
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

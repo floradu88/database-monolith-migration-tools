@@ -33,6 +33,7 @@
 - `src-templates/BuildingBlocks/Observability/AI-INSTRUCTIONS.md`
 - `src-templates/BuildingBlocks/Security/AI-INSTRUCTIONS.md`
 - `src-templates/DataServices/AI-INSTRUCTIONS.md`
+- `src-templates/DataServices/ShowcaseDataService/AI-INSTRUCTIONS.md`
 - `src-templates/DataServices/CustomerDataService/AI-INSTRUCTIONS.md`
 - `src-templates/DataServices/CustomerDataService/CustomerDataService.Api/AI-INSTRUCTIONS.md`
 - `src-templates/DataServices/CustomerDataService/CustomerDataService.Application/AI-INSTRUCTIONS.md`

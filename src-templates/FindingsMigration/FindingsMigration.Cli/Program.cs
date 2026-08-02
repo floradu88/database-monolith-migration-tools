@@ -4,12 +4,13 @@ using FindingsMigration.Core;
 static int Usage()
 {
     Console.WriteLine("""
-        FindingsMigration.Cli — package DbIntelligence JSON maps into domain manifests.
+        FindingsMigration.Cli — package DbIntelligence JSON maps into domain manifests + SP wrappers.
 
         Usage:
           findings-migrate --code-to-db <path> --domain <Name> [--out <dir>] [options]
+          findings-migrate generate-sp --sp-map <path> --service-root <dir> --domain <Name> --service <Name> [--schema <name>]
 
-        Options:
+        Package options:
           --code-to-db <path>     Required. code-to-db-map.json from DbIntelligence
           --sp-map <path>         Optional. stored-procedure-map.json
           --domain <Name>         Required. Domain name (e.g. Billing, Customer)
@@ -20,6 +21,13 @@ static int Usage()
           --owner <team>          Optional. Default: TBD
           --out <dir>             Optional. Default: ./out/{domain}
           --include-ambiguous     Include AMBIGUOUS edges in packaged manifests (default: review-only)
+
+        generate-sp options:
+          --sp-map <path>         Required. stored-procedure-map.json
+          --service-root <dir>    Required. Scaffolded DataService root
+          --domain <Name>         Required.
+          --service <Name>        Required. e.g. InsightDataService
+          --schema <name>         Optional. Default: lowercased domain
         """);
     return 2;
 }
@@ -37,6 +45,31 @@ string? GetOpt(string name)
 
 bool HasFlag(string name) =>
     argsList.Any(a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));
+
+if (string.Equals(argsList[0], "generate-sp", StringComparison.OrdinalIgnoreCase))
+{
+    var spMapPath = GetOpt("--sp-map");
+    var serviceRoot = GetOpt("--service-root");
+    var domainSp = GetOpt("--domain");
+    var serviceSp = GetOpt("--service");
+    var schemaSp = GetOpt("--schema") ?? "";
+    if (string.IsNullOrWhiteSpace(spMapPath) || string.IsNullOrWhiteSpace(serviceRoot) ||
+        string.IsNullOrWhiteSpace(domainSp) || string.IsNullOrWhiteSpace(serviceSp))
+        return Usage();
+
+    try
+    {
+        var gen = new SpWrapperGenerator();
+        var result = gen.GenerateFromMapFile(spMapPath, serviceRoot, domainSp, schemaSp, serviceSp);
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 1;
+    }
+}
 
 var codeToDb = GetOpt("--code-to-db");
 var domain = GetOpt("--domain");

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "showcase.fullname" . }}-blue
+  labels:
+    app.kubernetes.io/component: blue
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/name: showcase-dataservice
+    app.kubernetes.io/component: blue
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "showcase.fullname" . }}-green
+  labels:
+    app.kubernetes.io/component: green
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/name: showcase-dataservice
+    app.kubernetes.io/component: green
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8080

@@ -1,31 +1,10 @@
-# AI Instructions — `src-templates/BuildingBlocks`
+# AI Instructions — BuildingBlocks
 
-## Purpose
+Shared packages referenced by ShowcaseDataService. Prefer additive APIs.
 
-This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-a-Service kit. Its role is determined by its path and local README/documentation.
+## Mandatory
 
-## Mandatory workflow
-
-1. Read the root `README.md`, `REVIEW-REPORT.md`, and nearest parent instructions.
-2. Preserve ownership boundaries and prefer additive, reversible changes.
-3. Do not invent credentials, approvals, platform capabilities, or production values.
-4. Update docs, manifests, tests, RBAC, observability, and rollback guidance when behavior changes.
-5. Never execute destructive SQL automatically.
-6. Validate SQL-project and EF-migration ownership do not overlap.
-
-## Current subfolders
-
-- `DataAccess.Abstractions/`
-- `DataAccess.Dapper/`
-- `DataAccess.EfCore/`
-- `Migration/`
-- `Observability/`
-- `Security/`
-
-## Current files
-
-- None.
-
-## Completion report
-
-Report changed files, assumptions, validation, unresolved risks, and required approval.
+1. Do not invent credentials or production connection strings.
+2. Runtime identities must not require `db_owner` (see Security guards).
+3. Keep Migration types thin (route/slot/shadow) — no control-plane product here.
+4. When changing observability attributes, align with NFR docs and update Showcase together.

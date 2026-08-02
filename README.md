@@ -36,8 +36,9 @@ It includes:
 
 1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + kit overview)
 2. **[`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)** — findings → domain project roadmap + template
-3. `docs/00-master-plan.md`
-4. `docs/01-target-architecture.md`
+3. **[`src-templates/DataServices/ShowcaseDataService/`](src-templates/DataServices/ShowcaseDataService/)** — golden DB-as-a-Service template + [`SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md)
+4. `docs/00-master-plan.md`
+5. `docs/01-target-architecture.md`
 5. `docs/02-solution-and-project-structure.md`
 6. `docs/03-source-monolith-split.md`
 7. `docs/04-target-database-project-strategy.md`
