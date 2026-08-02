@@ -225,6 +225,36 @@ export class GraphPageComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  combineParentGraphs(): void {
+    if (!this.parentFolderPath.trim()) {
+      this.statusMessage = 'Enter a parent folder that contains project subfolders with graph.json.';
+      return;
+    }
+
+    this.statusMessage = 'Combining per-project graph.json files...';
+    this.api
+      .combineGraphs({
+        parentFolderPath: this.parentFolderPath.trim(),
+        requireProjectMarkers: this.requireProjectMarkers,
+        shareDatabaseNodes: true,
+        onlyCompletedFromSummary: true,
+        exportCombined: true,
+        artifactsRelativeDirectory: ''
+      })
+      .subscribe({
+        next: (r) => {
+          this.statusMessage =
+            `Combined ${r.projectsLoaded} project(s) → ${r.nodeCount} nodes / ${r.edgeCount} edges` +
+            (r.combinedOutputDirectory ? ` · ${r.combinedOutputDirectory}` : '');
+          this.indexMode = 'batch';
+          this.reloadGraph();
+          this.loadMaps();
+        },
+        error: (err) =>
+          (this.statusMessage = `Combine failed: ${err.error?.message || err.message || err.status}`)
+      });
+  }
+
   private pollJob(id: string): void {
     if (this.pollHandle) clearInterval(this.pollHandle);
     this.pollHandle = setInterval(() => {
@@ -247,7 +277,10 @@ export class GraphPageComponent implements AfterViewInit, OnDestroy {
         this.statusMessage = `${job.status}: ${job.completedProjects}/${job.totalProjects} ${job.currentProject || ''} ${job.message || ''}`;
         if (job.status === 'Completed' || job.status === 'Failed') {
           if (this.pollHandle) clearInterval(this.pollHandle);
-          if (job.status === 'Completed') this.reloadGraph();
+          if (job.status === 'Completed') {
+            this.reloadGraph();
+            this.loadMaps();
+          }
         }
       });
     }, 2000);
@@ -285,7 +318,7 @@ export class GraphPageComponent implements AfterViewInit, OnDestroy {
           border: '#1b1f24',
           highlight: { background: '#111827', border: '#111827' }
         },
-        size: n.id.startsWith('db:') ? 18 : 14
+        size: isDbNodeId(n.id) ? 18 : 14
       }))
     );
 
@@ -309,4 +342,9 @@ function hash(value: string): number {
   let h = 0;
   for (let i = 0; i < value.length; i++) h = (h << 5) - h + value.charCodeAt(i);
   return h;
+}
+
+function isDbNodeId(id: string): boolean {
+  const core = id.startsWith('p:') ? id.slice(id.indexOf('/') + 1) : id;
+  return core.startsWith('db:');
 }

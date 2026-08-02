@@ -26,7 +26,7 @@ Use this repository as a production-grade kit for decomposing a SQL Server monol
 | `sql/` | Discovery, telemetry, audit, RBAC, and platform SQL scripts |
 | `manifests/` | Domain ownership and migration-wave examples |
 | `src-templates/` | .NET solution/project scaffolds (source split, data services, control plane) |
-| `src-templates/DbIntelligence/scripts/` | PowerShell setup/run; fnm Node + Codegraph via `fnm exec --using=lts-latest` (`Initialize-DbIntelligenceNode.ps1`) |
+| `src-templates/DbIntelligence/scripts/` | PowerShell setup/run; prefer `Invoke-DbIntelligenceReady.ps1` (path only); fnm Node + Codegraph via `fnm exec --using=lts-latest` |
 | `checklists/` | Cutover and source-split checklists |
 | `validation/` | Checksums and validation summary |
 | `HOW-TO-USE.md` | Canonical PowerShell command reference for local DbIntelligence ops |

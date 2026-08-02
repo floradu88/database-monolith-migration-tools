@@ -161,6 +161,9 @@ public sealed class CodeToDbEntryDto
 
     [JsonPropertyName("pattern")]
     public string? Pattern { get; set; }
+
+    [JsonPropertyName("project")]
+    public string? Project { get; set; }
 }
 
 public sealed class StoredProcedureMapDto
@@ -338,4 +341,55 @@ public sealed class SearchResultDto
 public sealed class ExportRequest
 {
     public string? OutputDirectory { get; set; }
+}
+
+/// <summary>
+/// Load exported per-project graph.json files under a parent folder and present them as one in-memory graph.
+/// </summary>
+public sealed class CombineGraphsRequest
+{
+    public string ParentFolderPath { get; set; } = string.Empty;
+
+    /// <summary>Relative artifacts folder under each project (empty = project root).</summary>
+    public string? ArtifactsRelativeDirectory { get; set; } = "";
+
+    public bool RequireProjectMarkers { get; set; }
+
+    public List<string>? ProjectFolderNames { get; set; }
+
+    /// <summary>When true (default), share unprefixed DB nodes across projects.</summary>
+    public bool ShareDatabaseNodes { get; set; } = true;
+
+    /// <summary>When a batch summary exists, only load projects marked Completed (default true).</summary>
+    public bool OnlyCompletedFromSummary { get; set; } = true;
+
+    /// <summary>Also write combined graph.json / maps under the parent (default true).</summary>
+    public bool ExportCombined { get; set; } = true;
+
+    /// <summary>Override combined export directory (default: {parent}/db-intelligence-combined).</summary>
+    public string? CombinedOutputDirectory { get; set; }
+}
+
+public sealed class CombineGraphsResultDto
+{
+    public string ParentFolderPath { get; set; } = string.Empty;
+    public int ProjectsLoaded { get; set; }
+    public int ProjectsSkipped { get; set; }
+    public int NodeCount { get; set; }
+    public int EdgeCount { get; set; }
+    public string? CombinedOutputDirectory { get; set; }
+    public List<CombinedProjectLoadDto> Loaded { get; set; } = [];
+    public List<CombinedProjectLoadDto> Skipped { get; set; } = [];
+}
+
+public sealed class CombinedProjectLoadDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public string? ArtifactsDirectory { get; set; }
+    public string? GraphJsonPath { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? Message { get; set; }
+    public int? NodeCount { get; set; }
+    public int? EdgeCount { get; set; }
 }

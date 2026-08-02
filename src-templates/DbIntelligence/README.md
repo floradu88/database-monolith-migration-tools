@@ -77,6 +77,7 @@ Node/npm without admin (fnm, user scope) — also run automatically by Ready/set
 | `Start-DbIntelligenceWeb.ps1` | Angular (activates/installs fnm Node if needed) |
 | `Invoke-DbIntelligenceIndex.ps1` | Index job against a path (API must already be up) |
 | `Invoke-DbIntelligenceBatchIndex.ps1` | Batch-index children under a parent (`D:\code\projects` or `C:\code`) |
+| `Invoke-DbIntelligenceCombine.ps1` | Present all child `graph.json` as one live graph |
 
 ```powershell
 .\scripts\Install-DbIntelligencePrereqs.ps1 -Yes

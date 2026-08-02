@@ -31,6 +31,7 @@ public sealed class IndexingService : IIndexingService
     private readonly RepositoryScannerService _repositoryScanner;
     private readonly SqlScannerService _sqlScanner;
     private readonly EvidenceGraphMerger _merger;
+    private readonly ICombinedGraphService _combinedGraphs;
     private readonly DbIntelligenceOptions _options;
     private readonly ILogger<IndexingService> _logger;
 
@@ -42,6 +43,7 @@ public sealed class IndexingService : IIndexingService
         RepositoryScannerService repositoryScanner,
         SqlScannerService sqlScanner,
         EvidenceGraphMerger merger,
+        ICombinedGraphService combinedGraphs,
         IOptions<DbIntelligenceOptions> options,
         ILogger<IndexingService> logger)
     {
@@ -52,6 +54,7 @@ public sealed class IndexingService : IIndexingService
         _repositoryScanner = repositoryScanner;
         _sqlScanner = sqlScanner;
         _merger = merger;
+        _combinedGraphs = combinedGraphs;
         _options = options.Value;
         _logger = logger;
     }
@@ -223,6 +226,38 @@ public sealed class IndexingService : IIndexingService
             }
 
             await WriteBatchSummaryAsync(request.ParentFolderPath, batch, cancellationToken);
+
+            if (batch.CompletedProjects > 0)
+            {
+                try
+                {
+                    batch.Phase = "combine";
+                    batch.Message = "Combining per-project graph.json files into one live graph...";
+                    _store.UpdateBatchJob(batch);
+                    var combined = await _combinedGraphs.CombineFromParentAsync(
+                        new CombineGraphsRequest
+                        {
+                            ParentFolderPath = request.ParentFolderPath,
+                            ArtifactsRelativeDirectory = request.ArtifactsRelativeDirectory ?? "",
+                            RequireProjectMarkers = request.RequireProjectMarkers,
+                            ProjectFolderNames = request.ProjectFolderNames,
+                            ShareDatabaseNodes = true,
+                            OnlyCompletedFromSummary = true,
+                            ExportCombined = true
+                        },
+                        cancellationToken);
+                    BatchLog(batch,
+                        $"Combined {combined.ProjectsLoaded} project(s) → {combined.NodeCount} nodes / {combined.EdgeCount} edges" +
+                        (combined.CombinedOutputDirectory is null
+                            ? ""
+                            : $" (exported to {combined.CombinedOutputDirectory})"));
+                }
+                catch (Exception ex)
+                {
+                    BatchLog(batch, $"Combine skipped: {ex.Message}");
+                    _logger.LogWarning(ex, "Post-batch combine failed for {Parent}", request.ParentFolderPath);
+                }
+            }
 
             batch.Status = batch.FailedProjects > 0 && batch.CompletedProjects == 0 ? "Failed" : "Completed";
             batch.Phase = "done";

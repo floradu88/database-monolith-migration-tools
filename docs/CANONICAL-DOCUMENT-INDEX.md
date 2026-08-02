@@ -2,9 +2,10 @@
 
 ## How to run / operate locally
 
-- `../HOW-TO-USE.md` — PowerShell setup, run, index, batch (`D:\code\projects` / `C:\code`), fnm Node, Codegraph via `fnm exec`
+- `../HOW-TO-USE.md` — PowerShell setup, run, index, batch (`D:\code\projects` / `C:\code`); prefer `Invoke-DbIntelligenceReady.ps1` (path only); fnm Node; Codegraph via `fnm exec --using=lts-latest`
 - `../src-templates/DbIntelligence/README.md` — DbIntelligence project how-to
-- `../src-templates/DbIntelligence/scripts/Initialize-DbIntelligenceNode.ps1` — fnm Node/npm; Codegraph via `fnm exec`
+- `../src-templates/DbIntelligence/scripts/Invoke-DbIntelligenceReady.ps1` — path-only one-shot (prereqs → build → health → API → index)
+- `../src-templates/DbIntelligence/scripts/Initialize-DbIntelligenceNode.ps1` — fnm Node/npm; Codegraph via `fnm exec --using=lts-latest`
 - `../src-templates/FindingsMigration/README.md` — promote JSON maps to domain packages
 - `dbintelligence-runbook.md` — short PowerShell runbook + plan snapshot
 - `FUTURE-FEATURES.md` — findings → domain project roadmap

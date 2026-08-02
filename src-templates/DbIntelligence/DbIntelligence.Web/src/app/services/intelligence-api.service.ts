@@ -76,6 +76,30 @@ export interface CodeToDbMap {
     relation: string;
     confidence: string;
     pattern?: string;
+    project?: string;
+  }>;
+}
+
+export interface CombineGraphsResult {
+  parentFolderPath: string;
+  projectsLoaded: number;
+  projectsSkipped: number;
+  nodeCount: number;
+  edgeCount: number;
+  combinedOutputDirectory?: string;
+  loaded: Array<{
+    name: string;
+    path: string;
+    status: string;
+    message?: string;
+    nodeCount?: number;
+    edgeCount?: number;
+  }>;
+  skipped: Array<{
+    name: string;
+    path: string;
+    status: string;
+    message?: string;
   }>;
 }
 
@@ -193,5 +217,16 @@ export class IntelligenceApiService {
 
   export() {
     return this.http.post<{ outputDirectory: string }>(`${this.base}/export`, {});
+  }
+
+  combineGraphs(body: {
+    parentFolderPath: string;
+    artifactsRelativeDirectory?: string;
+    requireProjectMarkers?: boolean;
+    shareDatabaseNodes?: boolean;
+    onlyCompletedFromSummary?: boolean;
+    exportCombined?: boolean;
+  }) {
+    return this.http.post<CombineGraphsResult>(`${this.base}/graphs/combine`, body);
   }
 }

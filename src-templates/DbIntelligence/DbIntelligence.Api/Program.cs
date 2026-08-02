@@ -181,8 +181,8 @@ api.MapGet("/graphs/unified", (string? kind, string? confidence, bool? codeToDbO
     if (codeToDbOnly == true)
     {
         edges = edges.Where(e =>
-            e.Source.StartsWith("code:", StringComparison.OrdinalIgnoreCase) &&
-            e.Target.StartsWith("db:", StringComparison.OrdinalIgnoreCase));
+            ProjectGraphIds.IsCodeNodeId(e.Source) &&
+            ProjectGraphIds.IsDbNodeId(e.Target));
     }
 
     if (!string.IsNullOrWhiteSpace(confidence) &&
@@ -242,6 +242,19 @@ api.MapPost("/export", async (ExportRequest request, IIntelligenceStore store, I
 
     await store.ExportAsync(graph, output);
     return Results.Ok(new { outputDirectory = output });
+});
+
+api.MapPost("/graphs/combine", async (CombineGraphsRequest request, ICombinedGraphService combined) =>
+{
+    try
+    {
+        var result = await combined.CombineFromParentAsync(request);
+        return Results.Ok(result);
+    }
+    catch (Exception ex) when (ex is InvalidOperationException or DirectoryNotFoundException or ArgumentException)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
 });
 
 api.MapGet("/codegraph/query", async (string? q, string? repositoryPath, ICodegraphClient codegraph, IOptions<DbIntelligenceOptions> options) =>

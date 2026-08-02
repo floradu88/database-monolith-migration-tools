@@ -8,10 +8,8 @@ Index first with DbIntelligence — see root [`HOW-TO-USE.md`](../../HOW-TO-USE.
 
 ```powershell
 cd ..\DbIntelligence
-.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes   # fnm Node + Codegraph via fnm exec
-.\scripts\Setup-DbIntelligence.ps1 -Yes
-.\scripts\Start-DbIntelligence.ps1 -Force
-.\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
+.\scripts\Invoke-DbIntelligenceReady.ps1 "D:\path\to\repo"   # path only; fnm Node + Codegraph, no admin
+.\scripts\Start-DbIntelligenceWeb.ps1                        # optional UI
 # or batch: .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
 #           .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
 ```

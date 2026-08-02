@@ -26,10 +26,8 @@ Use **DbIntelligence** to index application repos that hit this monolith (PowerS
 
 ```powershell
 cd ..\DbIntelligence
-.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
-.\scripts\Setup-DbIntelligence.ps1 -Yes
-.\scripts\Start-DbIntelligence.ps1 -Force
-.\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\app"
+.\scripts\Invoke-DbIntelligenceReady.ps1 "D:\path\to\app"   # path only; no admin
+.\scripts\Start-DbIntelligenceWeb.ps1                       # optional UI
 # batch parents: D:\code\projects or C:\code
 ```
 

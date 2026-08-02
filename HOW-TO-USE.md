@@ -88,7 +88,7 @@ npm -v
 codegraph -V
 ```
 
-`Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, and `Start-DbIntelligenceWeb.ps1` call the Node helper automatically. The C# CLI installer also prefers `fnm exec` for Codegraph when fnm is on PATH.
+`Invoke-DbIntelligenceReady.ps1`, `Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, and `Start-DbIntelligenceWeb.ps1` call the Node helper automatically. The C# CLI installer also prefers `fnm exec --using=lts-latest` for Codegraph when fnm is on PATH.
 
 ---
 
@@ -108,6 +108,7 @@ All scripts live in `src-templates/DbIntelligence/scripts/`.
 | `Start-DbIntelligenceWeb.ps1` | Angular on `:4200` |
 | `Invoke-DbIntelligenceIndex.ps1` | POST index job for a repo path (API must already be up) |
 | `Invoke-DbIntelligenceBatchIndex.ps1` | Batch-index children under a parent (`D:\code\projects` or `C:\code`) |
+| `Invoke-DbIntelligenceCombine.ps1` | Load all child `graph.json` under a parent and present as **one** live graph (+ export `db-intelligence-combined`) |
 
 ### Setup flags
 
@@ -414,7 +415,13 @@ Roadmap: [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md).
 
 ### Batch: parent folder of projects
 
-Each immediate child folder is treated as one project; analyzed one-by-one; artifacts written to **that project's root** (`graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`). Parent gets `db-intelligence-batch-summary.json`.
+Each immediate child folder is treated as one project; analyzed one-by-one; artifacts written to **that project's root** (`graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`). Parent gets `db-intelligence-batch-summary.json`. After batch (or anytime JSON exists), **combine** loads every child `graph.json` into one live API graph and writes `{parent}\db-intelligence-combined\`.
+
+```powershell
+.\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
+.\scripts\Invoke-DbIntelligenceCombine.ps1 -ParentFolderPath "D:\code\projects"
+# UI: Parent folder → Present all as one
+```
 
 Supported layouts (same commands — swap the parent path):
 
@@ -469,6 +476,7 @@ Live API graph remains **in memory** (last completed project). Durable results a
 | `node` / `npm` missing (no admin) | `.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes` then `. .\scripts\Initialize-DbIntelligenceNode.ps1` or open a new shell |
 | `codegraph` missing | Prefer `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` or `.\scripts\Initialize-DbIntelligenceNode.ps1 -InstallCodegraph -Yes` |
 | `fnm exec` → "Can't find version in dotfiles" | Use `--using=lts-latest`, work under `src-templates/DbIntelligence` (ships `.node-version`), or run `.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes` |
+| `Start-DbIntelligenceWeb.ps1` parse error (`string` terminator / missing `}`) | Pull latest scripts (ASCII hyphens only). Unicode em dashes in `.ps1` break Windows PowerShell 5.1 |
 | `graphify` not found / wrong CLI | Install package `graphifyy`; help text must mention `extract` / `graphify-out` |
 | Index fails on Graphify JSON | Ensure you are on the fixed importer (numeric `community`, `links` edges) — rebuild API and restart with `-Force` |
 | Angular cannot reach API | Start API first; confirm http://localhost:5088/api/health |

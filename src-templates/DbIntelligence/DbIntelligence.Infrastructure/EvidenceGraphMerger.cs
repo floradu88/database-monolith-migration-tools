@@ -86,7 +86,9 @@ public sealed class EvidenceGraphMerger
                 DbKind = db.Kind.ToString(),
                 Relation = ToRelationString(edge.Relation),
                 Confidence = edge.Confidence.ToString().ToUpperInvariant(),
-                Pattern = edge.Evidence?.Pattern
+                Pattern = edge.Evidence?.Pattern,
+                Project = code.Properties.GetValueOrDefault(ProjectGraphIds.ProjectPropertyKey)
+                          ?? ProjectGraphIds.TryGetProject(code.Id)
             });
         }
 
@@ -115,7 +117,7 @@ public sealed class EvidenceGraphMerger
                 var caller = graph.FindNode(edge.Source);
                 if (caller is null)
                     continue;
-                if (caller.Id.StartsWith("code:", StringComparison.OrdinalIgnoreCase))
+                if (ProjectGraphIds.IsCodeNodeId(caller.Id))
                     entry.CodeCallers.Add(caller.Label);
                 else
                     entry.SqlCallers.Add(caller.Label);
@@ -170,8 +172,8 @@ public sealed class EvidenceGraphMerger
     }
 
     private static bool IsCodeToDbEdge(GraphEdge edge) =>
-        edge.Source.StartsWith("code:", StringComparison.OrdinalIgnoreCase) &&
-        edge.Target.StartsWith("db:", StringComparison.OrdinalIgnoreCase) &&
+        ProjectGraphIds.IsCodeNodeId(edge.Source) &&
+        ProjectGraphIds.IsDbNodeId(edge.Target) &&
         edge.Relation is EdgeRelation.Executes or EdgeRelation.Reads or EdgeRelation.Writes or EdgeRelation.Calls;
 
     private static string ToRelationString(EdgeRelation relation) => relation switch

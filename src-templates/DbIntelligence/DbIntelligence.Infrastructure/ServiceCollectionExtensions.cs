@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<CliProcessRunner>();
         services.AddSingleton<EvidenceGraphMerger>();
         services.AddSingleton<IIntelligenceStore, FileIntelligenceStore>();
+        services.AddSingleton<ICombinedGraphService, CombinedGraphService>();
         services.AddSingleton<ICodegraphClient, CodegraphClient>();
         services.AddSingleton<IGraphifyClient, GraphifyClient>();
         services.AddSingleton<IPrerequisiteHealthService, PrerequisiteHealthService>();

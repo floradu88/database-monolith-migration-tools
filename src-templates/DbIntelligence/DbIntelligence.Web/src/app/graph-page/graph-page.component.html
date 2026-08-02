@@ -55,6 +55,7 @@
       <table *ngIf="codeMap">
         <thead>
           <tr>
+            <th>Project</th>
             <th>Code</th>
             <th>DB object</th>
             <th>Relation</th>
@@ -64,6 +65,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let e of codeMap.entries">
+            <td>{{ e.project || '—' }}</td>
             <td>{{ e.codeLabel }}</td>
             <td>{{ e.dbObject }}</td>
             <td>{{ e.relation }}</td>
@@ -135,6 +137,7 @@
           <button type="button" (click)="discoverProjects()">Discover projects</button>
           <button type="button" (click)="checkTools()">Check health</button>
           <button type="button" (click)="startBatchIndex()">Index all projects</button>
+          <button type="button" (click)="combineParentGraphs()">Present all as one</button>
           <p class="meta" *ngIf="discoveredNames.length">Projects: {{ discoveredNames.join(', ') }}</p>
         </ng-container>
 

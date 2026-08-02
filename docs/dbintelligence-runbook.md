@@ -9,17 +9,24 @@ Cursor implementation plan (completed): `dbintelligence_graph_stack` — all tod
 ```powershell
 cd src-templates\DbIntelligence
 
-# User-scoped Node/npm + Codegraph via fnm exec (no admin) — also invoked by Setup/Prereqs/Build/Web
-.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
+# Preferred: path only (prereqs no admin → build → health → API → index)
+.\scripts\Invoke-DbIntelligenceReady.ps1 "D:\path\to\repo"
 
+# Optional Angular UI
+.\scripts\Start-DbIntelligenceWeb.ps1
+
+# Manual / stepwise (same kit)
+.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes
 .\scripts\Setup-DbIntelligence.ps1 -Yes
 .\scripts\Start-DbIntelligence.ps1 -Force
-.\scripts\Start-DbIntelligenceWeb.ps1
 .\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo"
 
 # Batch: one project per child folder (artifacts written to each project root)
 .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
 .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
+
+# Present all child graph.json files as one live graph (+ parent\db-intelligence-combined)
+.\scripts\Invoke-DbIntelligenceCombine.ps1 -ParentFolderPath "D:\code\projects"
 ```
 
 ## Delivered
@@ -32,7 +39,7 @@ cd src-templates\DbIntelligence
 | Angular UI | `DbIntelligence.Web` · `:4200` |
 | CLI health/install | `DbIntelligence.Cli` |
 | Scanners | `RepositoryScanner`, `SqlScanner` |
-| Scripts | `scripts/*.ps1` (fnm Node + Codegraph via `fnm exec`, setup/run/index/batch) |
+| Scripts | `scripts/*.ps1` including `Invoke-DbIntelligenceReady.ps1` (path-only); fnm Node + Codegraph via `fnm exec --using=lts-latest` |
 | Docs | Root `HOW-TO-USE.md`, `README.md`, this runbook |
 
 ## Node without admin

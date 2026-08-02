@@ -16,6 +16,7 @@ PowerShell setup/run helpers for local DbIntelligence development.
 - `Start-DbIntelligenceWeb.ps1` — Angular on :4200 (activates/installs fnm Node if needed)
 - `Invoke-DbIntelligenceIndex.ps1` — POST index job against a repo path
 - `Invoke-DbIntelligenceBatchIndex.ps1` — parent folder → index each child project; results in each project root
+- `Invoke-DbIntelligenceCombine.ps1` — load all child `graph.json` under a parent into **one** live graph (+ `db-intelligence-combined` export)
 
 Human docs: root `HOW-TO-USE.md` and parent `DbIntelligence/README.md` (PowerShell-first).
 
