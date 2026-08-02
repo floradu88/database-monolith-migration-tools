@@ -38,26 +38,67 @@ public sealed class DataAccessMethodStats
     public long P95Ms { get; init; }
 }
 
-/// <summary>Fluent query after ExecuteSp / ExecuteSql — map + materialize.</summary>
+/// <summary>
+/// Fluent query after ExecuteSp / ExecuteSql / ExecuteEf — map + materialize.
+/// Example: <c>context.ExecuteSp&lt;Dto&gt;("dbo.Proc").WithParameters(...).Map(...).ToList()</c>
+/// </summary>
 public interface IFluentQuery<T>
 {
     IFluentQuery<T> On(string connectionName);
     IFluentQuery<T> WithParameters(object? parameters);
     IFluentQuery<T> Named(string operationName);
+    IFluentQuery<T> Timeout(int commandTimeoutSeconds);
     IFluentQuery<T> Map(Func<T, T> mapper);
+    IFluentQuery<TResult> Map<TResult>(Func<T, TResult> mapper);
+
+    List<T> ToList();
     Task<List<T>> ToListAsync(CancellationToken cancellationToken = default);
+    T? FirstOrDefault();
     Task<T?> FirstOrDefaultAsync(CancellationToken cancellationToken = default);
+    int Execute();
     Task<int> ExecuteAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Fluent data-access entry: <c>context.ExecuteSp&lt;T&gt;("dbo.Proc").WithParameters(...).ToListAsync()</c>
-/// and <c>context.ExecuteSql&lt;T&gt;("SELECT ...").ToListAsync()</c>.
+/// Fluent data-access entry for SP + plain SQL (+ timing for EF via RecordTiming / Compare).
 /// </summary>
 public interface IDataAccessContext
 {
     IFluentQuery<T> ExecuteSp<T>(string procedureName);
+    /// <summary>Alias matching common call-site casing: ExecuteSP&lt;T&gt;().</summary>
+    IFluentQuery<T> ExecuteSP<T>(string procedureName) => ExecuteSp<T>(procedureName);
     IFluentQuery<T> ExecuteSql<T>(string sql);
-    /// <summary>Record an EF (or other) timing sample from outside the fluent pipeline.</summary>
-    void RecordTiming(string operation, DataAccessMethod method, string connectionName, long elapsedMs, int rowCount, bool succeeded = true, string? error = null);
+
+    void RecordTiming(
+        string operation,
+        DataAccessMethod method,
+        string connectionName,
+        long elapsedMs,
+        int rowCount,
+        bool succeeded = true,
+        string? error = null);
+
+    /// <summary>
+    /// Run the same logical operation via SP, SQL, and an EF callback; record timings; return the fastest method.
+    /// </summary>
+    Task<DataAccessCompareResult<T>> CompareAsync<T>(
+        string operationName,
+        string connectionName,
+        Func<CancellationToken, Task<T?>> efRead,
+        Func<IDataAccessContext, CancellationToken, Task<T?>> spRead,
+        Func<IDataAccessContext, CancellationToken, Task<T?>> sqlRead,
+        CancellationToken cancellationToken = default);
+}
+
+public sealed class DataAccessCompareResult<T>
+{
+    public required string Operation { get; init; }
+    public T? EfResult { get; init; }
+    public T? SpResult { get; init; }
+    public T? SqlResult { get; init; }
+    public long EfMs { get; init; }
+    public long SpMs { get; init; }
+    public long SqlMs { get; init; }
+    public required DataAccessMethod Fastest { get; init; }
+    public bool PayloadsMatch { get; init; }
 }

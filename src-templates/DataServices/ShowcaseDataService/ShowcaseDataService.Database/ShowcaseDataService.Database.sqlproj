@@ -28,11 +28,14 @@
     <Folder Include="Security\" />
     <Folder Include="Tables\" />
     <Folder Include="Programmability\" />
+    <Folder Include="Scripts\" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Security\Schemas.sql" />
     <Build Include="Tables\Items.sql" />
     <Build Include="Programmability\GetShowcaseSummary.sql" />
+    <PreDeploy Include="Scripts\PreDeploy.sql" />
+    <PostDeploy Include="Scripts\PostDeploy.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" Condition="'$(SQLDBExtensionsRefPath)' == '' AND Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')" />
 </Project>

@@ -1,4 +1,6 @@
-﻿namespace BuildingBlocks.Migration;
+﻿using BuildingBlocks.DataAccess.Abstractions;
+
+namespace BuildingBlocks.Migration;
 
 public enum DataAccessRoute
 {
@@ -18,8 +20,11 @@ public sealed class MigrationRoutingOptions
     public const string SectionName = "MigrationRouting";
     public DataAccessRoute DefaultRoute { get; set; } = DataAccessRoute.SourceFacade;
     public BlueGreenSlot Slot { get; set; } = BlueGreenSlot.Blue;
+    /// <summary>Default owned-side DAL when route is Owned (EfCore | StoredProcedure | PlainSql).</summary>
+    public DataAccessMethod AuthoritativeMethod { get; set; } = DataAccessMethod.EfCore;
     public string RouteHeaderName { get; set; } = "X-Data-Access-Route";
     public string SlotHeaderName { get; set; } = "X-Blue-Green-Slot";
+    public string MethodHeaderName { get; set; } = "X-Data-Access-Method";
 }
 
 public sealed class ShadowCompareResult

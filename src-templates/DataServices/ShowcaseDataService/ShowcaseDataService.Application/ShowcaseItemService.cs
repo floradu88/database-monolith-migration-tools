@@ -13,32 +13,51 @@ public sealed class ShowcaseItemService : IShowcaseItemService
     private readonly IShowcaseDataAccess _dataAccess;
     private readonly IShadowCompareStore _shadowStore;
     private readonly IDataAccessTimingStore _timingStore;
+    private readonly IShowcaseSloCounter _slo;
     private readonly MigrationRoutingOptions _options;
+    private readonly ShowcaseSloOptions _sloOptions;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public ShowcaseItemService(
         IShowcaseDataAccess dataAccess,
         IShadowCompareStore shadowStore,
         IDataAccessTimingStore timingStore,
+        IShowcaseSloCounter slo,
         IOptions<MigrationRoutingOptions> options,
+        IOptions<ShowcaseSloOptions> sloOptions,
         IHttpContextAccessor httpContextAccessor)
     {
         _dataAccess = dataAccess;
         _shadowStore = shadowStore;
         _timingStore = timingStore;
+        _slo = slo;
         _options = options.Value;
+        _sloOptions = sloOptions.Value;
         _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<ShowcaseSummaryDto?> GetSummaryAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var route = ResolveRoute();
-        return route switch
+        var sw = Stopwatch.StartNew();
+        try
         {
-            DataAccessRoute.Owned => await _dataAccess.GetSummaryAsync(id, "Owned", cancellationToken),
-            DataAccessRoute.Shadow => await GetWithShadowAsync(id, cancellationToken),
-            _ => await _dataAccess.GetSummaryAsync(id, "Source", cancellationToken)
-        };
+            var route = ResolveRoute();
+            var method = ResolveMethod();
+            ShowcaseSummaryDto? result = route switch
+            {
+                DataAccessRoute.Owned => await _dataAccess.GetSummaryAsync(id, "Owned", method, cancellationToken),
+                DataAccessRoute.Shadow => await GetWithShadowAsync(id, cancellationToken),
+                _ => await _dataAccess.GetSummaryAsync(id, "Source", DataAccessMethod.StoredProcedure, cancellationToken)
+            };
+            sw.Stop();
+            _slo.RecordSuccess(sw.ElapsedMilliseconds);
+            return result;
+        }
+        catch
+        {
+            _slo.RecordError();
+            throw;
+        }
     }
 
     public async Task UpdateAsync(ShowcaseUpdateRequest request, CancellationToken cancellationToken = default)
@@ -55,51 +74,41 @@ public sealed class ShowcaseItemService : IShowcaseItemService
         var recent = _shadowStore.Recent(20);
         var stats = BuildStats("GetShowcaseSummary");
         var fastest = stats.Where(s => s.IsFastest).Select(s => s.Method).FirstOrDefault();
+        var slo = _slo.Snapshot(_sloOptions);
         return new ShowcaseDashboardDto(
             ResolveSlot().ToString(),
             ResolveRoute().ToString(),
+            ResolveMethod().ToString(),
             recent.Count,
             recent.Count(r => r.PayloadsMatch),
             recent.Count(r => !r.PayloadsMatch),
             recent.Select(r => new ShadowDiffDto(
                 r.Operation, r.RouteA, r.RouteB, r.ElapsedMsA, r.ElapsedMsB, r.PayloadsMatch, r.DiffSummary, r.ComparedAt)).ToList(),
             stats,
-            fastest is null ? null : $"{fastest} has lowest avg ms for GetShowcaseSummary");
+            fastest is null ? null : $"{fastest} has lowest avg ms for GetShowcaseSummary",
+            new SloCountersDto(
+                slo.Requests,
+                slo.Errors,
+                slo.ErrorRatePercent,
+                slo.P95Ms,
+                _sloOptions.ReadLatencyP95MsBudget,
+                slo.WithinLatencyBudget,
+                slo.WithinErrorBudget));
     }
 
     public async Task<AccessBenchmarkDto> BenchmarkAccessAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        const string connection = "Owned";
-
-        var swEf = Stopwatch.StartNew();
-        var ef = await _dataAccess.GetSummaryViaEfAsync(id, cancellationToken);
-        swEf.Stop();
-
-        var swSp = Stopwatch.StartNew();
-        var sp = await _dataAccess.GetSummaryViaSpAsync(id, connection, cancellationToken);
-        swSp.Stop();
-
-        var swSql = Stopwatch.StartNew();
-        var sql = await _dataAccess.GetSummaryViaSqlAsync(id, connection, cancellationToken);
-        swSql.Stop();
-
-        var ranked = new[]
-        {
-            (Method: nameof(DataAccessMethod.EfCore), Ms: swEf.ElapsedMilliseconds),
-            (Method: nameof(DataAccessMethod.StoredProcedure), Ms: swSp.ElapsedMilliseconds),
-            (Method: nameof(DataAccessMethod.PlainSql), Ms: swSql.ElapsedMilliseconds)
-        };
-        var fastest = ranked.OrderBy(x => x.Ms).First().Method;
-
+        var compare = await _dataAccess.CompareAccessMethodsAsync(id, cancellationToken);
         return new AccessBenchmarkDto(
             id,
-            ef,
-            sp,
-            sql,
-            swEf.ElapsedMilliseconds,
-            swSp.ElapsedMilliseconds,
-            swSql.ElapsedMilliseconds,
-            fastest,
+            compare.EfResult,
+            compare.SpResult,
+            compare.SqlResult,
+            compare.EfMs,
+            compare.SpMs,
+            compare.SqlMs,
+            compare.Fastest.ToString(),
+            compare.PayloadsMatch,
             BuildStats("GetShowcaseSummary"));
     }
 
@@ -134,11 +143,11 @@ public sealed class ShowcaseItemService : IShowcaseItemService
     private async Task<ShowcaseSummaryDto?> GetWithShadowAsync(Guid id, CancellationToken cancellationToken)
     {
         var swA = Stopwatch.StartNew();
-        var source = await _dataAccess.GetSummaryAsync(id, "Source", cancellationToken);
+        var source = await _dataAccess.GetSummaryAsync(id, "Source", DataAccessMethod.StoredProcedure, cancellationToken);
         swA.Stop();
 
         var swB = Stopwatch.StartNew();
-        var owned = await _dataAccess.GetSummaryAsync(id, "Owned", cancellationToken);
+        var owned = await _dataAccess.GetSummaryAsync(id, "Owned", ResolveMethod(), cancellationToken);
         swB.Stop();
 
         var jsonA = JsonSerializer.Serialize(source);
@@ -172,5 +181,13 @@ public sealed class ShowcaseItemService : IShowcaseItemService
         if (!string.IsNullOrWhiteSpace(header) && Enum.TryParse<BlueGreenSlot>(header, true, out var parsed))
             return parsed;
         return _options.Slot;
+    }
+
+    private DataAccessMethod ResolveMethod()
+    {
+        var header = _httpContextAccessor.HttpContext?.Request.Headers[_options.MethodHeaderName].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(header) && Enum.TryParse<DataAccessMethod>(header, true, out var parsed))
+            return parsed;
+        return _options.AuthoritativeMethod;
     }
 }

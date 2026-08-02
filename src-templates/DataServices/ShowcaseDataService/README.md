@@ -4,12 +4,12 @@ Buildable, replicable data-service template for this kit. **CustomerDataService*
 
 ## Features
 
-- Hybrid ownership: EF for owned tables (`showcase.Items`), Dapper fluent `ExecuteSp` / `ExecuteSql` with mapping + latency monitoring
-- FacadeThenMove routes: `SourceFacade` | `Owned` | `Shadow` (header `X-Data-Access-Route`)
-- Blue/Green slot: header `X-Blue-Green-Slot` (`Blue` | `Green`)
-- Owner dashboard at `/` (shadow diffs, EF vs SP vs SQL speed)
+- Hybrid ownership: EF for owned tables (`showcase.Items`), fluent `ExecuteSP` / `ExecuteSql` / `ExecuteEf` with mapping + latency compare
+- Headers: `X-Data-Access-Route`, `X-Blue-Green-Slot`, `X-Data-Access-Method` (EfCore|StoredProcedure|PlainSql)
+- Owner dashboard at `/` (shadow diffs, DAL speed, SLO p95/error counters)
 - Benchmark: `GET /api/showcase/items/{id}/benchmark`
-- BuildingBlocks: DataAccess (fluent), Observability, Security, Migration
+- JWT/MI-ready auth placeholder (`Auth:RequireJwt`)
+- SQL Pre/PostDeploy stubs + ownership attributes
 - Deploy: Docker Compose + EKS Helm (blue + green)
 
 ## Run locally

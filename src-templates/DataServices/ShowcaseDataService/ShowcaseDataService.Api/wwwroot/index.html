@@ -9,10 +9,10 @@
     header { padding: 1.5rem 2rem; background: #0f172a; color: #f8fafc; }
     header h1 { margin: 0 0 .35rem; font-size: 1.4rem; }
     header p { margin: 0; opacity: .85; }
-    main { padding: 1.5rem 2rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    main { padding: 1.5rem 2rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
     .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; }
     .card h2 { margin: 0 0 .5rem; font-size: .95rem; color: #64748b; font-weight: 600; }
-    .card .value { font-size: 1.6rem; font-weight: 700; }
+    .card .value { font-size: 1.35rem; font-weight: 700; }
     table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; }
     th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid #e2e8f0; font-size: .9rem; }
     th { background: #f8fafc; }
@@ -26,15 +26,20 @@
 <body>
   <header>
     <h1>Showcase Data Service — Blue/Green Owner Dashboard</h1>
-    <p>Headers: <code>X-Data-Access-Route</code> · Benchmark: <code>GET /api/showcase/items/{id}/benchmark</code> (EF vs ExecuteSp vs ExecuteSql)</p>
+    <p>
+      <code>X-Data-Access-Route</code> · <code>X-Data-Access-Method</code> (EfCore|StoredProcedure|PlainSql) ·
+      benchmark <code>GET /api/showcase/items/{id}/benchmark</code>
+    </p>
   </header>
   <main>
     <div class="card"><h2>Slot</h2><div class="value" id="slot">—</div></div>
-    <div class="card"><h2>Default route</h2><div class="value" id="route">—</div></div>
-    <div class="card"><h2>Shadow compares</h2><div class="value" id="total">0</div></div>
-    <div class="card"><h2>Fastest access</h2><div class="value" id="fastest">—</div></div>
+    <div class="card"><h2>Route</h2><div class="value" id="route">—</div></div>
+    <div class="card"><h2>Method</h2><div class="value" id="method">—</div></div>
+    <div class="card"><h2>Fastest DAL</h2><div class="value" id="fastest">—</div></div>
+    <div class="card"><h2>SLO p95 / budget</h2><div class="value" id="slo">—</div></div>
+    <div class="card"><h2>Errors %</h2><div class="value" id="err">—</div></div>
     <section class="wide">
-      <h2>EF vs StoredProcedure vs PlainSql (avg / p95)</h2>
+      <h2>EF vs ExecuteSP vs ExecuteSql</h2>
       <table>
         <thead><tr><th>Operation</th><th>Method</th><th>Samples</th><th>Avg ms</th><th>P95</th><th>Min</th><th>Max</th></tr></thead>
         <tbody id="stats"></tbody>
@@ -54,8 +59,11 @@
       const d = await r.json();
       document.getElementById('slot').textContent = d.slot;
       document.getElementById('route').textContent = d.defaultRoute;
-      document.getElementById('total').textContent = d.shadowComparisons;
+      document.getElementById('method').textContent = d.authoritativeMethod;
       document.getElementById('fastest').textContent = d.fastestMethodHint || 'run /benchmark';
+      const slo = d.slo || {};
+      document.getElementById('slo').innerHTML = `<span class="${slo.withinLatencyBudget ? 'ok' : 'bad'}">${slo.p95Ms ?? 0}</span> / ${slo.latencyBudgetMs ?? 200}`;
+      document.getElementById('err').innerHTML = `<span class="${slo.withinErrorBudget ? 'ok' : 'bad'}">${slo.errorRatePercent ?? 0}%</span> (${slo.errors ?? 0}/${slo.requests ?? 0})`;
       const stats = document.getElementById('stats');
       stats.innerHTML = '';
       (d.accessMethodStats || []).forEach(x => {

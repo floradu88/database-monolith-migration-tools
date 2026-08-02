@@ -20,11 +20,13 @@ public class ShadowReconciliationTests
             access,
             store,
             new InMemoryDataAccessTimingStore(),
+            new InMemoryShowcaseSloCounter(),
             Options.Create(new MigrationRoutingOptions
             {
                 DefaultRoute = DataAccessRoute.Shadow,
                 Slot = BlueGreenSlot.Blue
             }),
+            Options.Create(new ShowcaseSloOptions()),
             new HttpContextAccessor { HttpContext = http });
 
         await svc.GetSummaryAsync(Guid.NewGuid());
@@ -37,20 +39,28 @@ public class ShadowReconciliationTests
 
     private sealed class MismatchAccess : IShowcaseDataAccess
     {
-        public Task<ShowcaseSummaryDto?> GetSummaryAsync(Guid id, string connectionName, CancellationToken cancellationToken = default)
+        public Task<ShowcaseSummaryDto?> GetSummaryAsync(Guid id, string connectionName, DataAccessMethod method, CancellationToken cancellationToken = default)
         {
             var name = connectionName == "Source" ? "legacy" : "owned";
             return Task.FromResult<ShowcaseSummaryDto?>(new ShowcaseSummaryDto(id, name, "Active", connectionName));
         }
 
         public Task<ShowcaseSummaryDto?> GetSummaryViaEfAsync(Guid id, CancellationToken cancellationToken = default) =>
-            GetSummaryAsync(id, "Owned", cancellationToken);
+            GetSummaryAsync(id, "Owned", DataAccessMethod.EfCore, cancellationToken);
 
         public Task<ShowcaseSummaryDto?> GetSummaryViaSpAsync(Guid id, string connectionName, CancellationToken cancellationToken = default) =>
-            GetSummaryAsync(id, connectionName, cancellationToken);
+            GetSummaryAsync(id, connectionName, DataAccessMethod.StoredProcedure, cancellationToken);
 
         public Task<ShowcaseSummaryDto?> GetSummaryViaSqlAsync(Guid id, string connectionName, CancellationToken cancellationToken = default) =>
-            GetSummaryAsync(id, connectionName, cancellationToken);
+            GetSummaryAsync(id, connectionName, DataAccessMethod.PlainSql, cancellationToken);
+
+        public Task<DataAccessCompareResult<ShowcaseSummaryDto>> CompareAccessMethodsAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new DataAccessCompareResult<ShowcaseSummaryDto>
+            {
+                Operation = "GetShowcaseSummary",
+                Fastest = DataAccessMethod.PlainSql,
+                PayloadsMatch = false
+            });
 
         public Task UpdateAsync(ShowcaseUpdateRequest request, string connectionName, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;

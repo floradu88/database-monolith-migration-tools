@@ -33,39 +33,35 @@ public sealed class ShowcaseDataAccess : IShowcaseDataAccess
         _timings = timings;
     }
 
-    public async Task<ShowcaseSummaryDto?> GetSummaryAsync(Guid id, string connectionName, CancellationToken cancellationToken = default)
+    public Task<ShowcaseSummaryDto?> GetSummaryAsync(
+        Guid id,
+        string connectionName,
+        DataAccessMethod method,
+        CancellationToken cancellationToken = default)
     {
-        if (string.Equals(connectionName, "Owned", StringComparison.OrdinalIgnoreCase))
-            return await GetSummaryViaEfAsync(id, cancellationToken);
+        if (!string.Equals(connectionName, "Owned", StringComparison.OrdinalIgnoreCase))
+            return GetSummaryViaSpAsync(id, connectionName, cancellationToken);
 
-        return await GetSummaryViaSpAsync(id, connectionName, cancellationToken);
+        return method switch
+        {
+            DataAccessMethod.StoredProcedure => GetSummaryViaSpAsync(id, connectionName, cancellationToken),
+            DataAccessMethod.PlainSql => GetSummaryViaSqlAsync(id, connectionName, cancellationToken),
+            _ => GetSummaryViaEfAsync(id, cancellationToken)
+        };
     }
 
-    public async Task<ShowcaseSummaryDto?> GetSummaryViaEfAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        var sw = Stopwatch.StartNew();
-        try
-        {
-            var item = await _db.Items.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-            sw.Stop();
-            _access.RecordTiming("GetShowcaseSummary", DataAccessMethod.EfCore, "Owned", sw.ElapsedMilliseconds, item is null ? 0 : 1);
-            return item is null
-                ? null
-                : new ShowcaseSummaryDto(item.Id, item.Name, item.Status, "Owned-EF");
-        }
-        catch (Exception ex)
-        {
-            sw.Stop();
-            _access.RecordTiming("GetShowcaseSummary", DataAccessMethod.EfCore, "Owned", sw.ElapsedMilliseconds, 0, false, ex.Message);
-            throw;
-        }
-    }
+    public Task<ShowcaseSummaryDto?> GetSummaryViaEfAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _db.ExecuteEf(db => db.Set<ShowcaseItem>().AsNoTracking().Where(x => x.Id == id), _timings, "Owned")
+            .Named("GetShowcaseSummary")
+            .Map(item => new ShowcaseSummaryDto(item.Id, item.Name, item.Status, "Owned-EF"))
+            .FirstOrDefaultAsync(cancellationToken);
 
     public Task<ShowcaseSummaryDto?> GetSummaryViaSpAsync(Guid id, string connectionName, CancellationToken cancellationToken = default) =>
-        _access.ExecuteSp<ShowcaseSummaryDto>(SpGetShowcaseSummary.ProcedureName)
+        _access.ExecuteSP<ShowcaseSummaryDto>(SpGetShowcaseSummary.ProcedureName)
             .On(connectionName)
             .WithParameters(new { Id = id })
             .Named("GetShowcaseSummary")
+            .Timeout(30)
             .Map(row => row with { Source = $"{connectionName}-SP" })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -74,8 +70,18 @@ public sealed class ShowcaseDataAccess : IShowcaseDataAccess
             .On(connectionName)
             .WithParameters(new { Id = id })
             .Named("GetShowcaseSummary")
+            .Timeout(30)
             .Map(row => row with { Source = $"{connectionName}-SQL" })
             .FirstOrDefaultAsync(cancellationToken);
+
+    public Task<DataAccessCompareResult<ShowcaseSummaryDto>> CompareAccessMethodsAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _access.CompareAsync(
+            "GetShowcaseSummary",
+            "Owned",
+            ct => GetSummaryViaEfAsync(id, ct),
+            (ctx, ct) => GetSummaryViaSpAsync(id, "Owned", ct),
+            (ctx, ct) => GetSummaryViaSqlAsync(id, "Owned", ct),
+            cancellationToken);
 
     public async Task UpdateAsync(ShowcaseUpdateRequest request, string connectionName, CancellationToken cancellationToken = default)
     {
@@ -110,12 +116,15 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.Configure<SqlConnectionOptions>(configuration.GetSection(SqlConnectionOptions.SectionName));
         services.Configure<MigrationRoutingOptions>(configuration.GetSection(MigrationRoutingOptions.SectionName));
+        services.Configure<ShowcaseAuthOptions>(configuration.GetSection(ShowcaseAuthOptions.SectionName));
+        services.Configure<ShowcaseSloOptions>(configuration.GetSection(ShowcaseSloOptions.SectionName));
 
         var sql = configuration.GetSection(SqlConnectionOptions.SectionName).Get<SqlConnectionOptions>() ?? new SqlConnectionOptions();
         SqlConnectionGuard.EnsureLeastPrivilege(sql);
 
         services.AddSingleton<IShadowCompareStore, InMemoryShadowCompareStore>();
         services.AddSingleton<IDataAccessTimingStore, InMemoryDataAccessTimingStore>();
+        services.AddSingleton<IShowcaseSloCounter, InMemoryShowcaseSloCounter>();
         services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactory(name =>
             name.Equals("Source", StringComparison.OrdinalIgnoreCase)
                 ? sql.SourceFacadeConnectionString
@@ -136,4 +145,15 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IShowcaseItemService, ShowcaseItemService>();
         return services;
     }
+}
+
+public sealed class ShowcaseAuthOptions
+{
+    public const string SectionName = "Auth";
+    /// <summary>When false (default for local demo), JWT is not required.</summary>
+    public bool RequireJwt { get; set; }
+    public string Authority { get; set; } = "";
+    public string Audience { get; set; } = "showcase-dataservice";
+    /// <summary>Placeholder for Managed Identity / Azure AD app id — do not invent production values.</summary>
+    public string ManagedIdentityClientId { get; set; } = "";
 }

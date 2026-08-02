@@ -16,15 +16,26 @@ public sealed record AccessMethodStatDto(
     long P95Ms,
     bool IsFastest);
 
+public sealed record SloCountersDto(
+    long Requests,
+    long Errors,
+    double ErrorRatePercent,
+    long P95Ms,
+    double LatencyBudgetMs,
+    bool WithinLatencyBudget,
+    bool WithinErrorBudget);
+
 public sealed record ShowcaseDashboardDto(
     string Slot,
     string DefaultRoute,
+    string AuthoritativeMethod,
     int ShadowComparisons,
     int MatchingShadows,
     int MismatchingShadows,
     IReadOnlyList<ShadowDiffDto> RecentDiffs,
     IReadOnlyList<AccessMethodStatDto> AccessMethodStats,
-    string? FastestMethodHint);
+    string? FastestMethodHint,
+    SloCountersDto Slo);
 
 public sealed record ShadowDiffDto(
     string Operation,
@@ -45,4 +56,5 @@ public sealed record AccessBenchmarkDto(
     long SpMs,
     long SqlMs,
     string FastestMethod,
+    bool PayloadsMatch,
     IReadOnlyList<AccessMethodStatDto> CumulativeStats);
