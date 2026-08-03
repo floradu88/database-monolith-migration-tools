@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using BuildingBlocks.DataAccess.Abstractions;
 using DbIntelligence.Domain;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -126,12 +127,13 @@ public sealed class RepositoryScannerService
         string filePath,
         CompilationUnitSyntax root)
     {
+        var tokens = DynamicProcedureNameScanner.BuildTokenCatalog(root);
         foreach (var method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
         {
             var typeName = method.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault()?.Identifier.Text ?? "Global";
             var memberName = method.Identifier.Text;
             var methodText = method.ToFullString();
-            foreach (var finding in ScanMethodBody(repositoryPath, filePath, typeName, memberName, method, methodText))
+            foreach (var finding in ScanMethodBody(repositoryPath, filePath, typeName, memberName, method, methodText, tokens))
                 yield return finding;
         }
     }
@@ -142,7 +144,8 @@ public sealed class RepositoryScannerService
         string typeName,
         string memberName,
         MethodDeclarationSyntax method,
-        string methodText)
+        string methodText,
+        DynamicProcedureNameScanner.TokenCatalog tokens)
     {
         foreach (var invocation in method.DescendantNodes().OfType<InvocationExpressionSyntax>())
         {
@@ -158,10 +161,14 @@ public sealed class RepositoryScannerService
                 }
             }
 
-            if (LooksLike(invText, "Query<", "QueryAsync", "Execute(", "ExecuteAsync", "QueryMultiple", "QueryFirst"))
+            if (LooksLike(invText, "Query<", "QueryAsync", "Execute(", "ExecuteAsync", "QueryMultiple", "QueryFirst", "ExecuteSP", "ExecuteSp"))
             {
                 foreach (var lit in ExtractStringArgs(invocation))
                 {
+                    // Interpolated / templated procedure names are handled by DynamicProcedureNameScanner.
+                    if (lit.Contains('{', StringComparison.Ordinal) || lit.TrimStart().StartsWith('$'))
+                        continue;
+
                     var isProc = !lit.Contains(' ', StringComparison.Ordinal) && ObjectNameRegex.IsMatch(lit);
                     if (isProc)
                     {
@@ -196,7 +203,7 @@ public sealed class RepositoryScannerService
             }
         }
 
-        // Interpolated / concatenated dynamic SQL
+        // Interpolated / concatenated dynamic SQL (SELECT/EXEC bodies)
         foreach (var interp in method.DescendantNodes().OfType<InterpolatedStringExpressionSyntax>())
         {
             var text = interp.ToString();
@@ -206,6 +213,11 @@ public sealed class RepositoryScannerService
             foreach (var f in FromSqlLiteral(repositoryPath, filePath, typeName, memberName, text, line, "interpolated-sql", dynamic: true))
                 yield return f;
         }
+
+        // Interpolated / concatenated procedure *names* with enum/const expansion
+        foreach (var f in DynamicProcedureNameScanner.ScanMethod(
+                     repositoryPath, filePath, typeName, memberName, method, tokens))
+            yield return f;
     }
 
     private static IEnumerable<CodeReferenceFinding> FromSqlLiteral(
@@ -311,9 +323,7 @@ public sealed class RepositoryScannerService
         text.Contains("EXEC", StringComparison.OrdinalIgnoreCase);
 
     private static string NormalizeName(string value) =>
-        value.Replace("[", "", StringComparison.Ordinal)
-             .Replace("]", "", StringComparison.Ordinal)
-             .Trim();
+        StoredProcedureName.NormalizeProcedureName(value);
 
     private static (string? Schema, string Name, NodeKind Kind) ClassifyDbObject(string normalized, EdgeRelation relation)
     {

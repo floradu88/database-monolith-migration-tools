@@ -35,19 +35,20 @@ It includes:
 ## Start here
 
 1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + kit overview)
-2. **[`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)** — findings → domain project roadmap + template
-3. **[`src-templates/DataServices/ShowcaseDataService/`](src-templates/DataServices/ShowcaseDataService/)** — golden DB-as-a-Service template + [`SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md)
-4. `docs/00-master-plan.md`
-5. `docs/01-target-architecture.md`
-5. `docs/02-solution-and-project-structure.md`
-6. `docs/03-source-monolith-split.md`
-7. `docs/04-target-database-project-strategy.md`
-8. `docs/05-migration-control-plane.md`
-9. `docs/06-usage-tracking-and-audit.md`
-10. `docs/07-data-access-strategy.md`
-11. `docs/08-performance-monitoring-and-scaling.md`
-12. `docs/09-rbac-security-and-change-control.md`
-13. `docs/10-execution-roadmap.md`
+2. **[`docs/PROJECT-GUIDE.md`](docs/PROJECT-GUIDE.md)** — all kit projects, why use them, pros/cons
+3. **[`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)** — findings → domain project roadmap + template
+4. **[`src-templates/DataServices/ShowcaseDataService/`](src-templates/DataServices/ShowcaseDataService/)** — golden DB-as-a-Service template + [`SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md) + [`DATABASE-HOSTING.md`](src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md) (OnPrem / Azure / Aws)
+5. `docs/00-master-plan.md`
+6. `docs/01-target-architecture.md`
+7. `docs/02-solution-and-project-structure.md`
+8. `docs/03-source-monolith-split.md`
+9. `docs/04-target-database-project-strategy.md`
+10. `docs/05-migration-control-plane.md`
+11. `docs/06-usage-tracking-and-audit.md`
+12. `docs/07-data-access-strategy.md`
+13. `docs/08-performance-monitoring-and-scaling.md`
+14. `docs/09-rbac-security-and-change-control.md`
+15. `docs/10-execution-roadmap.md`
 
 ## PowerShell command reference (local run)
 

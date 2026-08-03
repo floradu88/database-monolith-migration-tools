@@ -42,7 +42,19 @@ Review `out\Insight\FINDINGS-REVIEW.md` — AMBIGUOUS is not owned.
   -CopyManifestsToKit
 ```
 
-### 4. Blue (SourceFacade)
+### 4. Deploy owned database artifacts (non-prod)
+
+Hybrid order — DBA review; never invent production credentials; never auto-run destructive SQL:
+
+1. SQL PreDeploy (`ShowcaseDataService.Database/Scripts/PreDeploy.sql`)
+2. EF migrations (`ShowcaseDataService.Migrations`) for `showcase.Items`
+3. SQL project dacpac — SPs + `deployment.DatabaseContract`
+4. Approved `Cutover/*.up.sql` in order (`001` façade → `002` owned)
+5. SQL PostDeploy (RBAC stubs + contract stamp)
+
+Ownership map: [`ShowcaseDataService.Database/object-ownership.yml`](ShowcaseDataService.Database/object-ownership.yml).
+
+### 5. Blue (SourceFacade)
 
 ```powershell
 cd ..\DataServices\ShowcaseDataService\ShowcaseDataService.Api
@@ -59,11 +71,11 @@ cd ..\deploy
 docker compose --profile blue up --build
 ```
 
-### 5. Shadow compare (evidence)
+### 6. Shadow compare (evidence)
 
 Send reads with `X-Data-Access-Route: Shadow`. Open `/` dashboard — matching vs mismatching shadow diffs. **No dual-write.**
 
-### 6. Green (Owned)
+### 7. Green (Owned)
 
 ```powershell
 $env:MigrationRouting__Slot = "Green"
@@ -74,7 +86,7 @@ dotnet run --launch-profile green
 
 Compose: `docker compose --profile green up --build`
 
-### 7. EKS weight switch (template)
+### 8. EKS weight switch (template)
 
 ```powershell
 helm template showcase .\deploy\helm\showcase-dataservice `
@@ -82,12 +94,16 @@ helm template showcase .\deploy\helm\showcase-dataservice `
 # Raise greenWeight only after owner + DBA approval
 ```
 
-### 8. Approve
+### 9. Approve
 
-- Domain owner signs ownership manifests
+- Domain owner signs ownership manifests (`manifests/domains/showcase.example.yml`, `object-ownership.yml`)
 - DBA reviews SQL project vs EF split + RBAC (`sql/common/21-create-rbac-roles.sql` is DBA-review only)
 - Complete production cutover checklist before real traffic
 
 ## Rollback
 
-Set route/slot back to Blue / SourceFacade (or ingress blueWeight=100). Do not drop owned objects without DBA review.
+1. Apply matching `Cutover/*.down.sql` in reverse order (DBA review).
+2. Redeploy previous approved dacpac if SP definitions must roll back.
+3. Set route/slot back to Blue / SourceFacade (or ingress blueWeight=100).
+
+Do not drop owned objects without DBA review.

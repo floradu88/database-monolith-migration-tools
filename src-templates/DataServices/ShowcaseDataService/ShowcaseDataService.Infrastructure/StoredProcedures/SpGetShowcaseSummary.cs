@@ -1,10 +1,12 @@
 using BuildingBlocks.DataAccess.Abstractions;
+using Microsoft.Extensions.Options;
 using ShowcaseDataService.Contracts;
 
 namespace ShowcaseDataService.Infrastructure.StoredProcedures;
 
 /// <summary>
 /// Sample SP wrapper: <c>context.ExecuteSP&lt;T&gt;().WithParameters(...).ToListAsync()</c>.
+/// Procedure schema comes from <see cref="ShowcaseDatabaseOptions"/> (single config place).
 /// </summary>
 public interface ISpGetShowcaseSummary
 {
@@ -14,10 +16,16 @@ public interface ISpGetShowcaseSummary
 
 public sealed class SpGetShowcaseSummary : ISpGetShowcaseSummary
 {
-    public const string ProcedureName = "showcase.GetShowcaseSummary";
     private readonly IDataAccessContext _access;
+    private readonly ShowcaseDatabaseOptions _database;
 
-    public SpGetShowcaseSummary(IDataAccessContext access) => _access = access;
+    public SpGetShowcaseSummary(IDataAccessContext access, IOptions<ShowcaseDatabaseOptions> database)
+    {
+        _access = access;
+        _database = database.Value;
+    }
+
+    public string ProcedureName => _database.GetShowcaseSummaryProcedure;
 
     public Task<ShowcaseSummaryDto?> ExecuteAsync(Guid id, string connectionName, CancellationToken cancellationToken = default) =>
         _access.ExecuteSP<ShowcaseSummaryDto>(ProcedureName)

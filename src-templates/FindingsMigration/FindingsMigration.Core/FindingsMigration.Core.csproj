@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\FindingsMigration.Contracts\FindingsMigration.Contracts.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\DataAccess.Abstractions\DataAccess.Abstractions.csproj" />
   </ItemGroup>
 </Project>

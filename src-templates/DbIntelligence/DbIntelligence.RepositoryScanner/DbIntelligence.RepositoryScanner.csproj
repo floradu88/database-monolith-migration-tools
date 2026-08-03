@@ -9,5 +9,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DbIntelligence.Domain\DbIntelligence.Domain.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\DataAccess.Abstractions\DataAccess.Abstractions.csproj" />
   </ItemGroup>
 </Project>

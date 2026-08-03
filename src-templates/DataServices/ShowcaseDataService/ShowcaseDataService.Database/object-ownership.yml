@@ -1,0 +1,44 @@
+# Declares non-overlapping ownership for the Showcase golden hybrid model.
+# Fail CI / review if the same object appears under both owners.
+# Runtime schema + owned connection are configured in one .NET place: appsettings Database section
+# (Database:Schema, Database:OwnedConnectionString). Keep SQL project scripts aligned when Schema changes.
+domain: showcase
+target_service: ShowcaseDataService
+target_database: ShowcaseOwned
+target_schema: showcase
+database_change_model: hybrid
+dotnet_config_section: Database
+
+sql_project:
+  project: ShowcaseDataService.Database
+  owns:
+    - showcase schema
+    - deployment schema
+    - deployment.DatabaseContract
+    - deployment.v_DatabaseContractHealth
+    - showcase.GetShowcaseSummary
+    - showcase.usp_Showcase_Sales_Summary
+    - showcase.usp_Showcase_Inventory_Detail
+    - security / RBAC grants (PostDeploy stubs)
+
+ef_migrations:
+  project: ShowcaseDataService.Migrations
+  owns:
+    - showcase.Items
+
+cutover_scripts:
+  path: ShowcaseDataService.Database/Cutover
+  purpose: ordered up/down for FacadeThenMove waves (not SSDT Build objects)
+  apply_after:
+    - SQL pre-deploy / foundation
+    - EF migrations for EF-owned tables
+    - SQL project programmable objects (dacpac)
+  apply_by: DBA or migration control plane (never auto-execute destructive SQL)
+
+deploy_order:
+  - sql_pre_deploy
+  - ef_migrations
+  - sql_project_dacpac
+  - cutover_up_scripts
+  - security_grants_post_deploy
+  - contract_stamp_post_deploy

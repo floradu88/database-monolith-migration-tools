@@ -91,3 +91,20 @@ Fail the pipeline when:
 - a stored procedure references another domain database;
 - runtime role receives DDL;
 - deployment checksum differs from approved artifact.
+
+## Hosting providers (OnPrem / Azure / Aws)
+
+Target databases may run on:
+
+| Provider | Examples |
+|----------|----------|
+| OnPrem | SQL Server, Always On, LocalDB (lab) |
+| Azure | Azure SQL Database, Managed Instance, SQL on Azure VM |
+| Aws | RDS for SQL Server, SQL Server on EC2 |
+
+Runtime configuration (golden template): `Database:Owned:Provider` / `Database:SourceFacade:Provider` with connection composition and guardrails in `BuildingBlocks.Security` (`SqlHostProvider`, `SqlConnectionStringComposer`).
+
+**Pros/cons and when to choose each host:** [`../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md`](../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md).  
+**All kit projects and why to use them:** [`PROJECT-GUIDE.md`](PROJECT-GUIDE.md).
+
+FacadeThenMove often keeps **SourceFacade** on OnPrem while **Owned** lands on Azure or Aws; do not invent credentials or cloud resources in kit templates.

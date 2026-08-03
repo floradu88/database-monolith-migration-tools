@@ -3,16 +3,19 @@
 ## How to run / operate locally
 
 - `../HOW-TO-USE.md` — PowerShell setup, run, index, batch (`D:\code\projects` / `C:\code`); prefer `Invoke-DbIntelligenceReady.ps1` (path only); fnm Node; Codegraph via `fnm exec --using=lts-latest`
+- `PROJECT-GUIDE.md` — kit projects, why use them, pros/cons (OnPrem/Azure/Aws hosting summary links)
 - `../src-templates/DbIntelligence/README.md` — DbIntelligence project how-to
 - `../src-templates/DbIntelligence/scripts/Invoke-DbIntelligenceReady.ps1` — path-only one-shot (prereqs → build → health → API → index)
 - `../src-templates/DbIntelligence/scripts/Initialize-DbIntelligenceNode.ps1` — fnm Node/npm; Codegraph via `fnm exec --using=lts-latest`
 - `../src-templates/FindingsMigration/README.md` — promote JSON maps to domain packages
+- `../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md` — OnPrem / Azure / Aws pros/cons + config
 - `dbintelligence-runbook.md` — short PowerShell runbook + plan snapshot
 - `FUTURE-FEATURES.md` — findings → domain project roadmap
 - `03-discovery-and-ai-indexing.md` — discovery model + DbIntelligence PowerShell snippet
 
 ## Canonical plan
 
+0. `PROJECT-GUIDE.md` — projects + pros/cons (read with the plan)
 1. `00-master-plan.md`
 2. `01-target-architecture.md`
 3. `02-solution-and-project-structure.md`

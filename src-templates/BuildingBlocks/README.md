@@ -7,7 +7,9 @@
 | DataAccess.EfCore | `ExecuteEf` / `ExecuteQuery` fluent + migration history schema |
 | Migration | Route/slot/method options + shadow compare |
 | Observability | OpenTelemetry ASP.NET / Http / SqlClient |
-| Security | Least-privilege connection options; reject `db_owner` runtime |
+| Security | Least-privilege connection options; OnPrem/Azure/Aws composer + guards |
+
+Shared packages are documented in context in [`../../docs/PROJECT-GUIDE.md`](../../docs/PROJECT-GUIDE.md). Hosting pros/cons: [`../DataServices/ShowcaseDataService/DATABASE-HOSTING.md`](../DataServices/ShowcaseDataService/DATABASE-HOSTING.md).
 
 ## Fluent access (all three)
 

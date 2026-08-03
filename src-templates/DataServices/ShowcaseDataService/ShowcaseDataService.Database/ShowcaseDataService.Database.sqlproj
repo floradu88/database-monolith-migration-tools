@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Golden hybrid SQL project: owns schemas, SPs, security, and DatabaseContract.
+  Does NOT build EF-owned tables (see Reference/EfOwned) or Cutover up/down scripts (None).
+  Version desired-state objects via git + dacpac; use Cutover/ for ordered reversible waves.
+-->
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -14,6 +19,8 @@
     <ModelCollation>1033,CI</ModelCollation>
     <DefaultFileStructure>BySchemaObjectType</DefaultFileStructure>
     <TargetDatabaseSet>True</TargetDatabaseSet>
+    <!-- Stamp used by PostDeploy contract row (override at publish if needed). -->
+    <DatabaseContractVersion>1.0.0-showcase</DatabaseContractVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -26,16 +33,33 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Security\" />
-    <Folder Include="Tables\" />
+    <Folder Include="Contract\" />
     <Folder Include="Programmability\" />
+    <Folder Include="Programmability\Generated\" />
     <Folder Include="Scripts\" />
+    <Folder Include="Cutover\" />
+    <Folder Include="Reference\EfOwned\" />
   </ItemGroup>
   <ItemGroup>
+    <!-- SQL-project-owned (desired state → dacpac). -->
     <Build Include="Security\Schemas.sql" />
-    <Build Include="Tables\Items.sql" />
+    <Build Include="Contract\DatabaseContract.sql" />
     <Build Include="Programmability\GetShowcaseSummary.sql" />
+    <Build Include="Programmability\usp_Showcase_Sales_Summary.sql" />
+    <Build Include="Programmability\usp_Showcase_Inventory_Detail.sql" />
+    <!-- FindingsMigration writes stubs under Programmability\Generated\ — add each Build Include when promoting. -->
     <PreDeploy Include="Scripts\PreDeploy.sql" />
     <PostDeploy Include="Scripts\PostDeploy.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Not Build: EF owns showcase.Items — reference shape only (never dual-own). -->
+    <None Include="Reference\EfOwned\Items.reference.sql" />
+    <!-- Not Build: ordered cutover up/down applied by DBA/control-plane, not SSDT publish model. -->
+    <None Include="Cutover\**\*.sql" />
+    <None Include="Cutover\README.md" />
+    <None Include="object-ownership.yml" />
+    <None Include="README.md" />
+    <None Include="AI-INSTRUCTIONS.md" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" Condition="'$(SQLDBExtensionsRefPath)' == '' AND Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')" />
 </Project>

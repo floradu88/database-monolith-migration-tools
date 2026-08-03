@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using BuildingBlocks.DataAccess.Abstractions;
 using BuildingBlocks.DataAccess.Dapper;
 using BuildingBlocks.DataAccess.EfCore;
@@ -7,6 +6,7 @@ using BuildingBlocks.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using ShowcaseDataService.Application;
 using ShowcaseDataService.Contracts;
 using ShowcaseDataService.Domain;
@@ -19,18 +19,24 @@ public sealed class ShowcaseDataAccess : IShowcaseDataAccess
     private readonly ShowcaseDbContext _db;
     private readonly IDataAccessContext _access;
     private readonly IDataAccessTimingStore _timings;
+    private readonly ShowcaseDatabaseOptions _database;
+    private readonly string _summarySql;
 
-    private const string SummarySql = """
-        SELECT [Id], [Name], [Status], CAST('Owned-SQL' AS NVARCHAR(50)) AS [Source]
-        FROM [showcase].[Items]
-        WHERE [Id] = @Id
-        """;
-
-    public ShowcaseDataAccess(ShowcaseDbContext db, IDataAccessContext access, IDataAccessTimingStore timings)
+    public ShowcaseDataAccess(
+        ShowcaseDbContext db,
+        IDataAccessContext access,
+        IDataAccessTimingStore timings,
+        IOptions<ShowcaseDatabaseOptions> database)
     {
         _db = db;
         _access = access;
         _timings = timings;
+        _database = database.Value;
+        _summarySql = $"""
+            SELECT [Id], [Name], [Status], CAST('Owned-SQL' AS NVARCHAR(50)) AS [Source]
+            FROM {_database.ItemsTable}
+            WHERE [Id] = @Id
+            """;
     }
 
     public Task<ShowcaseSummaryDto?> GetSummaryAsync(
@@ -57,7 +63,7 @@ public sealed class ShowcaseDataAccess : IShowcaseDataAccess
             .FirstOrDefaultAsync(cancellationToken);
 
     public Task<ShowcaseSummaryDto?> GetSummaryViaSpAsync(Guid id, string connectionName, CancellationToken cancellationToken = default) =>
-        _access.ExecuteSP<ShowcaseSummaryDto>(SpGetShowcaseSummary.ProcedureName)
+        _access.ExecuteSP<ShowcaseSummaryDto>(_database.GetShowcaseSummaryProcedure)
             .On(connectionName)
             .WithParameters(new { Id = id })
             .Named("GetShowcaseSummary")
@@ -66,7 +72,7 @@ public sealed class ShowcaseDataAccess : IShowcaseDataAccess
             .FirstOrDefaultAsync(cancellationToken);
 
     public Task<ShowcaseSummaryDto?> GetSummaryViaSqlAsync(Guid id, string connectionName, CancellationToken cancellationToken = default) =>
-        _access.ExecuteSql<ShowcaseSummaryDto>(SummarySql)
+        _access.ExecuteSql<ShowcaseSummaryDto>(_summarySql)
             .On(connectionName)
             .WithParameters(new { Id = id })
             .Named("GetShowcaseSummary")
@@ -114,33 +120,54 @@ public static class InfrastructureServiceCollectionExtensions
 {
     public static IServiceCollection AddShowcaseInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<SqlConnectionOptions>(configuration.GetSection(SqlConnectionOptions.SectionName));
+        var database = ShowcaseDatabaseOptions.FromConfiguration(configuration);
+        services.AddSingleton(Options.Create(database));
+
         services.Configure<MigrationRoutingOptions>(configuration.GetSection(MigrationRoutingOptions.SectionName));
         services.Configure<ShowcaseAuthOptions>(configuration.GetSection(ShowcaseAuthOptions.SectionName));
         services.Configure<ShowcaseSloOptions>(configuration.GetSection(ShowcaseSloOptions.SectionName));
 
-        var sql = configuration.GetSection(SqlConnectionOptions.SectionName).Get<SqlConnectionOptions>() ?? new SqlConnectionOptions();
-        SqlConnectionGuard.EnsureLeastPrivilege(sql);
+        var ownedCs = database.ResolveOwnedConnectionString();
+        var sourceCs = database.ResolveSourceFacadeConnectionString();
+
+        // Bridge for any BuildingBlocks callers still bound to SqlConnections.
+        services.Configure<SqlConnectionOptions>(opts =>
+        {
+            opts.OwnedConnectionString = ownedCs;
+            opts.SourceFacadeConnectionString = sourceCs;
+            opts.AllowDbOwner = database.AllowDbOwner;
+        });
+
+        SqlConnectionGuard.EnsureLeastPrivilege(new SqlConnectionOptions
+        {
+            OwnedConnectionString = ownedCs,
+            SourceFacadeConnectionString = sourceCs,
+            AllowDbOwner = database.AllowDbOwner
+        });
 
         services.AddSingleton<IShadowCompareStore, InMemoryShadowCompareStore>();
         services.AddSingleton<IDataAccessTimingStore, InMemoryDataAccessTimingStore>();
         services.AddSingleton<IShowcaseSloCounter, InMemoryShowcaseSloCounter>();
         services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactory(name =>
             name.Equals("Source", StringComparison.OrdinalIgnoreCase)
-                ? sql.SourceFacadeConnectionString
-                : sql.OwnedConnectionString));
+                ? sourceCs
+                : ownedCs));
         services.AddScoped<IDataAccessContext>(sp =>
             new DataAccessContext(
                 sp.GetRequiredService<IDbConnectionFactory>(),
                 sp.GetRequiredService<IDataAccessTimingStore>()));
 
-        services.AddDbContext<ShowcaseDbContext>(options =>
-            options.UseShowcaseSqlServer(
-                string.IsNullOrWhiteSpace(sql.OwnedConnectionString)
-                    ? "Server=(localdb)\\mssqllocaldb;Database=ShowcaseOwned;Trusted_Connection=True;TrustServerCertificate=True"
-                    : sql.OwnedConnectionString));
+        if (string.IsNullOrWhiteSpace(ownedCs))
+        {
+            ownedCs =
+                "Server=(localdb)\\mssqllocaldb;Database=ShowcaseOwned;Trusted_Connection=True;TrustServerCertificate=True";
+        }
+
+        services.AddDbContext<ShowcaseDbContext>((sp, options) =>
+            options.UseShowcaseSqlServer(ownedCs));
 
         services.AddScoped<ISpGetShowcaseSummary, SpGetShowcaseSummary>();
+        services.AddScoped<ISpGetShowcaseReport, SpGetShowcaseReport>();
         services.AddScoped<IShowcaseDataAccess, ShowcaseDataAccess>();
         services.AddScoped<IShowcaseItemService, ShowcaseItemService>();
         return services;

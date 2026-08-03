@@ -1,0 +1,29 @@
+domain: showcase
+owner_team: Showcase Platform
+source_database: MonolithDb
+source_projects:
+  - Monolith.Database.Composite
+target_service: ShowcaseDataService
+target_database: ShowcaseOwned
+target_schema: showcase
+database_change_model: hybrid
+sql_project_owns:
+  - schemas
+  - stored_procedures
+  - functions
+  - views
+  - security
+  - deployment.DatabaseContract
+ef_migrations_own:
+  - showcase.Items
+runtime_identity: ShowcaseDataService.Runtime
+migration_identity: ShowcaseDataService.Migration
+cutover:
+  sql_project: ShowcaseDataService.Database
+  cutover_scripts: ShowcaseDataService.Database/Cutover
+  strategy: FacadeThenMove
+read_scaling:
+  replica_safe_operations:
+    - GetShowcaseSummary
+sharding:
+  enabled: false

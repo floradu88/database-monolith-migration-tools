@@ -284,6 +284,14 @@ public sealed class StoredProcedureMapEntryDto
     [JsonPropertyName("writes")]
     public List<string> Writes { get; set; } = [];
 
+    /// <summary>When the call site used a template / interpolation, the <c>{Token}</c> form.</summary>
+    [JsonPropertyName("nameTemplate")]
+    public string? NameTemplate { get; set; }
+
+    /// <summary>Concrete names expanded from enums/constants when available.</summary>
+    [JsonPropertyName("resolvedNames")]
+    public List<string> ResolvedNames { get; set; } = [];
+
     /// <summary>Caller sites with full path + line.</summary>
     [JsonPropertyName("references")]
     public List<CodeReferenceLocationDto> References { get; set; } = [];

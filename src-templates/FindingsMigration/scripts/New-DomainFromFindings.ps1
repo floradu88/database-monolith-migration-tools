@@ -66,7 +66,7 @@ Get-ChildItem $dest -Recurse | Sort-Object FullName -Descending | ForEach-Object
 $schemaLower = $DomainName.ToLowerInvariant()
 
 # Replace text inside common text files
-$patterns = @("*.cs", "*.csproj", "*.md", "*.json", "*.yml", "*.yaml", "*.sql", "*.html")
+$patterns = @("*.cs", "*.csproj", "*.sqlproj", "*.md", "*.json", "*.yml", "*.yaml", "*.sql", "*.html")
 foreach ($pat in $patterns) {
     Get-ChildItem $dest -Recurse -Filter $pat -File -ErrorAction SilentlyContinue | ForEach-Object {
         $text = Get-Content -LiteralPath $_.FullName -Raw -ErrorAction SilentlyContinue

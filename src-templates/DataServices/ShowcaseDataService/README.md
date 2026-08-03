@@ -4,13 +4,34 @@ Buildable, replicable data-service template for this kit. **CustomerDataService*
 
 ## Features
 
-- Hybrid ownership: EF for owned tables (`showcase.Items`), fluent `ExecuteSP` / `ExecuteSql` / `ExecuteEf` with mapping + latency compare
+- Hybrid ownership (see `ShowcaseDataService.Database/object-ownership.yml`):
+  - **SQL project** owns SPs, schemas, security, `deployment.DatabaseContract` (desired-state → dacpac)
+  - **EF migrations** own selected tables only (`showcase.Items`)
+  - **Cutover/** holds ordered up/down waves (not SSDT Build)
+- **Single .NET config place** — `Database` in `appsettings.json` (`Schema`, `Owned` / `SourceFacade` endpoints). Host providers: **OnPrem | Azure | Aws** (see [`DATABASE-HOSTING.md`](DATABASE-HOSTING.md)). Env: `Database__Owned__Provider`, `Database__Owned__ConnectionString`, …
+- **Templated SP names** — use enums/constants for `$"{ValueA}_{ValueB}"` holes (`ShowcaseProcedureNames` + `StoredProcedureName`). DbIntelligence expands them for discovery; FindingsMigration emits per-combination SQL stubs.
+- Fluent `ExecuteSP` / `ExecuteSql` / `ExecuteEf` with mapping + latency compare
 - Headers: `X-Data-Access-Route`, `X-Blue-Green-Slot`, `X-Data-Access-Method` (EfCore|StoredProcedure|PlainSql)
 - Owner dashboard at `/` (shadow diffs, DAL speed, SLO p95/error counters)
 - Benchmark: `GET /api/showcase/items/{id}/benchmark`
 - JWT/MI-ready auth placeholder (`Auth:RequireJwt`)
-- SQL Pre/PostDeploy stubs + ownership attributes
 - Deploy: Docker Compose + EKS Helm (blue + green)
+
+## Database layout
+
+```text
+ShowcaseDataService.Database/
+├── Programmability/          # SP desired state (Build)
+├── Contract/                 # version / health surface (Build)
+├── Security/                 # schemas (Build)
+├── Scripts/Pre|PostDeploy    # foundation + contract stamp
+├── Cutover/                  # NNN_*.up.sql / *.down.sql (None)
+├── Reference/EfOwned/        # EF table shapes — not Build
+└── object-ownership.yml
+ShowcaseDataService.Migrations/  # EF-owned tables only
+```
+
+Deploy order: PreDeploy → EF migrations → dacpac → Cutover ups → PostDeploy. Details: [`ShowcaseDataService.Database/README.md`](ShowcaseDataService.Database/README.md).
 
 ## Run locally
 
@@ -27,4 +48,4 @@ docker compose --profile blue --profile green up --build
 
 ## Cutover demo
 
-See [`SHOWCASE-CUTOVER.md`](SHOWCASE-CUTOVER.md).
+See [`SHOWCASE-CUTOVER.md`](SHOWCASE-CUTOVER.md). Hosting (OnPrem / Azure / Aws pros & cons): [`DATABASE-HOSTING.md`](DATABASE-HOSTING.md). Kit projects overview: [`../../../docs/PROJECT-GUIDE.md`](../../../docs/PROJECT-GUIDE.md).

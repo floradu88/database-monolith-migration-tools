@@ -8,3 +8,11 @@ This scaffold is intentionally minimal — wire approved package versions and re
 
 - Root kit overview: [`../../../README.md`](../../../README.md)
 - Local DbIntelligence ops (PowerShell, fnm Node, Codegraph via `fnm exec`): [`../../../HOW-TO-USE.md`](../../../HOW-TO-USE.md)
+
+## Stored procedure name templates
+
+Use `StoredProcedureName` for call sites that build SP names from segments (`usp_{Area}_{Action}`, `$"{a}_{b}"`):
+
+- Prefer **enums** or named **constants** for each hole so scanners can expand concrete procedures.
+- Runtime: `StoredProcedureName.Format(template, enumA, enumB)`
+- Discovery: `StoredProcedureName.Expand(template, tokenMap)` (capped)

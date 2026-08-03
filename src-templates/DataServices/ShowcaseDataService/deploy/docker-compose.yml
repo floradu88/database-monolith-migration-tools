@@ -12,8 +12,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       MigrationRouting__Slot: Blue
       MigrationRouting__DefaultRoute: SourceFacade
-      SqlConnections__SourceFacadeConnectionString: "Server=host.docker.internal,1433;Database=MonolithDb;User Id=app_ro;Password=CHANGE_ME;TrustServerCertificate=True"
-      SqlConnections__OwnedConnectionString: "Server=host.docker.internal,1433;Database=ShowcaseDb;User Id=app_rw;Password=CHANGE_ME;TrustServerCertificate=True"
+      Database__Schema: showcase
+      Database__Owned__Provider: OnPrem
+      Database__SourceFacade__Provider: OnPrem
+      Database__SourceFacade__ConnectionString: "Server=host.docker.internal,1433;Database=MonolithDb;User Id=app_ro;Password=CHANGE_ME;TrustServerCertificate=True"
+      Database__Owned__ConnectionString: "Server=host.docker.internal,1433;Database=ShowcaseDb;User Id=app_rw;Password=CHANGE_ME;TrustServerCertificate=True"
 
   showcase-green:
     profiles: ["green"]
@@ -26,5 +29,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       MigrationRouting__Slot: Green
       MigrationRouting__DefaultRoute: Owned
-      SqlConnections__SourceFacadeConnectionString: "Server=host.docker.internal,1433;Database=MonolithDb;User Id=app_ro;Password=CHANGE_ME;TrustServerCertificate=True"
-      SqlConnections__OwnedConnectionString: "Server=host.docker.internal,1433;Database=ShowcaseDb;User Id=app_rw;Password=CHANGE_ME;TrustServerCertificate=True"
+      Database__Schema: showcase
+      Database__Owned__Provider: OnPrem
+      Database__SourceFacade__Provider: OnPrem
+      Database__SourceFacade__ConnectionString: "Server=host.docker.internal,1433;Database=MonolithDb;User Id=app_ro;Password=CHANGE_ME;TrustServerCertificate=True"
+      Database__Owned__ConnectionString: "Server=host.docker.internal,1433;Database=ShowcaseDb;User Id=app_rw;Password=CHANGE_ME;TrustServerCertificate=True"

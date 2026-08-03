@@ -28,16 +28,22 @@ spec:
               value: {{ .Values.blue.slot | quote }}
             - name: MigrationRouting__DefaultRoute
               value: {{ .Values.blue.defaultRoute | quote }}
-            - name: SqlConnections__SourceFacadeConnectionString
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.existingSecretName }}
-                  key: {{ .Values.sourceConnectionKey }}
-            - name: SqlConnections__OwnedConnectionString
+            - name: Database__Schema
+              value: {{ .Values.database.schema | quote }}
+            - name: Database__Owned__Provider
+              value: {{ .Values.database.provider | quote }}
+            - name: Database__SourceFacade__Provider
+              value: {{ .Values.database.sourceProvider | quote }}
+            - name: Database__Owned__ConnectionString
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.existingSecretName }}
                   key: {{ .Values.ownedConnectionKey }}
+            - name: Database__SourceFacade__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecretName }}
+                  key: {{ .Values.sourceConnectionKey }}
           readinessProbe:
             httpGet:
               path: /ready
@@ -79,16 +85,22 @@ spec:
               value: {{ .Values.green.slot | quote }}
             - name: MigrationRouting__DefaultRoute
               value: {{ .Values.green.defaultRoute | quote }}
-            - name: SqlConnections__SourceFacadeConnectionString
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.existingSecretName }}
-                  key: {{ .Values.sourceConnectionKey }}
-            - name: SqlConnections__OwnedConnectionString
+            - name: Database__Schema
+              value: {{ .Values.database.schema | quote }}
+            - name: Database__Owned__Provider
+              value: {{ .Values.database.provider | quote }}
+            - name: Database__SourceFacade__Provider
+              value: {{ .Values.database.sourceProvider | quote }}
+            - name: Database__Owned__ConnectionString
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.existingSecretName }}
                   key: {{ .Values.ownedConnectionKey }}
+            - name: Database__SourceFacade__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecretName }}
+                  key: {{ .Values.sourceConnectionKey }}
           readinessProbe:
             httpGet:
               path: /ready

@@ -26,7 +26,12 @@ green:
   slot: Green
   defaultRoute: Owned
 
-# Connection strings via Secret — never commit real credentials
+# Connection strings + schema via Secret / values — never commit real credentials.
+# Providers: OnPrem | Azure | Aws (see DATABASE-HOSTING.md).
+database:
+  schema: showcase
+  provider: OnPrem
+  sourceProvider: OnPrem
 existingSecretName: showcase-sql-connection
 sourceConnectionKey: source
 ownedConnectionKey: owned

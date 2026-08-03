@@ -1,0 +1,12 @@
+-- REFERENCE ONLY — not included in dacpac Build.
+-- Ownership: EF (ShowcaseDataService.Migrations) owns [showcase].[Items].
+-- Keep this file in sync with the EF model for human review; do not CREATE from the SQL project.
+--
+-- Expected shape (EF-owned):
+-- CREATE TABLE [showcase].[Items]
+-- (
+--     [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+--     [Name] NVARCHAR(200) NOT NULL,
+--     [Status] NVARCHAR(50) NOT NULL,
+--     [UpdatedAt] DATETIMEOFFSET NOT NULL
+-- );

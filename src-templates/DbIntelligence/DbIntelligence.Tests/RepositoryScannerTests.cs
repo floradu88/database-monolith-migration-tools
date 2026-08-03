@@ -49,6 +49,12 @@ public class RepositoryScannerTests
             var spMap = merger.ToStoredProcedureMap(graph);
             Assert.Contains(spMap.Procedures, p => p.Name.Contains("usp_Customer_Get", StringComparison.OrdinalIgnoreCase));
             Assert.NotEmpty(spMap.References);
+
+            Assert.Contains(findings, f =>
+                (f.Pattern is "interpolated-procedure-expanded" or "interpolated-procedure-template") &&
+                f.NormalizedObjectName.Contains("usp_Report_Sales", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(findings, f =>
+                f.NormalizedObjectName.Contains("usp_Report_Inventory", StringComparison.OrdinalIgnoreCase));
         }
         finally
         {
@@ -89,7 +95,22 @@ public class RepositoryScannerTests
                     return Array.Empty<Customer>();
                 }
 
+                public void LoadReport(ReportArea area)
+                {
+                    // Templated procedure name — enums in this file expand holes for discovery.
+                    using var command = new SqlCommand($"usp_Report_{area}")
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
+                }
+
                 private static void QueryAsync<T>(string sql) { }
+            }
+
+            public enum ReportArea
+            {
+                Sales = 0,
+                Inventory = 1
             }
 
             public class Customer

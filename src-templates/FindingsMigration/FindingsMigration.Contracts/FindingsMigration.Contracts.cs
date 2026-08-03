@@ -58,6 +58,21 @@ public sealed class StoredProcedureEntry
     [JsonPropertyName("name")]
     public string Name { get; set; } = "";
 
+    /// <summary>
+    /// Optional template with <c>{Token}</c> holes (e.g. <c>usp_{Area}_{Action}</c>).
+    /// When set (or when <see cref="Name"/> contains holes), wrappers resolve via enums/constants.
+    /// </summary>
+    [JsonPropertyName("nameTemplate")]
+    public string? NameTemplate { get; set; }
+
+    /// <summary>Token → allowed values (enum member names or constants) for expansion.</summary>
+    [JsonPropertyName("tokens")]
+    public Dictionary<string, List<string>>? Tokens { get; set; }
+
+    /// <summary>Concrete procedure names discovered/expanded from the template.</summary>
+    [JsonPropertyName("resolvedNames")]
+    public List<string>? ResolvedNames { get; set; }
+
     [JsonPropertyName("schema")]
     public string? Schema { get; set; }
 
