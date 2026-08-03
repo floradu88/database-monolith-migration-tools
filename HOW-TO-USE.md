@@ -108,7 +108,7 @@ All scripts live in `src-templates/DbIntelligence/scripts/`.
 | `Start-DbIntelligenceWeb.ps1` | Angular on `:4200` |
 | `Invoke-DbIntelligenceIndex.ps1` | POST index job for a repo path (API must already be up) |
 | `Invoke-DbIntelligenceBatchIndex.ps1` | Batch-index children under a parent (`D:\code\projects` or `C:\code`) |
-| `Invoke-DbIntelligenceCombine.ps1` | Load all child `graph.json` under a parent and present as **one** live graph (+ export `db-intelligence-combined`) |
+| `Invoke-DbIntelligenceCombine.ps1` | Load all child `.db-index\graph.json` under a parent and present as **one** live graph (+ export `.db-index-combined`) |
 
 ### Setup flags
 
@@ -269,13 +269,14 @@ Against the folder you pass:
 5. Optional SQL Server inventory (`runSqlScan`)  
 6. Merge + export artifacts  
 
-Typical artifacts (under the configured artifacts directory, often under the target repo):
+Typical artifacts (under `{repo}/.db-index/` by default):
 
 - `graph.json`
 - `code-to-db-map.json` (includes `references[]` with full path + line)
 - `stored-procedure-map.json` (includes caller `references[]`)
 - `code-reference-locations.json` (flat list: `fullPath`, `line`, `location`)
-- `GRAPH_REPORT.md`
+- `GRAPH_REPORT.md` (Mermaid overview)
+- `findings.html` (standalone HTML)
 
 ---
 
@@ -305,7 +306,7 @@ Typical artifacts (under the configured artifacts directory, often under the tar
 {
   "DbIntelligence": {
     "TargetRepositoryPath": "",
-    "ArtifactsDirectory": "artifacts/db-intelligence",
+    "ArtifactsDirectory": ".db-index",
     "CodegraphExecutable": "codegraph",
     "GraphifyExecutable": "graphify",
     "SqlConnectionString": "",
@@ -390,25 +391,25 @@ dotnet test src-templates\FindingsMigration\FindingsMigration.Tests\FindingsMigr
 
 ## Storage model (current)
 
-DbIntelligence keeps the unified graph and job list **in memory** for the API process. Maps are also written as **JSON files** under `artifacts/db-intelligence/` on export/index. There is **no mapping database** yet — FindingsMigration and offline tools consume those JSON files.
+DbIntelligence keeps the unified graph and job list **in memory** for the API process. Maps are also written as **JSON/MD/HTML files** under `{repo}/.db-index/` on export/index. There is **no mapping database** yet — FindingsMigration and offline tools consume those JSON files.
 
 Re-index after API restart to restore the live API graph.
 
-After DbIntelligence exports maps under `artifacts/db-intelligence/`:
+After DbIntelligence exports maps under `{repo}/.db-index/`:
 
 ```powershell
 cd src-templates\FindingsMigration
 
 .\scripts\Invoke-FindingsMigration.ps1 `
-  -CodeToDbMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\code-to-db-map.json" `
-  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
+  -CodeToDbMap "D:\code\projects\personalinsightanalysis\.db-index\code-to-db-map.json" `
+  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\.db-index\stored-procedure-map.json" `
   -DomainName "Insight" `
   -OwnerTeam "Personal Insight"
 
 .\scripts\New-DomainFromFindings.ps1 `
   -DomainName "Insight" `
   -PackageDirectory ".\out\Insight" `
-  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
+  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\.db-index\stored-procedure-map.json" `
   -CopyManifestsToKit
 ```
 
@@ -433,7 +434,7 @@ Roadmap: [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md).
 
 ### Batch: parent folder of projects
 
-Each immediate child folder is treated as one project; analyzed one-by-one; artifacts written to **that project's root** (`graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `code-reference-locations.json`, `GRAPH_REPORT.md`). Parent gets `db-intelligence-batch-summary.json`. After batch (or anytime JSON exists), **combine** loads every child `graph.json` into one live API graph and writes `{parent}\db-intelligence-combined\`.
+Each immediate child folder is treated as one project; analyzed one-by-one; artifacts written to **that project's `.db-index/`** (`graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `code-reference-locations.json`, `GRAPH_REPORT.md`, `findings.html`). Parent gets `db-intelligence-batch-summary.json`. After batch (or anytime JSON exists), **combine** loads every child `.db-index\graph.json` into one live API graph and writes `{parent}\.db-index-combined\`.
 
 ```powershell
 .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"

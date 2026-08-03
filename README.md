@@ -176,7 +176,7 @@ Invoke-RestMethod "http://localhost:5088/api/maps/code-to-db"
 Invoke-RestMethod "http://localhost:5088/api/maps/stored-procedures"
 ```
 
-Typical artifacts (under the target repo / configured artifacts dir): `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`.
+Typical artifacts (under `{repo}/.db-index/`): `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`, `findings.html`.
 
 ### 4. Batch-index a parent folder (`D:\code\projects` or `C:\code`)
 
@@ -229,8 +229,8 @@ Live API graph stays **in memory** (last completed project). Durable results are
 cd src-templates\FindingsMigration
 
 .\scripts\Invoke-FindingsMigration.ps1 `
-  -CodeToDbMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\code-to-db-map.json" `
-  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
+  -CodeToDbMap "D:\code\projects\personalinsightanalysis\.db-index\code-to-db-map.json" `
+  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\.db-index\stored-procedure-map.json" `
   -DomainName "Insight" `
   -OwnerTeam "Personal Insight"
 
@@ -244,8 +244,8 @@ If the indexed project lived under `C:\code` instead:
 
 ```powershell
 .\scripts\Invoke-FindingsMigration.ps1 `
-  -CodeToDbMap "C:\code\personalinsightanalysis\artifacts\db-intelligence\code-to-db-map.json" `
-  -StoredProcedureMap "C:\code\personalinsightanalysis\artifacts\db-intelligence\stored-procedure-map.json" `
+  -CodeToDbMap "C:\code\personalinsightanalysis\.db-index\code-to-db-map.json" `
+  -StoredProcedureMap "C:\code\personalinsightanalysis\.db-index\stored-procedure-map.json" `
   -DomainName "Insight" `
   -OwnerTeam "Personal Insight"
 ```

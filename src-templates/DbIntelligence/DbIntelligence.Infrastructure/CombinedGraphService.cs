@@ -110,7 +110,7 @@ public sealed class CombinedGraphService : ICombinedGraphService
         if (request.ExportCombined)
         {
             exportDir = string.IsNullOrWhiteSpace(request.CombinedOutputDirectory)
-                ? Path.Combine(parent, "db-intelligence-combined")
+                ? Path.Combine(parent, DbIntelligenceOptions.DefaultCombinedDirectoryName)
                 : Path.GetFullPath(request.CombinedOutputDirectory);
             await _store.ExportAsync(combined, exportDir, cancellationToken);
             _logger.LogInformation("Exported combined graph to {ExportDir}", exportDir);
@@ -133,7 +133,7 @@ public sealed class CombinedGraphService : ICombinedGraphService
         string parent,
         CombineGraphsRequest request)
     {
-        var relative = request.ArtifactsRelativeDirectory ?? "";
+        var relative = request.ArtifactsRelativeDirectory ?? DbIntelligenceOptions.DefaultArtifactsDirectory;
         var summaryPath = Path.Combine(parent, "db-intelligence-batch-summary.json");
         var results = new List<(string Name, string Path, string ArtifactsDir)>();
 

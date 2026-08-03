@@ -17,7 +17,7 @@
 
 .EXAMPLE
   .\Invoke-FindingsMigration.ps1 `
-    -CodeToDbMap "D:\code\projects\personalinsightanalysis\artifacts\db-intelligence\code-to-db-map.json" `
+    -CodeToDbMap "D:\code\projects\personalinsightanalysis\.db-index\code-to-db-map.json" `
     -DomainName "Insight" `
     -OwnerTeam "Personal Insight"
 #>

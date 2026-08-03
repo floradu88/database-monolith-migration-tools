@@ -4,7 +4,7 @@ public static class ProjectFolderDiscovery
 {
     private static readonly HashSet<string> SkipNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        ".git", ".svn", ".hg", ".vs", ".idea", ".cursor", ".codegraph",
+        ".git", ".svn", ".hg", ".vs", ".idea", ".cursor", ".codegraph", ".db-index",
         "node_modules", "bin", "obj", "dist", "build", "out", "packages",
         "TestResults", "artifacts", "coverage", "__pycache__", ".tmp",
         "graphify-out", "canvases"

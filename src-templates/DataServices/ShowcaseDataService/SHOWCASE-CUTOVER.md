@@ -17,7 +17,7 @@ Production gates: also complete [`checklists/production-cutover.md`](../../../ch
 ```powershell
 cd src-templates\DbIntelligence
 .\scripts\Invoke-DbIntelligenceReady.ps1 "D:\path\to\your\app"
-# Export / locate artifacts under artifacts/db-intelligence/
+# Export / locate artifacts under {repo}/.db-index/
 ```
 
 ### 2. Package domain

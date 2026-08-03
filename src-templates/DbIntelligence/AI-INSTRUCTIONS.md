@@ -16,7 +16,7 @@ Concrete DbIntelligence implementation: orchestrate Codegraph/Graphify CLIs, sca
 8. Prefer `scripts/*.ps1` for local setup/run documentation (PowerShell-first).
 9. Prefer user-scoped Node via `scripts/Initialize-DbIntelligenceNode.ps1` (fnm + winget `--scope user`) over admin Node installers.
 10. Prefer Codegraph via `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` whenever fnm is present.
-11. Treat the live store as **in-memory only** (`FileIntelligenceStore`); do not assume a database catalog exists. Durable output is JSON/MD export under artifacts.
+11. Treat the live store as **in-memory only** (`FileIntelligenceStore`); do not assume a database catalog exists. Durable output is JSON/MD/HTML under each project's `.db-index/` (default).
 
 
 ## Current subfolders

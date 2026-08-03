@@ -2,7 +2,7 @@
 
 Template + CLI that **migrates DbIntelligence JSON mapping findings** into a **separate domain package** and scaffolds a **DataService project** from the golden **`DataServices/ShowcaseDataService`** template (`CustomerDataService` remains a thin example only).
 
-Reads **exported JSON files** (not a database). The API’s live graph is in-memory only; always point this tool at `artifacts/db-intelligence/*.json` (or another export path).
+Reads **exported JSON files** (not a database). The API’s live graph is in-memory only; always point this tool at `{repo}/.db-index/*.json` (or another export path).
 
 Index first with DbIntelligence — see root [`HOW-TO-USE.md`](../../HOW-TO-USE.md):
 
@@ -35,8 +35,8 @@ AMBIGUOUS edges are **not** packaged into ownership candidates unless you pass `
 cd src-templates\FindingsMigration
 
 .\scripts\Invoke-FindingsMigration.ps1 `
-  -CodeToDbMap "D:\code\projects\...\artifacts\db-intelligence\code-to-db-map.json" `
-  -StoredProcedureMap "D:\code\projects\...\artifacts\db-intelligence\stored-procedure-map.json" `
+  -CodeToDbMap "D:\code\projects\...\.db-index\code-to-db-map.json" `
+  -StoredProcedureMap "D:\code\projects\...\.db-index\stored-procedure-map.json" `
   -DomainName "Insight" `
   -OwnerTeam "Personal Insight"
 

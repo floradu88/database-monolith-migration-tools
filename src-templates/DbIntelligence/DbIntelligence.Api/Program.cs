@@ -242,9 +242,21 @@ api.MapPost("/export", async (ExportRequest request, IIntelligenceStore store, I
     if (graph is null)
         return Results.BadRequest(new { message = "No graph loaded. Run an index job first." });
 
-    var output = string.IsNullOrWhiteSpace(request.OutputDirectory)
-        ? Path.GetFullPath(options.Value.ArtifactsDirectory)
-        : Path.GetFullPath(request.OutputDirectory!);
+    string output;
+    if (!string.IsNullOrWhiteSpace(request.OutputDirectory))
+    {
+        output = Path.GetFullPath(request.OutputDirectory!);
+    }
+    else if (!string.IsNullOrWhiteSpace(graph.Meta.TargetRepositoryPath))
+    {
+        output = ProjectFolderDiscovery.ResolveArtifactsDirectory(
+            graph.Meta.TargetRepositoryPath,
+            options.Value.ArtifactsDirectory);
+    }
+    else
+    {
+        output = Path.GetFullPath(options.Value.ArtifactsDirectory);
+    }
 
     await store.ExportAsync(graph, output);
     return Results.Ok(new { outputDirectory = output });

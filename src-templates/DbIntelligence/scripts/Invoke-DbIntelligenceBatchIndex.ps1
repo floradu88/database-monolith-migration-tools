@@ -24,7 +24,7 @@ param(
     [string]$ApiBase = "http://localhost:5088",
     [switch]$RequireProjectMarkers,
     [switch]$RefreshGraphify,
-    [string]$ArtifactsRelativeDirectory = ""
+    [string]$ArtifactsRelativeDirectory = ".db-index"
 )
 
 $ErrorActionPreference = "Stop"

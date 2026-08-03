@@ -6,10 +6,10 @@
 .DESCRIPTION
   Calls POST /api/graphs/combine. Prefer after batch index (or whenever per-project JSON exists).
   Code nodes are project-prefixed; DB nodes are shared across projects by default.
-  Also writes {parent}\db-intelligence-combined\ (graph.json, maps, report) unless -SkipExport.
+  Also writes {parent}\.db-index-combined\ (graph.json, maps, GRAPH_REPORT.md, findings.html) unless -SkipExport.
 
 .PARAMETER ParentFolderPath
-  Folder that contains one project per subfolder (each with graph.json).
+  Folder that contains one project per subfolder (each with .db-index\graph.json).
 
 .PARAMETER ApiBase
   API base URL (default http://localhost:5088).
@@ -27,7 +27,7 @@ param(
     [string]$ApiBase = "http://localhost:5088",
     [switch]$RequireProjectMarkers,
     [switch]$SkipExport,
-    [string]$ArtifactsRelativeDirectory = ""
+    [string]$ArtifactsRelativeDirectory = ".db-index"
 )
 
 $ErrorActionPreference = "Stop"

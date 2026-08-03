@@ -321,8 +321,8 @@ public sealed class IndexJobRequest
     public string? SqlConnectionString { get; set; }
 
     /// <summary>
-    /// Relative folder under the project root where JSON/MD artifacts are written.
-    /// Empty or "." writes into the project root. Default: artifacts/db-intelligence.
+    /// Relative folder under the project root where JSON/MD/HTML artifacts are written.
+    /// Empty or "." writes into the project root. Default when omitted: <c>.db-index</c>.
     /// </summary>
     public string? ArtifactsRelativeDirectory { get; set; }
 }
@@ -344,10 +344,11 @@ public sealed class BatchIndexRequest
     public string? SqlConnectionString { get; set; }
 
     /// <summary>
-    /// Relative output under each project. Default empty = project root
-    /// (graph.json, code-to-db-map.json, stored-procedure-map.json, GRAPH_REPORT.md).
+    /// Relative output under each project. Default <c>.db-index</c>
+    /// (graph.json, maps, GRAPH_REPORT.md, findings.html).
+    /// Empty or "." writes into the project root.
     /// </summary>
-    public string? ArtifactsRelativeDirectory { get; set; } = "";
+    public string? ArtifactsRelativeDirectory { get; set; } = ".db-index";
 
     /// <summary>
     /// When true, only include child folders that look like code projects
@@ -437,8 +438,8 @@ public sealed class CombineGraphsRequest
 {
     public string ParentFolderPath { get; set; } = string.Empty;
 
-    /// <summary>Relative artifacts folder under each project (empty = project root).</summary>
-    public string? ArtifactsRelativeDirectory { get; set; } = "";
+    /// <summary>Relative artifacts folder under each project (default <c>.db-index</c>).</summary>
+    public string? ArtifactsRelativeDirectory { get; set; } = ".db-index";
 
     public bool RequireProjectMarkers { get; set; }
 
@@ -453,7 +454,7 @@ public sealed class CombineGraphsRequest
     /// <summary>Also write combined graph.json / maps under the parent (default true).</summary>
     public bool ExportCombined { get; set; } = true;
 
-    /// <summary>Override combined export directory (default: {parent}/db-intelligence-combined).</summary>
+    /// <summary>Override combined export directory (default: {parent}/.db-index-combined).</summary>
     public string? CombinedOutputDirectory { get; set; }
 }
 

@@ -188,7 +188,7 @@ export class GraphPageComponent implements AfterViewInit, OnDestroy {
         runSqlScan: false,
         requireProjectMarkers: this.requireProjectMarkers,
         continueOnError: true,
-        artifactsRelativeDirectory: ''
+        artifactsRelativeDirectory: '.db-index'
       })
       .subscribe({
         next: (job) => {
@@ -239,7 +239,7 @@ export class GraphPageComponent implements AfterViewInit, OnDestroy {
         shareDatabaseNodes: true,
         onlyCompletedFromSummary: true,
         exportCombined: true,
-        artifactsRelativeDirectory: ''
+        artifactsRelativeDirectory: '.db-index'
       })
       .subscribe({
         next: (r) => {

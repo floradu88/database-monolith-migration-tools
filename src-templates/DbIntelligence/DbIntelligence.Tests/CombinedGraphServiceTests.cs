@@ -15,12 +15,12 @@ public class CombinedGraphServiceTests
         var root = Path.Combine(Path.GetTempPath(), "dbi-combine-" + Guid.NewGuid().ToString("N"));
         var a = Path.Combine(root, "AppA");
         var b = Path.Combine(root, "AppB");
-        Directory.CreateDirectory(a);
-        Directory.CreateDirectory(b);
+        Directory.CreateDirectory(Path.Combine(a, ".db-index"));
+        Directory.CreateDirectory(Path.Combine(b, ".db-index"));
 
         try
         {
-            await File.WriteAllTextAsync(Path.Combine(a, "graph.json"), """
+            await File.WriteAllTextAsync(Path.Combine(a, ".db-index", "graph.json"), """
                 {
                   "nodes": [
                     { "id": "code:A.Run", "label": "A.Run", "kind": "Method" },
@@ -33,7 +33,7 @@ public class CombinedGraphServiceTests
                 }
                 """);
 
-            await File.WriteAllTextAsync(Path.Combine(b, "graph.json"), """
+            await File.WriteAllTextAsync(Path.Combine(b, ".db-index", "graph.json"), """
                 {
                   "nodes": [
                     { "id": "code:B.Run", "label": "B.Run", "kind": "Method" },
@@ -70,8 +70,9 @@ public class CombinedGraphServiceTests
             Assert.Equal(2, map.Entries.Count);
             Assert.Contains(map.Entries, e => e.Project == "AppA");
             Assert.Contains(map.Entries, e => e.Project == "AppB");
-            Assert.True(Directory.Exists(Path.Combine(root, "db-intelligence-combined")));
-            Assert.True(File.Exists(Path.Combine(root, "db-intelligence-combined", "graph.json")));
+            Assert.True(Directory.Exists(Path.Combine(root, ".db-index-combined")));
+            Assert.True(File.Exists(Path.Combine(root, ".db-index-combined", "graph.json")));
+            Assert.True(File.Exists(Path.Combine(root, ".db-index-combined", "findings.html")));
         }
         finally
         {

@@ -25,7 +25,7 @@ cd src-templates\DbIntelligence
 .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
 .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
 
-# Present all child graph.json files as one live graph (+ parent\db-intelligence-combined)
+# Present all child .db-index\graph.json files as one live graph (+ parent\.db-index-combined)
 .\scripts\Invoke-DbIntelligenceCombine.ps1 -ParentFolderPath "D:\code\projects"
 ```
 
@@ -35,7 +35,7 @@ cd src-templates\DbIntelligence
 |------|----------|
 | API + health | `DbIntelligence.Api` · `:5088` |
 | Live maps | **In memory** (`FileIntelligenceStore`) — no DB yet |
-| Durable export | `artifacts/db-intelligence/*.json` (or project root for batch) |
+| Durable export | `{repo}/.db-index/*.json` (+ `GRAPH_REPORT.md`, `findings.html`) |
 | Angular UI | `DbIntelligence.Web` · `:4200` |
 | CLI health/install | `DbIntelligence.Cli` |
 | Scanners | `RepositoryScanner`, `SqlScanner` |

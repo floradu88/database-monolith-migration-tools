@@ -10,7 +10,7 @@
 |------|--------|
 | Live graph + maps served by API | **In memory** (`FileIntelligenceStore`) for the running process |
 | Index job status | **In memory** (lost on API restart) |
-| Durable snapshot | **JSON/MD files** only when export runs (`artifacts/db-intelligence/`) |
+| Durable snapshot | **JSON/MD/HTML** under `{repo}/.db-index/` when export/index runs |
 
 There is **no database** for mappings yet. Restarting the API clears the live graph until you re-index or load from exported files (re-index is the supported path today). A catalog DB is a future feature — see [`docs/FUTURE-FEATURES.md`](../../docs/FUTURE-FEATURES.md).
 
@@ -114,7 +114,7 @@ Health:
 5. Optional SQL inventory  
 6. Merge + export maps  
 
-Artifacts: `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `code-reference-locations.json` (full path + line list), `GRAPH_REPORT.md`.
+Artifacts: under `{repo}/.db-index/` — `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `code-reference-locations.json`, `GRAPH_REPORT.md`, `findings.html`.
 
 ### Index via API (PowerShell)
 
@@ -153,7 +153,7 @@ Open [`../DatabaseModernization.sln`](../DatabaseModernization.sln).
 {
   "DbIntelligence": {
     "TargetRepositoryPath": "",
-    "ArtifactsDirectory": "artifacts/db-intelligence",
+    "ArtifactsDirectory": ".db-index",
     "CodegraphExecutable": "codegraph",
     "GraphifyExecutable": "graphify",
     "SqlConnectionString": "",

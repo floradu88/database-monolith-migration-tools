@@ -171,7 +171,8 @@ public sealed class IndexingService : IIndexingService
                         RunRepositoryScan = request.RunRepositoryScan,
                         RunSqlScan = request.RunSqlScan,
                         SqlConnectionString = request.SqlConnectionString,
-                        ArtifactsRelativeDirectory = request.ArtifactsRelativeDirectory ?? ""
+                        ArtifactsRelativeDirectory = request.ArtifactsRelativeDirectory
+                            ?? DbIntelligenceOptions.DefaultArtifactsDirectory
                     };
 
                     var childJob = _store.CreateJob(childRequest);
@@ -238,7 +239,8 @@ public sealed class IndexingService : IIndexingService
                         new CombineGraphsRequest
                         {
                             ParentFolderPath = request.ParentFolderPath,
-                            ArtifactsRelativeDirectory = request.ArtifactsRelativeDirectory ?? "",
+                            ArtifactsRelativeDirectory = request.ArtifactsRelativeDirectory
+                                ?? DbIntelligenceOptions.DefaultArtifactsDirectory,
                             RequireProjectMarkers = request.RequireProjectMarkers,
                             ProjectFolderNames = request.ProjectFolderNames,
                             ShareDatabaseNodes = true,
