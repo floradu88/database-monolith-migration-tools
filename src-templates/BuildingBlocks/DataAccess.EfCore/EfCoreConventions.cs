@@ -14,4 +14,13 @@ public static class EfCoreConventions
         return builder.UseSqlServer(connectionString, sql =>
             sql.MigrationsHistoryTable(MigrationHistoryTable, MigrationHistorySchema));
     }
+
+    public static DbContextOptionsBuilder<TContext> UseShowcaseSqlServer<TContext>(
+        this DbContextOptionsBuilder<TContext> builder,
+        string connectionString)
+        where TContext : DbContext
+    {
+        UseShowcaseSqlServer((DbContextOptionsBuilder)builder, connectionString);
+        return builder;
+    }
 }
