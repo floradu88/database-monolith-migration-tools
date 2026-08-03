@@ -126,8 +126,15 @@ public sealed class CodeToDbMapDto
     [JsonPropertyName("generatedAt")]
     public DateTimeOffset GeneratedAt { get; set; } = DateTimeOffset.UtcNow;
 
+    [JsonPropertyName("repositoryPath")]
+    public string? RepositoryPath { get; set; }
+
     [JsonPropertyName("entries")]
     public List<CodeToDbEntryDto> Entries { get; set; } = [];
+
+    /// <summary>Flat list of every code→DB hit with full file path and line number.</summary>
+    [JsonPropertyName("references")]
+    public List<CodeReferenceLocationDto> References { get; set; } = [];
 }
 
 public sealed class CodeToDbEntryDto
@@ -141,8 +148,16 @@ public sealed class CodeToDbEntryDto
     [JsonPropertyName("sourceFile")]
     public string? SourceFile { get; set; }
 
+    /// <summary>Absolute path when resolvable from repository root.</summary>
+    [JsonPropertyName("sourceFileFullPath")]
+    public string? SourceFileFullPath { get; set; }
+
     [JsonPropertyName("line")]
     public int? Line { get; set; }
+
+    /// <summary>Display helper: <c>fullPath:line</c>.</summary>
+    [JsonPropertyName("location")]
+    public string? Location { get; set; }
 
     [JsonPropertyName("dbNodeId")]
     public string DbNodeId { get; set; } = string.Empty;
@@ -164,6 +179,68 @@ public sealed class CodeToDbEntryDto
 
     [JsonPropertyName("project")]
     public string? Project { get; set; }
+
+    [JsonPropertyName("references")]
+    public List<CodeReferenceLocationDto> References { get; set; } = [];
+}
+
+/// <summary>One concrete file:line occurrence of a code→DB (or SP caller) reference.</summary>
+public sealed class CodeReferenceLocationDto
+{
+    [JsonPropertyName("fullPath")]
+    public string FullPath { get; set; } = string.Empty;
+
+    [JsonPropertyName("relativePath")]
+    public string? RelativePath { get; set; }
+
+    [JsonPropertyName("line")]
+    public int? Line { get; set; }
+
+    /// <summary><c>fullPath:line</c> for quick copy/paste into editors.</summary>
+    [JsonPropertyName("location")]
+    public string Location { get; set; } = string.Empty;
+
+    [JsonPropertyName("codeNodeId")]
+    public string? CodeNodeId { get; set; }
+
+    [JsonPropertyName("codeLabel")]
+    public string? CodeLabel { get; set; }
+
+    [JsonPropertyName("dbObject")]
+    public string? DbObject { get; set; }
+
+    [JsonPropertyName("dbKind")]
+    public string? DbKind { get; set; }
+
+    [JsonPropertyName("relation")]
+    public string? Relation { get; set; }
+
+    [JsonPropertyName("confidence")]
+    public string? Confidence { get; set; }
+
+    [JsonPropertyName("pattern")]
+    public string? Pattern { get; set; }
+
+    [JsonPropertyName("rawReference")]
+    public string? RawReference { get; set; }
+
+    [JsonPropertyName("project")]
+    public string? Project { get; set; }
+}
+
+public sealed class CodeReferenceLocationsDocument
+{
+    [JsonPropertyName("generatedAt")]
+    public DateTimeOffset GeneratedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    [JsonPropertyName("repositoryPath")]
+    public string? RepositoryPath { get; set; }
+
+    [JsonPropertyName("count")]
+    public int Count { get; set; }
+
+    [JsonPropertyName("references")]
+    public List<CodeReferenceLocationDto> References { get; set; } = [];
 }
 
 public sealed class StoredProcedureMapDto
@@ -171,8 +248,14 @@ public sealed class StoredProcedureMapDto
     [JsonPropertyName("generatedAt")]
     public DateTimeOffset GeneratedAt { get; set; } = DateTimeOffset.UtcNow;
 
+    [JsonPropertyName("repositoryPath")]
+    public string? RepositoryPath { get; set; }
+
     [JsonPropertyName("procedures")]
     public List<StoredProcedureMapEntryDto> Procedures { get; set; } = [];
+
+    [JsonPropertyName("references")]
+    public List<CodeReferenceLocationDto> References { get; set; } = [];
 }
 
 public sealed class StoredProcedureMapEntryDto
@@ -200,6 +283,10 @@ public sealed class StoredProcedureMapEntryDto
 
     [JsonPropertyName("writes")]
     public List<string> Writes { get; set; } = [];
+
+    /// <summary>Caller sites with full path + line.</summary>
+    [JsonPropertyName("references")]
+    public List<CodeReferenceLocationDto> References { get; set; } = [];
 }
 
 public sealed class IndexJobRequest

@@ -32,9 +32,23 @@ public class RepositoryScannerTests
             var merger = new EvidenceGraphMerger();
             var map = merger.ToCodeToDbMap(graph);
             Assert.NotEmpty(map.Entries);
+            Assert.NotEmpty(map.References);
+            Assert.All(map.References, r =>
+            {
+                Assert.False(string.IsNullOrWhiteSpace(r.FullPath));
+                Assert.Contains(':', r.Location);
+                Assert.True(r.Line is > 0);
+            });
+            Assert.Contains(map.References, r =>
+                r.FullPath.Contains("CustomerRepository.cs", StringComparison.OrdinalIgnoreCase));
+
+            var locationsDoc = merger.ToCodeReferenceLocations(graph);
+            Assert.Equal(map.References.Count, locationsDoc.Count);
+            Assert.Equal(graph.Meta.TargetRepositoryPath, locationsDoc.RepositoryPath);
 
             var spMap = merger.ToStoredProcedureMap(graph);
             Assert.Contains(spMap.Procedures, p => p.Name.Contains("usp_Customer_Get", StringComparison.OrdinalIgnoreCase));
+            Assert.NotEmpty(spMap.References);
         }
         finally
         {

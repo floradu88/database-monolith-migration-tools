@@ -308,7 +308,14 @@ public sealed class CombinedGraphService : ICombinedGraphService
                         Line = edge.Evidence.Line,
                         Pattern = edge.Evidence.Pattern,
                         RawReference = edge.Evidence.RawReference
-                    }
+                    },
+                Locations = edge.Locations.Select(l => new EdgeEvidence
+                {
+                    File = l.File,
+                    Line = l.Line,
+                    Pattern = l.Pattern,
+                    RawReference = l.RawReference
+                }).ToList()
             });
         }
 

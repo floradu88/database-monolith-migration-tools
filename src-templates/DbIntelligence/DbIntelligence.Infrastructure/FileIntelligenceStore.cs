@@ -131,13 +131,15 @@ public sealed class FileIntelligenceStore : IIntelligenceStore
         var graphDto = _merger.ToGraphifyDto(graph);
         var codeMap = _merger.ToCodeToDbMap(graph);
         var spMap = _merger.ToStoredProcedureMap(graph);
+        var refs = _merger.ToCodeReferenceLocations(graph);
 
         await WriteJsonAsync(Path.Combine(outputDirectory, "graph.json"), graphDto, cancellationToken);
         await WriteJsonAsync(Path.Combine(outputDirectory, "code-to-db-map.json"), codeMap, cancellationToken);
         await WriteJsonAsync(Path.Combine(outputDirectory, "stored-procedure-map.json"), spMap, cancellationToken);
+        await WriteJsonAsync(Path.Combine(outputDirectory, "code-reference-locations.json"), refs, cancellationToken);
         await File.WriteAllTextAsync(
             Path.Combine(outputDirectory, "GRAPH_REPORT.md"),
-            BuildReport(graph, codeMap, spMap),
+            BuildReport(graph, codeMap, spMap, refs),
             cancellationToken);
     }
 
@@ -147,7 +149,11 @@ public sealed class FileIntelligenceStore : IIntelligenceStore
         await JsonSerializer.SerializeAsync(stream, value, JsonOptions, cancellationToken);
     }
 
-    private static string BuildReport(EvidenceGraph graph, CodeToDbMapDto codeMap, StoredProcedureMapDto spMap)
+    private static string BuildReport(
+        EvidenceGraph graph,
+        CodeToDbMapDto codeMap,
+        StoredProcedureMapDto spMap,
+        CodeReferenceLocationsDocument refs)
     {
         var topDegree = graph.Nodes
             .Select(n => (Node: n, Degree: graph.Edges.Count(e => e.Source == n.Id || e.Target == n.Id)))
@@ -160,6 +166,7 @@ public sealed class FileIntelligenceStore : IIntelligenceStore
             "# DbIntelligence GRAPH_REPORT",
             "",
             $"Generated: {DateTimeOffset.UtcNow:O}",
+            $"Repository: {graph.Meta.TargetRepositoryPath ?? "(unknown)"}",
             $"Nodes: {graph.Nodes.Count}",
             $"Edges: {graph.Edges.Count}",
             $"Sources: {string.Join(", ", graph.Meta.Sources)}",
@@ -175,7 +182,16 @@ public sealed class FileIntelligenceStore : IIntelligenceStore
         lines.Add("## Code to DB map summary");
         lines.Add("");
         lines.Add($"Entries: {codeMap.Entries.Count}");
+        lines.Add($"Reference locations (full path + line): {refs.Count}");
         lines.Add($"Stored procedures mapped: {spMap.Procedures.Count}");
+        lines.Add("");
+        lines.Add("## Reference locations (full path:line)");
+        lines.Add("");
+        foreach (var r in refs.References.Take(200))
+            lines.Add($"- `{r.Location}` — {r.CodeLabel} -[{r.Relation}]-> {r.DbObject}");
+        if (refs.Count > 200)
+            lines.Add($"- … and {refs.Count - 200} more (see code-reference-locations.json)");
+
         lines.Add("");
         lines.Add("## Review queue (AMBIGUOUS)");
         lines.Add("");

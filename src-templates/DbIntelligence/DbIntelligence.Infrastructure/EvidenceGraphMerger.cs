@@ -67,7 +67,13 @@ public sealed class EvidenceGraphMerger
 
     public CodeToDbMapDto ToCodeToDbMap(EvidenceGraph graph)
     {
-        var map = new CodeToDbMapDto { GeneratedAt = DateTimeOffset.UtcNow };
+        var repo = graph.Meta.TargetRepositoryPath;
+        var map = new CodeToDbMapDto
+        {
+            GeneratedAt = DateTimeOffset.UtcNow,
+            RepositoryPath = repo
+        };
+
         foreach (var edge in graph.Edges.Where(IsCodeToDbEdge))
         {
             var code = graph.FindNode(edge.Source);
@@ -75,29 +81,74 @@ public sealed class EvidenceGraphMerger
             if (code is null || db is null)
                 continue;
 
+            var project = code.Properties.GetValueOrDefault(ProjectGraphIds.ProjectPropertyKey)
+                          ?? ProjectGraphIds.TryGetProject(code.Id);
+            var relation = ToRelationString(edge.Relation);
+            var confidence = edge.Confidence.ToString().ToUpperInvariant();
+            var locations = GetEdgeLocations(edge, code.SourceFile).ToList();
+            var refs = locations.Select(loc => ReferencePathResolver.ToLocationDto(
+                loc.File,
+                loc.Line,
+                repo,
+                code.Id,
+                code.Label,
+                db.Label,
+                db.Kind.ToString(),
+                relation,
+                confidence,
+                loc.Pattern,
+                loc.RawReference,
+                project)).ToList();
+
+            var primary = refs.FirstOrDefault();
             map.Entries.Add(new CodeToDbEntryDto
             {
                 CodeNodeId = code.Id,
                 CodeLabel = code.Label,
-                SourceFile = edge.Evidence?.File ?? code.SourceFile,
-                Line = edge.Evidence?.Line,
+                SourceFile = primary?.RelativePath ?? primary?.FullPath ?? edge.Evidence?.File ?? code.SourceFile,
+                SourceFileFullPath = primary?.FullPath,
+                Line = primary?.Line,
+                Location = primary?.Location,
                 DbNodeId = db.Id,
                 DbObject = db.Label,
                 DbKind = db.Kind.ToString(),
-                Relation = ToRelationString(edge.Relation),
-                Confidence = edge.Confidence.ToString().ToUpperInvariant(),
-                Pattern = edge.Evidence?.Pattern,
-                Project = code.Properties.GetValueOrDefault(ProjectGraphIds.ProjectPropertyKey)
-                          ?? ProjectGraphIds.TryGetProject(code.Id)
+                Relation = relation,
+                Confidence = confidence,
+                Pattern = primary?.Pattern ?? edge.Evidence?.Pattern,
+                Project = project,
+                References = refs
             });
+
+            map.References.AddRange(refs);
         }
 
+        map.References = DeduplicateReferences(map.References);
         return map;
+    }
+
+    public CodeReferenceLocationsDocument ToCodeReferenceLocations(EvidenceGraph graph)
+    {
+        var map = ToCodeToDbMap(graph);
+        return new CodeReferenceLocationsDocument
+        {
+            GeneratedAt = map.GeneratedAt,
+            RepositoryPath = map.RepositoryPath,
+            Count = map.References.Count,
+            References = map.References
+                .OrderBy(r => r.FullPath, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(r => r.Line)
+                .ToList()
+        };
     }
 
     public StoredProcedureMapDto ToStoredProcedureMap(EvidenceGraph graph)
     {
-        var dto = new StoredProcedureMapDto { GeneratedAt = DateTimeOffset.UtcNow };
+        var repo = graph.Meta.TargetRepositoryPath;
+        var dto = new StoredProcedureMapDto
+        {
+            GeneratedAt = DateTimeOffset.UtcNow,
+            RepositoryPath = repo
+        };
         var procedures = graph.Nodes.Where(n => n.Kind == NodeKind.StoredProcedure).ToList();
 
         foreach (var proc in procedures)
@@ -118,9 +169,30 @@ public sealed class EvidenceGraphMerger
                 if (caller is null)
                     continue;
                 if (ProjectGraphIds.IsCodeNodeId(caller.Id))
+                {
                     entry.CodeCallers.Add(caller.Label);
+                    foreach (var loc in GetEdgeLocations(edge, caller.SourceFile))
+                    {
+                        var reference = ReferencePathResolver.ToLocationDto(
+                            loc.File,
+                            loc.Line,
+                            repo,
+                            caller.Id,
+                            caller.Label,
+                            proc.Label,
+                            proc.Kind.ToString(),
+                            ToRelationString(edge.Relation),
+                            edge.Confidence.ToString().ToUpperInvariant(),
+                            loc.Pattern,
+                            loc.RawReference);
+                        entry.References.Add(reference);
+                        dto.References.Add(reference);
+                    }
+                }
                 else
+                {
                     entry.SqlCallers.Add(caller.Label);
+                }
             }
 
             foreach (var edge in graph.Edges.Where(e => string.Equals(e.Source, proc.Id, StringComparison.OrdinalIgnoreCase)))
@@ -134,9 +206,16 @@ public sealed class EvidenceGraphMerger
                     entry.Writes.Add(target.Label);
             }
 
+            entry.CodeCallers = entry.CodeCallers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            entry.SqlCallers = entry.SqlCallers.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            entry.References = DeduplicateReferences(entry.References);
             dto.Procedures.Add(entry);
         }
 
+        dto.References = DeduplicateReferences(dto.References)
+            .OrderBy(r => r.FullPath, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(r => r.Line)
+            .ToList();
         return dto;
     }
 
@@ -170,6 +249,26 @@ public sealed class EvidenceGraphMerger
 
         return result;
     }
+
+    private static IEnumerable<EdgeEvidence> GetEdgeLocations(GraphEdge edge, string? fallbackFile)
+    {
+        if (edge.Locations.Count > 0)
+            return edge.Locations;
+
+        if (edge.Evidence is not null)
+            return [edge.Evidence];
+
+        if (!string.IsNullOrWhiteSpace(fallbackFile))
+            return [new EdgeEvidence { File = fallbackFile }];
+
+        return [];
+    }
+
+    private static List<CodeReferenceLocationDto> DeduplicateReferences(IEnumerable<CodeReferenceLocationDto> refs) =>
+        refs
+            .GroupBy(r => $"{r.FullPath}|{r.Line}|{r.DbObject}|{r.Relation}|{r.CodeLabel}", StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToList();
 
     private static bool IsCodeToDbEdge(GraphEdge edge) =>
         ProjectGraphIds.IsCodeNodeId(edge.Source) &&

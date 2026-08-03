@@ -272,8 +272,9 @@ Against the folder you pass:
 Typical artifacts (under the configured artifacts directory, often under the target repo):
 
 - `graph.json`
-- `code-to-db-map.json`
-- `stored-procedure-map.json`
+- `code-to-db-map.json` (includes `references[]` with full path + line)
+- `stored-procedure-map.json` (includes caller `references[]`)
+- `code-reference-locations.json` (flat list: `fullPath`, `line`, `location`)
 - `GRAPH_REPORT.md`
 
 ---
@@ -289,8 +290,9 @@ Typical artifacts (under the configured artifacts directory, often under the tar
 | GET | `/api/search?q=` | Search |
 | GET | `/api/explore?q=` | Neighborhood |
 | GET | `/api/graphs/unified` | Unified graph |
-| GET | `/api/maps/code-to-db` | Code→DB map |
-| GET | `/api/maps/stored-procedures` | SP map |
+| GET | `/api/maps/code-to-db` | Code→DB map (+ `references[]`) |
+| GET | `/api/maps/code-references` | Flat full-path + line list |
+| GET | `/api/maps/stored-procedures` | SP map (+ caller `references[]`) |
 | POST | `/api/export` | Write artifacts |
 
 ---
@@ -431,7 +433,7 @@ Roadmap: [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md).
 
 ### Batch: parent folder of projects
 
-Each immediate child folder is treated as one project; analyzed one-by-one; artifacts written to **that project's root** (`graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`). Parent gets `db-intelligence-batch-summary.json`. After batch (or anytime JSON exists), **combine** loads every child `graph.json` into one live API graph and writes `{parent}\db-intelligence-combined\`.
+Each immediate child folder is treated as one project; analyzed one-by-one; artifacts written to **that project's root** (`graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `code-reference-locations.json`, `GRAPH_REPORT.md`). Parent gets `db-intelligence-batch-summary.json`. After batch (or anytime JSON exists), **combine** loads every child `graph.json` into one live API graph and writes `{parent}\db-intelligence-combined\`.
 
 ```powershell
 .\scripts\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"

@@ -224,6 +224,12 @@ api.MapGet("/maps/code-to-db", (IIntelligenceStore store, EvidenceGraphMerger me
     return Results.Ok(merger.ToCodeToDbMap(graph));
 });
 
+api.MapGet("/maps/code-references", (IIntelligenceStore store, EvidenceGraphMerger merger) =>
+{
+    var graph = store.CurrentGraph ?? new EvidenceGraph();
+    return Results.Ok(merger.ToCodeReferenceLocations(graph));
+});
+
 api.MapGet("/maps/stored-procedures", (IIntelligenceStore store, EvidenceGraphMerger merger) =>
 {
     var graph = store.CurrentGraph ?? new EvidenceGraph();

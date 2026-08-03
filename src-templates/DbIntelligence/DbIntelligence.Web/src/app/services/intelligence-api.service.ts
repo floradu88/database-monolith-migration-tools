@@ -64,12 +64,32 @@ export interface DiscoveredProjects {
   projects: Array<{ name: string; path: string; hasProjectMarker: boolean }>;
 }
 
+export interface CodeReferenceLocation {
+  fullPath: string;
+  relativePath?: string;
+  line?: number;
+  location: string;
+  codeNodeId?: string;
+  codeLabel?: string;
+  dbObject?: string;
+  dbKind?: string;
+  relation?: string;
+  confidence?: string;
+  pattern?: string;
+  rawReference?: string;
+  project?: string;
+}
+
 export interface CodeToDbMap {
+  generatedAt?: string;
+  repositoryPath?: string;
   entries: Array<{
     codeNodeId: string;
     codeLabel: string;
     sourceFile?: string;
+    sourceFileFullPath?: string;
     line?: number;
+    location?: string;
     dbNodeId: string;
     dbObject: string;
     dbKind: string;
@@ -77,7 +97,33 @@ export interface CodeToDbMap {
     confidence: string;
     pattern?: string;
     project?: string;
+    references?: CodeReferenceLocation[];
   }>;
+  references?: CodeReferenceLocation[];
+}
+
+export interface CodeReferenceLocationsDocument {
+  generatedAt?: string;
+  repositoryPath?: string;
+  count: number;
+  references: CodeReferenceLocation[];
+}
+
+export interface StoredProcedureMap {
+  generatedAt?: string;
+  repositoryPath?: string;
+  procedures: Array<{
+    id: string;
+    name: string;
+    schema?: string;
+    database?: string;
+    codeCallers: string[];
+    sqlCallers: string[];
+    reads: string[];
+    writes: string[];
+    references?: CodeReferenceLocation[];
+  }>;
+  references?: CodeReferenceLocation[];
 }
 
 export interface CombineGraphsResult {
@@ -100,19 +146,6 @@ export interface CombineGraphsResult {
     path: string;
     status: string;
     message?: string;
-  }>;
-}
-
-export interface StoredProcedureMap {
-  procedures: Array<{
-    id: string;
-    name: string;
-    schema?: string;
-    database?: string;
-    codeCallers: string[];
-    sqlCallers: string[];
-    reads: string[];
-    writes: string[];
   }>;
 }
 
@@ -209,6 +242,10 @@ export class IntelligenceApiService {
 
   getCodeToDbMap() {
     return this.http.get<CodeToDbMap>(`${this.base}/maps/code-to-db`);
+  }
+
+  getCodeReferences() {
+    return this.http.get<CodeReferenceLocationsDocument>(`${this.base}/maps/code-references`);
   }
 
   getStoredProcedureMap() {

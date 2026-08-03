@@ -114,7 +114,7 @@ Health:
 5. Optional SQL inventory  
 6. Merge + export maps  
 
-Artifacts: `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `GRAPH_REPORT.md`.
+Artifacts: `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `code-reference-locations.json` (full path + line list), `GRAPH_REPORT.md`.
 
 ### Index via API (PowerShell)
 

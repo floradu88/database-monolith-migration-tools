@@ -68,13 +68,58 @@ public sealed class EvidenceGraph
 
     public void UpsertEdge(GraphEdge edge)
     {
-        var exists = Edges.Any(e =>
+        var existing = Edges.FirstOrDefault(e =>
             string.Equals(e.Source, edge.Source, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(e.Target, edge.Target, StringComparison.OrdinalIgnoreCase) &&
             e.Relation == edge.Relation);
-        if (!exists)
+
+        if (existing is null)
+        {
+            if (edge.Evidence is not null && edge.Locations.Count == 0)
+                edge.Locations.Add(CloneEvidence(edge.Evidence));
             Edges.Add(edge);
+            return;
+        }
+
+        // Prefer stronger confidence (Extracted < Inferred < Ambiguous).
+        if (edge.Confidence < existing.Confidence)
+            existing.Confidence = edge.Confidence;
+
+        existing.Evidence ??= edge.Evidence;
+        foreach (var loc in EnumerateIncomingLocations(edge))
+            AddLocationIfNew(existing, loc);
     }
+
+    private static IEnumerable<EdgeEvidence> EnumerateIncomingLocations(GraphEdge edge)
+    {
+        foreach (var loc in edge.Locations)
+            yield return loc;
+        if (edge.Evidence is not null)
+            yield return edge.Evidence;
+    }
+
+    private static void AddLocationIfNew(GraphEdge edge, EdgeEvidence candidate)
+    {
+        if (string.IsNullOrWhiteSpace(candidate.File) && candidate.Line is null)
+            return;
+
+        var exists = edge.Locations.Any(l =>
+            string.Equals(l.File, candidate.File, StringComparison.OrdinalIgnoreCase) &&
+            l.Line == candidate.Line);
+        if (exists)
+            return;
+
+        edge.Locations.Add(CloneEvidence(candidate));
+        edge.Evidence ??= CloneEvidence(candidate);
+    }
+
+    private static EdgeEvidence CloneEvidence(EdgeEvidence e) => new()
+    {
+        File = e.File,
+        Line = e.Line,
+        Pattern = e.Pattern,
+        RawReference = e.RawReference
+    };
 }
 
 public sealed class GraphNode
@@ -96,7 +141,10 @@ public sealed class GraphEdge
     public required string Target { get; set; }
     public EdgeRelation Relation { get; set; }
     public Confidence Confidence { get; set; } = Confidence.Extracted;
+    /// <summary>Primary / first evidence location (backward compatible).</summary>
     public EdgeEvidence? Evidence { get; set; }
+    /// <summary>All file:line locations for this edge (duplicates collapsed by full path + line).</summary>
+    public List<EdgeEvidence> Locations { get; set; } = [];
 }
 
 public sealed class EdgeEvidence

@@ -77,6 +77,7 @@ public sealed class RepositoryScannerService
 
         foreach (var finding in findings)
         {
+            graph.Meta.TargetRepositoryPath ??= finding.RepositoryPath;
             var typeName = finding.TypeName ?? "UnknownType";
             var member = finding.MemberName ?? "UnknownMember";
             var codeId = GraphIds.CodeMethod(typeName, member);
