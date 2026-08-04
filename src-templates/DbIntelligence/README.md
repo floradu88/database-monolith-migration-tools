@@ -137,6 +137,7 @@ SP-focused helper (infers Showcase LocalDB placeholders from kit `appsettings.js
 ```powershell
 .\scripts\Invoke-DbIntelligenceExtractSps.ps1 -UseShowcaseLocalDefaults
 .\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo" -SqlConnectionString "<non-prod cs>"
+.\scripts\Export-DatabaseStoredProcedures.ps1 -OutputFile "D:\exports\all-sps.sql" -SqlConnectionString "<non-prod cs>"
 ```
 
 ## Solution projects
