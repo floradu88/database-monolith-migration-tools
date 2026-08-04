@@ -10,7 +10,7 @@
     3. Restore + build + test
     4. CLI health must be healthy
     5. Start API on :5088 if needed
-    6. Index the given repository path (Codegraph + Graphify + repo scan)
+    6. Index the given repository path (Codegraph + Graphify + repo scan; optional SQL SP inventory)
     7. Print map counts and exit non-zero on failure
 
 .PARAMETER RepositoryPath
@@ -34,9 +34,16 @@
 .PARAMETER SkipTests
   Skip dotnet test during build.
 
+.PARAMETER SqlConnectionString
+  When set, enables read-only SQL inventory (runSqlScan) so live SPs are extracted into the map.
+
+.PARAMETER UseShowcaseLocalDefaults
+  Infer LocalDB Owned connection from Showcase appsettings.json (non-secret kit placeholders).
+
 .EXAMPLE
   .\Invoke-DbIntelligenceReady.ps1 "D:\code\projects\my-app"
   .\Invoke-DbIntelligenceReady.ps1 -RepositoryPath "C:\git\my-app"
+  .\Invoke-DbIntelligenceReady.ps1 ".\ShowcaseDataService" -UseShowcaseLocalDefaults
 #>
 [CmdletBinding()]
 param(
@@ -46,6 +53,9 @@ param(
 
     [int]$Port = 5088,
     [string]$ApiBase = "",
+
+    [string]$SqlConnectionString = "",
+    [switch]$UseShowcaseLocalDefaults,
 
     [switch]$SkipBuild,
     [switch]$SkipPrereqs,
@@ -191,12 +201,22 @@ Write-Host "API health: $($health.status)" -ForegroundColor Green
 
 # --- 5) index ---
 Write-Step "Index $full"
+. (Join-Path $Scripts "Resolve-DbIntelligenceSqlConnection.ps1")
+$cs = Resolve-DbIntelligenceSqlConnection `
+    -SqlConnectionString $SqlConnectionString `
+    -UseShowcaseLocalDefaults:$UseShowcaseLocalDefaults
+$runSql = -not [string]::IsNullOrWhiteSpace($cs)
+if ($runSql) {
+    Write-Host "SQL scan enabled (read-only inventory)." -ForegroundColor Cyan
+}
+
 $body = @{
     targetRepositoryPath = $full
     runCodegraph         = $true
     runGraphify          = $true
     runRepositoryScan    = $true
-    runSqlScan           = $false
+    runSqlScan           = $runSql
+    sqlConnectionString  = $(if ($runSql) { $cs } else { $null })
 } | ConvertTo-Json
 
 $job = Invoke-RestMethod -Uri "$ApiBase/api/index/jobs" -Method Post -Body $body -ContentType "application/json"

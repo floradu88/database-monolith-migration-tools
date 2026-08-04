@@ -13,6 +13,12 @@
 .PARAMETER ApiBase
   API base URL (default http://localhost:5088).
 
+.PARAMETER SqlConnectionString
+  When set, enables read-only SQL inventory for every child project (same connection).
+
+.PARAMETER UseShowcaseLocalDefaults
+  Infer LocalDB Owned connection from Showcase appsettings.json (non-secret kit placeholders).
+
 .EXAMPLE
   .\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "D:\code\projects"
   .\Invoke-DbIntelligenceBatchIndex.ps1 -ParentFolderPath "C:\code"
@@ -24,7 +30,9 @@ param(
     [string]$ApiBase = "http://localhost:5088",
     [switch]$RequireProjectMarkers,
     [switch]$RefreshGraphify,
-    [string]$ArtifactsRelativeDirectory = ".db-index"
+    [string]$ArtifactsRelativeDirectory = ".db-index",
+    [string]$SqlConnectionString = "",
+    [switch]$UseShowcaseLocalDefaults
 )
 
 $ErrorActionPreference = "Stop"
@@ -44,13 +52,20 @@ if ($discovered.projects.Count -eq 0) {
     throw "No projects discovered."
 }
 
+. (Join-Path $PSScriptRoot "Resolve-DbIntelligenceSqlConnection.ps1")
+$cs = Resolve-DbIntelligenceSqlConnection `
+    -SqlConnectionString $SqlConnectionString `
+    -UseShowcaseLocalDefaults:$UseShowcaseLocalDefaults
+$runSql = -not [string]::IsNullOrWhiteSpace($cs)
+
 $body = @{
     parentFolderPath           = $full
     runCodegraph               = $true
     runGraphify                = $true
     refreshGraphify            = [bool]$RefreshGraphify
     runRepositoryScan          = $true
-    runSqlScan                 = $false
+    runSqlScan                 = $runSql
+    sqlConnectionString        = $(if ($runSql) { $cs } else { $null })
     requireProjectMarkers      = [bool]$RequireProjectMarkers
     continueOnError            = $true
     artifactsRelativeDirectory = $ArtifactsRelativeDirectory

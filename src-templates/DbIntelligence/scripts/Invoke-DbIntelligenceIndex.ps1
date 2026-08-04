@@ -9,18 +9,35 @@
 .PARAMETER ApiBase
   API base URL (default http://localhost:5088).
 
+.PARAMETER SqlConnectionString
+  When set, enables read-only SQL inventory (runSqlScan) and extracts live SPs into the map.
+
+.PARAMETER UseShowcaseLocalDefaults
+  Infer LocalDB Owned connection from Showcase appsettings.json (non-secret kit placeholders).
+
 .EXAMPLE
   .\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\code\projects\my-app"
+
+.EXAMPLE
+  .\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\code\projects\my-app" -UseShowcaseLocalDefaults
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$RepositoryPath,
-    [string]$ApiBase = "http://localhost:5088"
+    [string]$ApiBase = "http://localhost:5088",
+    [string]$SqlConnectionString = "",
+    [switch]$UseShowcaseLocalDefaults
 )
 
 $ErrorActionPreference = "Stop"
 $full = (Resolve-Path $RepositoryPath).Path
+. (Join-Path $PSScriptRoot "Resolve-DbIntelligenceSqlConnection.ps1")
+
+$cs = Resolve-DbIntelligenceSqlConnection `
+    -SqlConnectionString $SqlConnectionString `
+    -UseShowcaseLocalDefaults:$UseShowcaseLocalDefaults
+$runSql = -not [string]::IsNullOrWhiteSpace($cs)
 
 Write-Host "Checking API health at $ApiBase/api/health ..." -ForegroundColor Cyan
 try {
@@ -42,10 +59,11 @@ $body = @{
     runCodegraph         = $true
     runGraphify          = $true
     runRepositoryScan    = $true
-    runSqlScan           = $false
+    runSqlScan           = $runSql
+    sqlConnectionString  = $(if ($runSql) { $cs } else { $null })
 } | ConvertTo-Json
 
-Write-Host "Starting index job for $full ..." -ForegroundColor Cyan
+Write-Host "Starting index job for $full (runSqlScan=$runSql) ..." -ForegroundColor Cyan
 $job = Invoke-RestMethod -Uri "$ApiBase/api/index/jobs" -Method Post -Body $body -ContentType "application/json"
 Write-Host "Job id: $($job.id)"
 

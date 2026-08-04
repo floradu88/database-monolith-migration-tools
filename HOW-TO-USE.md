@@ -231,6 +231,44 @@ cd src-templates\DbIntelligence
   -ApiBase "http://localhost:5088"
 ```
 
+### Extract stored procedures (SQL inventory)
+
+Pass a connection string (or Showcase LocalDB defaults inferred from kit `appsettings.json`) to enable read-only `runSqlScan`. Live SPs land in `GET /api/maps/stored-procedures` and `{repo}/.db-index/stored-procedure-map.json`.
+
+**Inferred Showcase placeholders (from code — no secrets):**
+
+| Placeholder | Inferred value |
+|-------------|----------------|
+| `Database:Schema` | `showcase` |
+| `Database:Owned:ConnectionString` | `Server=(localdb)\mssqllocaldb;Database=ShowcaseOwned;Trusted_Connection=True;TrustServerCertificate=True` |
+| `Database:SourceFacade:ConnectionString` | `Server=(localdb)\mssqllocaldb;Database=ShowcaseSource;Trusted_Connection=True;TrustServerCertificate=True` |
+| SP template | `usp_Showcase_{ShowcaseReportArea}_{ShowcaseReportAction}` |
+| `{ShowcaseReportArea}` | `Sales`, `Inventory` |
+| `{ShowcaseReportAction}` | `Summary`, `Detail` |
+| Resolved SP names | `usp_Showcase_Sales_Summary`, `usp_Showcase_Sales_Detail`, `usp_Showcase_Inventory_Summary`, `usp_Showcase_Inventory_Detail` |
+
+Azure/Aws `CHANGE_ME` / empty `Password` stay operator-supplied (user-secrets / env) — never commit them.
+
+```powershell
+cd src-templates\DbIntelligence
+
+# Dedicated SP extract (prints code-inferred placeholders + live map)
+.\scripts\Invoke-DbIntelligenceExtractSps.ps1 -UseShowcaseLocalDefaults
+
+# Or explicit connection (non-prod only)
+.\scripts\Invoke-DbIntelligenceExtractSps.ps1 `
+  -RepositoryPath "D:\code\projects\my-monolith" `
+  -SqlConnectionString "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True" `
+  -SkipCodeTools
+
+# Ready / Index also accept the same switches
+.\scripts\Invoke-DbIntelligenceReady.ps1 `
+  "D:\code\projects\database-monolith-migration-tools\src-templates\DataServices\ShowcaseDataService" `
+  -UseShowcaseLocalDefaults -SkipBuild
+```
+
+LocalDB databases `ShowcaseOwned` / `ShowcaseSource` must exist (publish Showcase SQL project / migrations first); otherwise the SQL scan fails while code-inferred names still print.
+
 Raw PowerShell (same job):
 
 ```powershell
@@ -329,7 +367,7 @@ User secrets (API project):
 ```powershell
 cd src-templates\DbIntelligence\DbIntelligence.Api
 dotnet user-secrets init
-dotnet user-secrets set "DbIntelligence:SqlConnectionString" "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True"
+dotnet user-secrets set "DbIntelligence:SqlConnectionString" "Server=(localdb)\mssqllocaldb;Database=ShowcaseOwned;Trusted_Connection=True;TrustServerCertificate=True"
 ```
 
 ---

@@ -6,7 +6,7 @@ PowerShell setup/run helpers for local DbIntelligence development.
 
 ## Scripts
 
-- `Invoke-DbIntelligenceReady.ps1` — **one command:** project path only → prereqs (no admin) → build → health → API → index
+- `Invoke-DbIntelligenceReady.ps1` — **one command:** project path only → prereqs (no admin) → build → health → API → index (`-SqlConnectionString` / `-UseShowcaseLocalDefaults` enables SQL SP scan)
 - `Setup-DbIntelligence.ps1` — prereqs + build + test + health
 - `Initialize-DbIntelligenceNode.ps1` — user-scoped Node/npm via fnm; Codegraph via `fnm exec --using=lts-latest -- npm i -g` when fnm present
 - `Install-DbIntelligencePrereqs.ps1` — Node/fnm/Codegraph first, then `--install-preqs` wrapper
@@ -14,7 +14,9 @@ PowerShell setup/run helpers for local DbIntelligence development.
 - `Test-DbIntelligenceHealth.ps1` — CLI `--health`
 - `Start-DbIntelligence.ps1` — API on :5088 (`-Force`, `-Port`, `-RepositoryPath`)
 - `Start-DbIntelligenceWeb.ps1` — Angular on :4200 (activates/installs fnm Node if needed)
-- `Invoke-DbIntelligenceIndex.ps1` — POST index job against a repo path
+- `Invoke-DbIntelligenceIndex.ps1` — POST index job against a repo path (`-SqlConnectionString` / `-UseShowcaseLocalDefaults`)
+- `Invoke-DbIntelligenceExtractSps.ps1` — SP extract: resolve CS → `runSqlScan` → print live map + code-inferred Showcase placeholders
+- `Resolve-DbIntelligenceSqlConnection.ps1` — shared CS resolver + `Get-ShowcaseProcedurePlaceholders`
 - `Invoke-DbIntelligenceBatchIndex.ps1` — parent folder → index each child project; results in each project root
 - `Invoke-DbIntelligenceCombine.ps1` — load all child `.db-index\graph.json` under a parent into **one** live graph (+ `.db-index-combined` export)
 
