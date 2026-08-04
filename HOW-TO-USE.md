@@ -269,6 +269,28 @@ cd src-templates\DbIntelligence
 
 LocalDB databases `ShowcaseOwned` / `ShowcaseSource` must exist (publish Showcase SQL project / migrations first); otherwise the SQL scan fails while code-inferred names still print.
 
+### Export all stored procedures to a .sql file
+
+Read-only dump of `sys.procedures` definitions to a full output path:
+
+```powershell
+cd src-templates\DbIntelligence
+
+.\scripts\Export-DatabaseStoredProcedures.ps1 `
+  -OutputFile "D:\exports\ShowcaseOwned-procedures.sql" `
+  -UseShowcaseLocalDefaults
+
+.\scripts\Export-DatabaseStoredProcedures.ps1 `
+  -OutputFile "D:\exports\monolith-sps.sql" `
+  -SqlConnectionString "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True"
+
+# Names only
+.\scripts\Export-DatabaseStoredProcedures.ps1 `
+  -OutputFile "D:\exports\sp-list.txt" `
+  -SqlConnectionString "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True" `
+  -ListOnly
+```
+
 Raw PowerShell (same job):
 
 ```powershell
@@ -394,6 +416,26 @@ src-templates/DbIntelligence/
 
 ---
 
+## CodegraphChat (topic chat over an existing index)
+
+Separate ChatGPT-style UI for asking about a **topic** in a repo you already mapped with Codegraph. Answers are Codegraph CLI evidence only (no external LLM, no invented credentials).
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
+
+# Terminal 1 — API :5091 (bound to your mapped path)
+.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
+
+# Terminal 2 — Angular UI :4201
+.\scripts\Start-CodegraphChatWeb.ps1
+```
+
+Then open http://localhost:4201 and ask e.g. `tell me about IndexingService`, `who calls CodegraphClient`, `impact of EvidenceGraph`, or `index status`.
+
+Details: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md).
+
+---
+
 ## Rest of the kit (not auto-run)
 
 | Area | How to use |
@@ -403,6 +445,7 @@ src-templates/DbIntelligence/
 | `manifests/` | Copy/adapt domain + wave examples for your org |
 | `src-templates/SourceMonolith/` | Scaffold for splitting the current DB project |
 | `src-templates/DataServices/` | Example target service shape |
+| `src-templates/CodegraphChat/` | Topic chat over an existing Codegraph index |
 | `src-templates/MigrationControlPlane/` | Cutover/control-plane templates |
 | `checklists/` | Cutover / source-split checklists |
 | `validation/` | Checksums after material file changes |
@@ -423,6 +466,7 @@ dotnet restore src-templates\DatabaseModernization.sln
 dotnet build src-templates\DatabaseModernization.sln -c Release
 dotnet test src-templates\DbIntelligence\DbIntelligence.Tests\DbIntelligence.Tests.csproj -c Release
 dotnet test src-templates\FindingsMigration\FindingsMigration.Tests\FindingsMigration.Tests.csproj -c Release
+dotnet test src-templates\CodegraphChat\CodegraphChat.Tests\CodegraphChat.Tests.csproj -c Release
 ```
 
 ---
@@ -554,6 +598,7 @@ Live API graph remains **in memory** (last completed project). Durable results a
 ## More detail
 
 - DbIntelligence project README: [`src-templates/DbIntelligence/README.md`](src-templates/DbIntelligence/README.md)
+- Codegraph topic chat: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md)
 - Findings → domain template: [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md)
 - Future features: [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)
 - Discovery model: [`docs/03-discovery-and-ai-indexing.md`](docs/03-discovery-and-ai-indexing.md)

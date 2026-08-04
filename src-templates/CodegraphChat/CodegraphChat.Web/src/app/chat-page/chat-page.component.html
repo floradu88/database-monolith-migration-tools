@@ -1,0 +1,93 @@
+<div class="shell">
+  <header class="hero">
+    <div class="brand">Codegraph Chat</div>
+    <p class="tagline">
+      ChatGPT-style questions over a Codegraph index you already mapped. Answers come from
+      <code>query</code>, <code>callers</code>, <code>callees</code>, <code>impact</code>, and <code>status</code> — no invented credentials.
+    </p>
+    <div class="status">{{ statusLine }}</div>
+  </header>
+
+  <section class="bind-row">
+    <label for="repo">Mapped repository path</label>
+    <div class="row">
+      <input
+        id="repo"
+        type="text"
+        [(ngModel)]="repoPath"
+        placeholder="D:\path\to\your\app"
+        [disabled]="busy"
+      />
+      <button type="button" (click)="bindRepo()" [disabled]="busy || !repoPath.trim()">Bind</button>
+      <span class="pill" [class.ok]="indexReady" [class.warn]="!indexReady">
+        {{ indexReady ? 'index ready' : 'index unknown' }}
+      </span>
+    </div>
+  </section>
+
+  <section class="chat-panel">
+    <div class="toolbar">
+      <label>
+        Mode override
+        <select [(ngModel)]="mode" [disabled]="busy">
+          <option value="">auto</option>
+          <option value="query">query</option>
+          <option value="callers">callers</option>
+          <option value="callees">callees</option>
+          <option value="impact">impact</option>
+          <option value="status">status</option>
+          <option value="files">files</option>
+        </select>
+      </label>
+      <button type="button" class="ghost" (click)="clearChat()" [disabled]="busy">Clear chat</button>
+    </div>
+
+    <div class="messages" #scrollHost>
+      @for (m of messages; track m.at; let i = $index) {
+        <article class="bubble" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'" [class.system]="m.role === 'system'">
+          <div class="meta">
+            <span>{{ m.role }}</span>
+            @if (m.mode) {
+              <span class="mode">{{ m.mode }}</span>
+            }
+          </div>
+          <pre class="body">{{ m.content }}</pre>
+          @if (m.evidence?.length) {
+            <details>
+              <summary>Codegraph evidence ({{ m.evidence!.length }})</summary>
+              @for (e of m.evidence; track e.command + (e.symbol || '') + e.exitCode) {
+                <div class="evidence">
+                  <strong>{{ e.command }}</strong>
+                  @if (e.symbol) { <code>{{ e.symbol }}</code> }
+                  <span [class.ok]="e.succeeded" [class.fail]="!e.succeeded">
+                    exit {{ e.exitCode }}
+                  </span>
+                  @if (e.output) {
+                    <pre>{{ e.output }}</pre>
+                  }
+                  @if (e.error) {
+                    <pre class="err">{{ e.error }}</pre>
+                  }
+                </div>
+              }
+            </details>
+          }
+        </article>
+      }
+      @if (busy) {
+        <div class="typing">Querying Codegraph…</div>
+      }
+    </div>
+
+    <div class="composer">
+      <textarea
+        [(ngModel)]="draft"
+        (keydown)="onKeydown($event)"
+        rows="3"
+        placeholder="Ask about a topic, symbol, callers, or impact…"
+        [disabled]="busy"
+      ></textarea>
+      <button type="button" (click)="send()" [disabled]="busy || !draft.trim()">Send</button>
+    </div>
+  </section>
+</div>

@@ -57,6 +57,13 @@
 - `src-templates/DbIntelligence/DbIntelligence.Web/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/DbIntelligence.Worker/AI-INSTRUCTIONS.md`
 - `src-templates/DbIntelligence/scripts/AI-INSTRUCTIONS.md`
+- `src-templates/CodegraphChat/AI-INSTRUCTIONS.md`
+- `src-templates/CodegraphChat/CodegraphChat.Api/AI-INSTRUCTIONS.md`
+- `src-templates/CodegraphChat/CodegraphChat.Contracts/AI-INSTRUCTIONS.md`
+- `src-templates/CodegraphChat/CodegraphChat.Infrastructure/AI-INSTRUCTIONS.md`
+- `src-templates/CodegraphChat/CodegraphChat.Tests/AI-INSTRUCTIONS.md`
+- `src-templates/CodegraphChat/CodegraphChat.Web/AI-INSTRUCTIONS.md`
+- `src-templates/CodegraphChat/scripts/AI-INSTRUCTIONS.md`
 - `src-templates/FindingsMigration/AI-INSTRUCTIONS.md`
 - `src-templates/FindingsMigration/scripts/AI-INSTRUCTIONS.md`
 

@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+**/.vs/
+CodegraphChat.Web/node_modules/
+CodegraphChat.Web/dist/
+CodegraphChat.Web/.angular/
+*.user
+*.suo
