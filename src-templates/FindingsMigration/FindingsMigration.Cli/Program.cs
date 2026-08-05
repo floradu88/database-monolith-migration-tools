@@ -32,7 +32,7 @@ static int Usage()
           --sp-map <path>         Required. stored-procedure-map.json
           --service-root <dir>    Required. Scaffolded DataService root
           --domain <Name>         Required.
-          --service <Name>        Required. e.g. BillingDataService
+          --service <Name>        Required. e.g. InsightDataService
           --schema <name>         Optional. Default: lowercased domain
 
         suggest-domains options:

@@ -164,7 +164,7 @@ Invoke-RestMethod http://localhost:5088/api/tools
 cd src-templates\DbIntelligence
 
 .\scripts\Invoke-DbIntelligenceIndex.ps1 `
-  -RepositoryPath "D:\code\projects\my-monolith" `
+  -RepositoryPath "D:\code\projects\personalinsightanalysis" `
   -ApiBase "http://localhost:5088"
 ```
 
@@ -172,7 +172,7 @@ Raw API:
 
 ```powershell
 $body = @{
-  targetRepositoryPath = "D:\code\projects\my-monolith"
+  targetRepositoryPath = "D:\code\projects\personalinsightanalysis"
   runCodegraph         = $true
   runGraphify          = $true
   runRepositoryScan    = $true
@@ -245,14 +245,14 @@ Live API graph stays **in memory** (last completed project). Durable results are
 cd src-templates\FindingsMigration
 
 .\scripts\Invoke-FindingsMigration.ps1 `
-  -CodeToDbMap "D:\code\projects\my-monolith\.db-index\code-to-db-map.json" `
-  -StoredProcedureMap "D:\code\projects\my-monolith\.db-index\stored-procedure-map.json" `
-  -DomainName "Billing" `
-  -OwnerTeam "TBD"
+  -CodeToDbMap "D:\code\projects\personalinsightanalysis\.db-index\code-to-db-map.json" `
+  -StoredProcedureMap "D:\code\projects\personalinsightanalysis\.db-index\stored-procedure-map.json" `
+  -DomainName "Insight" `
+  -OwnerTeam "Personal Insight"
 
 .\scripts\New-DomainFromFindings.ps1 `
-  -DomainName "Billing" `
-  -PackageDirectory ".\out\Billing" `
+  -DomainName "Insight" `
+  -PackageDirectory ".\out\Insight" `
   -CopyManifestsToKit
 ```
 
@@ -260,10 +260,10 @@ If the indexed project lived under `C:\code` instead:
 
 ```powershell
 .\scripts\Invoke-FindingsMigration.ps1 `
-  -CodeToDbMap "C:\code\my-monolith\.db-index\code-to-db-map.json" `
-  -StoredProcedureMap "C:\code\my-monolith\.db-index\stored-procedure-map.json" `
-  -DomainName "Billing" `
-  -OwnerTeam "TBD"
+  -CodeToDbMap "C:\code\personalinsightanalysis\.db-index\code-to-db-map.json" `
+  -StoredProcedureMap "C:\code\personalinsightanalysis\.db-index\stored-procedure-map.json" `
+  -DomainName "Insight" `
+  -OwnerTeam "Personal Insight"
 ```
 
 CLI equivalent:
@@ -272,9 +272,9 @@ CLI equivalent:
 dotnet run --project .\FindingsMigration.Cli -c Release -- `
   --code-to-db "D:\path\to\code-to-db-map.json" `
   --sp-map "D:\path\to\stored-procedure-map.json" `
-  --domain Billing `
-  --out .\out\Billing `
-  --owner "TBD"
+  --domain Insight `
+  --out .\out\Insight `
+  --owner "Personal Insight"
 ```
 
 Review `FINDINGS-REVIEW.md` before ownership approval. See [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md) and [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md).

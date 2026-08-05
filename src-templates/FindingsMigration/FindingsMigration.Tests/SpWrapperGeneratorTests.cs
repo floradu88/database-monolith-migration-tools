@@ -10,7 +10,7 @@ public class SpWrapperGeneratorTests
     public void Generate_expands_templated_procedure_names()
     {
         var root = Path.Combine(Path.GetTempPath(), "sp-gen-tmpl-" + Guid.NewGuid().ToString("N"));
-        var service = "BillingDataService";
+        var service = "InsightDataService";
         var serviceRoot = Path.Combine(root, service);
         Directory.CreateDirectory(Path.Combine(serviceRoot, $"{service}.Database"));
         Directory.CreateDirectory(Path.Combine(serviceRoot, $"{service}.Infrastructure"));
@@ -30,12 +30,12 @@ public class SpWrapperGeneratorTests
                             ["Area"] = ["Billing", "Ordering"],
                             ["Action"] = ["Get"]
                         },
-                        Callers = ["BillingApp.Run"]
+                        Callers = ["InsightApp.Run"]
                     }
                 ]
             };
 
-            var result = new SpWrapperGenerator().Generate(map, serviceRoot, "Billing", "billing", service);
+            var result = new SpWrapperGenerator().Generate(map, serviceRoot, "Insight", "insight", service);
             Assert.Contains(result.WrittenFiles, f => f.EndsWith("usp_Billing_Get.sql", StringComparison.OrdinalIgnoreCase));
             Assert.Contains(result.WrittenFiles, f => f.EndsWith("usp_Ordering_Get.sql", StringComparison.OrdinalIgnoreCase));
             var wrapper = File.ReadAllText(result.WrittenFiles.First(f => f.EndsWith(".cs")));
@@ -53,7 +53,7 @@ public class SpWrapperGeneratorTests
     public void Generate_registers_sql_stub_in_sqlproj_when_present()
     {
         var root = Path.Combine(Path.GetTempPath(), "sp-gen-proj-" + Guid.NewGuid().ToString("N"));
-        var service = "BillingDataService";
+        var service = "InsightDataService";
         var serviceRoot = Path.Combine(root, service);
         var dbDir = Path.Combine(serviceRoot, $"{service}.Database");
         Directory.CreateDirectory(dbDir);
@@ -71,11 +71,11 @@ public class SpWrapperGeneratorTests
         {
             var map = new StoredProcedureMapDocument
             {
-                Procedures = [new StoredProcedureEntry { Name = "GetBillingProfile", Schema = "dbo" }]
+                Procedures = [new StoredProcedureEntry { Name = "GetInsight", Schema = "dbo" }]
             };
-            new SpWrapperGenerator().Generate(map, serviceRoot, "Billing", "billing", service);
+            new SpWrapperGenerator().Generate(map, serviceRoot, "Insight", "insight", service);
             var sqlproj = File.ReadAllText(Path.Combine(dbDir, $"{service}.Database.sqlproj"));
-            Assert.Contains(@"Build Include=""Programmability\Generated\GetBillingProfile.sql""", sqlproj);
+            Assert.Contains(@"Build Include=""Programmability\Generated\GetInsight.sql""", sqlproj);
         }
         finally
         {
@@ -87,7 +87,7 @@ public class SpWrapperGeneratorTests
     public void Generate_emits_sql_stub_and_csharp_wrapper()
     {
         var root = Path.Combine(Path.GetTempPath(), "sp-gen-" + Guid.NewGuid().ToString("N"));
-        var service = "BillingDataService";
+        var service = "InsightDataService";
         var serviceRoot = Path.Combine(root, service);
         Directory.CreateDirectory(Path.Combine(serviceRoot, $"{service}.Database"));
         Directory.CreateDirectory(Path.Combine(serviceRoot, $"{service}.Infrastructure"));
@@ -100,31 +100,31 @@ public class SpWrapperGeneratorTests
                 [
                     new StoredProcedureEntry
                     {
-                        Name = "GetBillingProfile",
+                        Name = "GetInsight",
                         Schema = "dbo",
-                        Callers = ["BillingApp.Get"],
-                        Reads = ["dbo.BillingAccount"],
+                        Callers = ["InsightApp.Get"],
+                        Reads = ["dbo.Insight"],
                         Writes = []
                     }
                 ]
             };
 
-            var result = new SpWrapperGenerator().Generate(map, serviceRoot, "Billing", "billing", service);
+            var result = new SpWrapperGenerator().Generate(map, serviceRoot, "Insight", "insight", service);
             Assert.Equal(1, result.ProcedureCount);
-            Assert.Contains(result.WrittenFiles, f => f.EndsWith("GetBillingProfile.sql", StringComparison.OrdinalIgnoreCase));
-            Assert.Contains(result.WrittenFiles, f => f.EndsWith("Sp_GetBillingProfile.cs", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.WrittenFiles, f => f.EndsWith("GetInsight.sql", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.WrittenFiles, f => f.EndsWith("Sp_GetInsight.cs", StringComparison.OrdinalIgnoreCase));
             var sql = File.ReadAllText(result.WrittenFiles.First(f => f.EndsWith(".sql")));
             Assert.Contains("Ownership: SqlProject", sql);
             Assert.Contains("Cutover/", sql);
             var cs = File.ReadAllText(result.WrittenFiles.First(f => f.EndsWith(".cs")));
-            Assert.Contains("billing.GetBillingProfile", cs);
+            Assert.Contains("insight.GetInsight", cs);
             Assert.Contains("ExecuteSp<object>", cs);
             Assert.Contains("IDataAccessContext", cs);
-            Assert.Contains(result.WrittenFiles, f => f.EndsWith("GetBillingProfile.migration-manifest.snippet.yml", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.WrittenFiles, f => f.EndsWith("GetInsight.migration-manifest.snippet.yml", StringComparison.OrdinalIgnoreCase));
             var snippet = File.ReadAllText(result.WrittenFiles.First(f => f.EndsWith(".migration-manifest.snippet.yml")));
             Assert.Contains("type: StoredProcedure", snippet);
-            Assert.Contains("targetService: BillingDataService", snippet);
-            Assert.Contains("wave: billing-001", snippet);
+            Assert.Contains("targetService: InsightDataService", snippet);
+            Assert.Contains("wave: insight-001", snippet);
         }
         finally
         {

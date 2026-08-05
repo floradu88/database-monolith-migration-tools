@@ -17,9 +17,9 @@
 
 .EXAMPLE
   .\Invoke-FindingsMigration.ps1 `
-    -CodeToDbMap "D:\code\projects\my-monolith\.db-index\code-to-db-map.json" `
-    -DomainName "Billing" `
-    -OwnerTeam "TBD"
+    -CodeToDbMap "D:\code\projects\personalinsightanalysis\.db-index\code-to-db-map.json" `
+    -DomainName "Insight" `
+    -OwnerTeam "Personal Insight"
 #>
 [CmdletBinding()]
 param(
