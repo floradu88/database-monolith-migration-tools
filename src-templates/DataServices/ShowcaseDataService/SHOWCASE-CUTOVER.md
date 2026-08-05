@@ -27,17 +27,17 @@ cd src-templates\FindingsMigration
 .\scripts\Invoke-FindingsMigration.ps1 `
   -CodeToDbMap "...\code-to-db-map.json" `
   -StoredProcedureMap "...\stored-procedure-map.json" `
-  -DomainName "Insight"
+  -DomainName "Billing"
 ```
 
-Review `out\Insight\FINDINGS-REVIEW.md` — AMBIGUOUS is not owned.
+Review `out\Billing\FINDINGS-REVIEW.md` — AMBIGUOUS is not owned.
 
 ### 3. Scaffold from Showcase golden
 
 ```powershell
 .\scripts\New-DomainFromFindings.ps1 `
-  -DomainName "Insight" `
-  -PackageDirectory ".\out\Insight" `
+  -DomainName "Billing" `
+  -PackageDirectory ".\out\Billing" `
   -StoredProcedureMap "...\stored-procedure-map.json" `
   -CopyManifestsToKit
 ```

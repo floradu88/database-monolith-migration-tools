@@ -64,12 +64,12 @@ cd src-templates\FindingsMigration
 .\scripts\Invoke-FindingsMigration.ps1 `
   -CodeToDbMap "D:\code\projects\...\.db-index\code-to-db-map.json" `
   -StoredProcedureMap "D:\code\projects\...\.db-index\stored-procedure-map.json" `
-  -DomainName "Insight" `
-  -OwnerTeam "Personal Insight"
+  -DomainName "Billing" `
+  -OwnerTeam "TBD"
 
 .\scripts\New-DomainFromFindings.ps1 `
-  -DomainName "Insight" `
-  -PackageDirectory ".\out\Insight" `
+  -DomainName "Billing" `
+  -PackageDirectory ".\out\Billing" `
   -StoredProcedureMap "...\stored-procedure-map.json" `
   -CopyManifestsToKit
 ```
@@ -79,8 +79,8 @@ CLI `generate-sp` (also emits `*.migration-manifest.snippet.yml` per procedure):
 ```powershell
 dotnet run --project FindingsMigration.Cli -- generate-sp `
   --sp-map "...\stored-procedure-map.json" `
-  --service-root "..\DataServices\InsightDataService" `
-  --domain Insight --service InsightDataService --schema insight
+  --service-root "..\DataServices\BillingDataService" `
+  --domain Billing --service BillingDataService --schema billing
 ```
 
 Package with reconciliation stubs + DAL hints:
@@ -88,6 +88,6 @@ Package with reconciliation stubs + DAL hints:
 ```powershell
 dotnet run --project FindingsMigration.Cli -- `
   --code-to-db "...\code-to-db-map.json" `
-  --domain Insight `
+  --domain Billing `
   --emit-reconciliation-tests
 ```

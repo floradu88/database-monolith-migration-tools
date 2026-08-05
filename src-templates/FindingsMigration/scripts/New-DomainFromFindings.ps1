@@ -4,7 +4,7 @@
   Scaffold a DataService project from the ShowcaseDataService golden template using a findings package.
 
 .PARAMETER DomainName
-  Domain name used for replacements (e.g. Insight → InsightDataService).
+  Domain name used for replacements (e.g. Billing → BillingDataService).
 
 .PARAMETER PackageDirectory
   Output of Invoke-FindingsMigration.ps1 (contains domain-package.json / SCAFFOLD.md).
@@ -19,7 +19,7 @@
   Copy generated manifests into kit manifests/domains|migration-waves|objects.
 
 .EXAMPLE
-  .\New-DomainFromFindings.ps1 -DomainName Insight -PackageDirectory .\out\Insight -CopyManifestsToKit
+  .\New-DomainFromFindings.ps1 -DomainName Billing -PackageDirectory .\out\Billing -CopyManifestsToKit
 #>
 [CmdletBinding()]
 param(
