@@ -1,21 +1,22 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Ready CodegraphChat against an already-mapped repository path.
+  Ready CodegraphChat against a repository path (build + start API).
 
 .DESCRIPTION
-  1. Ensure fnm Node + Codegraph (via DbIntelligence helper)
-  2. Build .NET solution
-  3. Run unit tests
-  4. Start API bound to the repository path
+  1. User-scoped fnm Node + Codegraph (via DbIntelligence helper)
+  2. Build .NET + Angular (publish SPA to Api/wwwroot) unless -SkipWeb
+  3. Start API bound to the repository path (single-host UI at :5091 when wwwroot present)
 
 .EXAMPLE
   .\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
+  .\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app" -SkipWeb
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0)]
     [string]$RepositoryPath,
+    [switch]$SkipWeb,
     [switch]$SkipWebHint,
     [switch]$Yes
 )
@@ -25,7 +26,6 @@ $Root = Split-Path -Parent $PSScriptRoot
 $Scripts = $PSScriptRoot
 $DbIntelScripts = Join-Path (Split-Path -Parent $Root) "DbIntelligence\scripts"
 $NodeInit = Join-Path $DbIntelScripts "Initialize-DbIntelligenceNode.ps1"
-$Sln = Join-Path $Root "CodegraphChat.sln"
 
 if (-not (Test-Path $RepositoryPath)) {
     throw "Repository path not found: $RepositoryPath"
@@ -39,7 +39,7 @@ if (-not (Test-Path $NodeInit)) {
     throw "Missing DbIntelligence Node helper at $NodeInit"
 }
 
-Write-Host "`n[1/4] Node / Codegraph (fnm preferred)..." -ForegroundColor Cyan
+Write-Host "`n[1/3] Node / Codegraph (fnm preferred)..." -ForegroundColor Cyan
 if ($Yes) {
     & $NodeInit -Install -InstallCodegraph -Yes
 }
@@ -55,19 +55,22 @@ if (-not $codegraphOk) {
 
 $dotCodegraph = Join-Path $RepoFull ".codegraph"
 if (-not (Test-Path $dotCodegraph)) {
-    Write-Warning "No .codegraph folder under $RepoFull. Index first (DbIntelligence Ready, or: codegraph init `"$RepoFull`")."
+    Write-Warning "No .codegraph folder under $RepoFull. Use Ensure index in the UI, or: codegraph init `"$RepoFull`"."
 }
 
-Write-Host "`n[2/4] Build..." -ForegroundColor Cyan
-dotnet build $Sln -c Release
+Write-Host "`n[2/3] Build..." -ForegroundColor Cyan
+$buildArgs = @{ Yes = $true }
+if ($SkipWeb) { $buildArgs.SkipWeb = $true }
+if ($Yes) { $buildArgs.Yes = $true }
+& (Join-Path $Scripts "Build-CodegraphChat.ps1") @buildArgs
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-Write-Host "`n[3/4] Tests..." -ForegroundColor Cyan
-dotnet test $Sln -c Release --no-build
-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-Write-Host "`n[4/4] Start API..." -ForegroundColor Cyan
-if (-not $SkipWebHint) {
+$wwwIndex = Join-Path $Root "CodegraphChat.Api\wwwroot\index.html"
+Write-Host "`n[3/3] Start API..." -ForegroundColor Cyan
+if (Test-Path $wwwIndex) {
+    Write-Host "Single-host UI: http://localhost:5091/" -ForegroundColor DarkGray
+}
+elseif (-not $SkipWebHint) {
     Write-Host "In another terminal: .\Start-CodegraphChatWeb.ps1" -ForegroundColor DarkGray
     Write-Host "UI: http://localhost:4201  API: http://localhost:5091" -ForegroundColor DarkGray
 }

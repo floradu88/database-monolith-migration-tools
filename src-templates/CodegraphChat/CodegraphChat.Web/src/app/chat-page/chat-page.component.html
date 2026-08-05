@@ -2,7 +2,7 @@
   <header class="hero">
     <div class="brand">Codegraph Chat</div>
     <p class="tagline">
-      ChatGPT-style questions over a Codegraph index you already mapped. Answers come from
+      Ask about a topic in a Codegraph-mapped repo. Answers use
       <code>query</code>, <code>callers</code>, <code>callees</code>, <code>impact</code>, and <code>status</code> — no invented credentials.
     </p>
     <div class="status">{{ statusLine }}</div>
@@ -17,12 +17,20 @@
         [(ngModel)]="repoPath"
         placeholder="D:\path\to\your\app"
         [disabled]="busy"
+        (keydown.enter)="bindRepo()"
       />
       <button type="button" (click)="bindRepo()" [disabled]="busy || !repoPath.trim()">Bind</button>
+      <button type="button" class="ghost" (click)="ensureIndex()" [disabled]="busy || !bound">Ensure index</button>
       <span class="pill" [class.ok]="indexReady" [class.warn]="!indexReady">
-        {{ indexReady ? 'index ready' : 'index unknown' }}
+        {{ indexReady ? 'index ready' : bound ? 'index missing' : 'not bound' }}
       </span>
     </div>
+  </section>
+
+  <section class="suggestions" aria-label="Suggested prompts">
+    @for (s of suggestions; track s.label) {
+      <button type="button" class="chip" (click)="useSuggestion(s)" [disabled]="busy">{{ s.label }}</button>
+    }
   </section>
 
   <section class="chat-panel">
@@ -39,29 +47,57 @@
           <option value="files">files</option>
         </select>
       </label>
-      <button type="button" class="ghost" (click)="clearChat()" [disabled]="busy">Clear chat</button>
+      <div class="toolbar-actions">
+        @if (copyHint) {
+          <span class="copy-hint">{{ copyHint }}</span>
+        }
+        <button type="button" class="ghost" (click)="clearChat()" [disabled]="busy">Clear chat</button>
+      </div>
     </div>
 
     <div class="messages" #scrollHost>
-      @for (m of messages; track m.at; let i = $index) {
+      @for (m of messages; track m.id) {
         <article class="bubble" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'" [class.system]="m.role === 'system'">
           <div class="meta">
             <span>{{ m.role }}</span>
             @if (m.mode) {
               <span class="mode">{{ m.mode }}</span>
             }
+            @if (m.symbol) {
+              <span class="symbol">{{ m.symbol }}</span>
+            }
+            @if (m.role === 'assistant') {
+              <button type="button" class="linkish" (click)="copyMessage(m.content)">Copy</button>
+            }
           </div>
-          <pre class="body">{{ m.content }}</pre>
+
+          @if (m.role === 'assistant') {
+            <div class="body md" [innerHTML]="m.content | chatMarkdown"></div>
+          } @else {
+            <pre class="body">{{ m.content }}</pre>
+          }
+
+          @if (m.symbol && m.role === 'assistant') {
+            <div class="followups">
+              <button type="button" class="chip" (click)="askFollowUp(m.symbol!, 'query')" [disabled]="busy">About {{ m.symbol }}</button>
+              <button type="button" class="chip" (click)="askFollowUp(m.symbol!, 'callers')" [disabled]="busy">Who calls it</button>
+              <button type="button" class="chip" (click)="askFollowUp(m.symbol!, 'callees')" [disabled]="busy">What it calls</button>
+              <button type="button" class="chip" (click)="askFollowUp(m.symbol!, 'impact')" [disabled]="busy">Impact</button>
+            </div>
+          }
+
           @if (m.evidence?.length) {
             <details>
               <summary>Codegraph evidence ({{ m.evidence!.length }})</summary>
               @for (e of m.evidence; track e.command + (e.symbol || '') + e.exitCode) {
                 <div class="evidence">
                   <strong>{{ e.command }}</strong>
-                  @if (e.symbol) { <code>{{ e.symbol }}</code> }
-                  <span [class.ok]="e.succeeded" [class.fail]="!e.succeeded">
-                    exit {{ e.exitCode }}
-                  </span>
+                  @if (e.symbol) {
+                    <button type="button" class="linkish" (click)="askFollowUp(e.symbol!, 'query')" [disabled]="busy">
+                      <code>{{ e.symbol }}</code>
+                    </button>
+                  }
+                  <span [class.ok]="e.succeeded" [class.fail]="!e.succeeded">exit {{ e.exitCode }}</span>
                   @if (e.output) {
                     <pre>{{ e.output }}</pre>
                   }
@@ -81,13 +117,14 @@
 
     <div class="composer">
       <textarea
+        #composer
         [(ngModel)]="draft"
         (keydown)="onKeydown($event)"
         rows="3"
-        placeholder="Ask about a topic, symbol, callers, or impact…"
+        [placeholder]="bound ? 'Ask about a topic, symbol, callers, or impact…' : 'Bind a repository path first…'"
         [disabled]="busy"
       ></textarea>
-      <button type="button" (click)="send()" [disabled]="busy || !draft.trim()">Send</button>
+      <button type="button" (click)="send()" [disabled]="!canChat || !draft.trim()">Send</button>
     </div>
   </section>
 </div>

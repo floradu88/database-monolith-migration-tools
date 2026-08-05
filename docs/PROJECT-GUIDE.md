@@ -175,13 +175,14 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 | `CodegraphChat.Web` | Angular chat UI `:4201` |
 | `scripts/` | PowerShell Ready/Start (reuses DbIntelligence fnm helper) |
 
-**Why use it:** Conversational exploration of symbols, callers, callees, and impact without leaving the kit stack. Complements DbIntelligence (which builds maps) rather than replacing it.
+**Why use it:** Conversational exploration of symbols, callers, callees, and impact without leaving the kit stack. Complements DbIntelligence (which builds maps) rather than replacing it. Prefer `Setup-CodegraphChat.ps1` / `Build-CodegraphChat.ps1` so the API can serve the SPA from `wwwroot` (single-host on `:5091`).
 
 | Pros | Cons |
 |------|------|
-| Same .NET 8 + Angular 18 + PowerShell/fnm patterns | Requires an existing `.codegraph/` index |
+| Same .NET 8 + Angular 18 + PowerShell/fnm patterns | Best with an existing `.codegraph/` index (Ensure can init/sync) |
 | Answers grounded in CLI evidence (no LLM key) | Not a code→DB map or ownership tool |
 | Intent routing for query/callers/impact/status | Symbol detection benefits from quoting names |
+| Single-host SPA publish into API wwwroot | Generated wwwroot assets are local build output |
 
 ---
 

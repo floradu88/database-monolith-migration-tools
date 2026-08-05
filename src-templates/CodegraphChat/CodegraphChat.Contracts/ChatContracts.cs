@@ -47,6 +47,8 @@ public sealed class SessionConfigDto
     public string? IndexDetail { get; set; }
     public bool CodegraphAvailable { get; set; }
     public string? CodegraphVersion { get; set; }
+    public bool? EnsureSucceeded { get; set; }
+    public string? EnsureDetail { get; set; }
 }
 
 public sealed class HealthDto

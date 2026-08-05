@@ -418,19 +418,28 @@ src-templates/DbIntelligence/
 
 ## CodegraphChat (topic chat over an existing index)
 
-Separate ChatGPT-style UI for asking about a **topic** in a repo you already mapped with Codegraph. Answers are Codegraph CLI evidence only (no external LLM, no invented credentials).
+Separate ChatGPT-style UI for asking about a **topic** in a repo indexed with Codegraph. Answers are Codegraph CLI evidence only (no external LLM, no invented credentials). **Ensure index** may run local `init`/`sync`; it does not replace DbIntelligence code→DB maps.
 
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
 
-# Terminal 1 — API :5091 (bound to your mapped path)
-.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
-
-# Terminal 2 — Angular UI :4201
-.\scripts\Start-CodegraphChatWeb.ps1
+.\scripts\Setup-CodegraphChat.ps1 -Yes
+.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"   # builds SPA into Api/wwwroot + starts :5091
 ```
 
-Then open http://localhost:4201 and ask e.g. `tell me about IndexingService`, `who calls CodegraphClient`, `impact of EvidenceGraph`, or `index status`.
+Open **http://localhost:5091/** (single-host). Optional hot-reload UI:
+
+```powershell
+.\scripts\Start-CodegraphChatWeb.ps1   # http://localhost:4201
+```
+
+| Script | Purpose |
+|--------|---------|
+| `Setup-CodegraphChat.ps1` | Prereqs + build (no start) |
+| `Build-CodegraphChat.ps1` | Restore/build/test; publish Angular to `Api/wwwroot` |
+| `Invoke-CodegraphChatReady.ps1` | Build + start API bound to a path |
+| `Start-CodegraphChat.ps1` | API only (`-Force`, `-RepositoryPath`) |
+| `Start-CodegraphChatWeb.ps1` | Angular dev server |
 
 Details: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md).
 

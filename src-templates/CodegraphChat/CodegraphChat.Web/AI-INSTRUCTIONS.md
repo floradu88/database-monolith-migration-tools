@@ -6,6 +6,7 @@ Angular 18 SPA: ChatGPT-like topic chat over Codegraph (proxies `/api` → `http
 
 ## Rules
 
-1. Prefer `../scripts/Start-CodegraphChatWeb.ps1` (fnm via DbIntelligence helper).
-2. Do not hard-code production repository paths or secrets.
-3. Keep visual language aligned with DbIntelligence.Web (Fraunces + IBM Plex, paper/ink palette).
+1. Prefer `../scripts/Start-CodegraphChatWeb.ps1` (fnm via DbIntelligence helper) for hot reload.
+2. Prefer `../scripts/Build-CodegraphChat.ps1` to publish production SPA into `../CodegraphChat.Api/wwwroot`.
+3. Do not hard-code production repository paths or secrets.
+4. Keep visual language aligned with DbIntelligence.Web (Fraunces + IBM Plex, paper/ink palette).

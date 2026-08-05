@@ -22,6 +22,7 @@ public interface ITopicChatService
     Task<HealthDto> GetHealthAsync(CancellationToken cancellationToken = default);
     Task<SessionConfigDto> GetSessionAsync(CancellationToken cancellationToken = default);
     Task<SessionConfigDto> SetSessionAsync(SessionConfigRequest request, CancellationToken cancellationToken = default);
+    Task<SessionConfigDto> EnsureIndexAsync(CancellationToken cancellationToken = default);
     Task<ChatResponse> AskAsync(ChatRequest request, CancellationToken cancellationToken = default);
 }
 
@@ -78,12 +79,20 @@ public sealed class TopicChatService : ITopicChatService
 
         if (!string.IsNullOrWhiteSpace(repo) && Directory.Exists(repo))
         {
+            var codegraphDir = Path.Combine(repo, ".codegraph");
+            var folderReady = Directory.Exists(codegraphDir);
             var status = await _codegraph.StatusAsync(repo, cancellationToken);
-            indexReady = status.Succeeded &&
-                         (status.StandardOutput.Contains(".codegraph", StringComparison.OrdinalIgnoreCase)
-                          || status.StandardOutput.Contains("indexed", StringComparison.OrdinalIgnoreCase)
-                          || LooksLikeJson(status.StandardOutput));
-            detail = Truncate(status.StandardOutput + status.StandardError, 1500);
+            var statusReady = status.Succeeded &&
+                              (status.StandardOutput.Contains(".codegraph", StringComparison.OrdinalIgnoreCase)
+                               || status.StandardOutput.Contains("indexed", StringComparison.OrdinalIgnoreCase)
+                               || LooksLikeJson(status.StandardOutput));
+            // Folder presence wins when CLI status JSON shape drifts across Codegraph versions.
+            indexReady = folderReady || statusReady;
+            detail = Truncate(
+                folderReady
+                    ? $".codegraph present. {status.StandardOutput}{status.StandardError}"
+                    : status.StandardOutput + status.StandardError,
+                1500);
         }
 
         return new SessionConfigDto
@@ -107,6 +116,26 @@ public sealed class TopicChatService : ITopicChatService
 
         _session.RepositoryPath = full;
         return await GetSessionAsync(cancellationToken);
+    }
+
+    public async Task<SessionConfigDto> EnsureIndexAsync(CancellationToken cancellationToken = default)
+    {
+        var repo = _session.RepositoryPath ?? _options.TargetRepositoryPath;
+        if (string.IsNullOrWhiteSpace(repo))
+            throw new InvalidOperationException("Bind a repository path before ensuring the Codegraph index.");
+
+        var full = Path.GetFullPath(repo);
+        if (!Directory.Exists(full))
+            throw new DirectoryNotFoundException($"Repository path not found: {full}");
+
+        _session.RepositoryPath = full;
+        var result = await _codegraph.EnsureIndexAsync(full, cancellationToken);
+        var session = await GetSessionAsync(cancellationToken);
+        session.EnsureSucceeded = result.Succeeded;
+        session.EnsureDetail = Truncate(
+            string.IsNullOrWhiteSpace(result.StandardOutput) ? result.StandardError : result.StandardOutput,
+            2000);
+        return session;
     }
 
     public async Task<ChatResponse> AskAsync(ChatRequest request, CancellationToken cancellationToken = default)

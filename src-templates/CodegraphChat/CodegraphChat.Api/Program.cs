@@ -44,6 +44,18 @@ api.MapPost("/session", async (SessionConfigRequest request, ITopicChatService c
     }
 });
 
+api.MapPost("/session/ensure-index", async (ITopicChatService chat) =>
+{
+    try
+    {
+        return Results.Ok(await chat.EnsureIndexAsync());
+    }
+    catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or DirectoryNotFoundException)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+});
+
 api.MapPost("/chat", async (ChatRequest request, ITopicChatService chat) =>
 {
     try
