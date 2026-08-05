@@ -284,6 +284,13 @@ cd src-templates\DbIntelligence
 
 LocalDB databases `ShowcaseOwned` / `ShowcaseSource` must exist (publish Showcase SQL project / migrations first); otherwise the SQL scan fails while code-inferred names still print.
 
+**One-command lab publish + SP export assert:**
+
+```powershell
+cd src-templates\DataServices\ShowcaseDataService
+.\scripts\Initialize-ShowcaseLocalDb.ps1
+```
+
 ### Export all stored procedures to a .sql file
 
 Read-only dump of `sys.procedures` definitions to a full output path:
@@ -515,6 +522,14 @@ cd src-templates\FindingsMigration
 ```
 
 Produces draft manifests + optional `DataServices\InsightDataService` scaffold from the **ShowcaseDataService** golden template (SP stubs/wrappers when a SP map is provided). `CustomerDataService` remains a thin example only. Review `FINDINGS-REVIEW.md` before ownership approval.
+
+Additional CLI (see FindingsMigration README):
+
+```powershell
+dotnet run --project FindingsMigration.Cli -- diff-maps --previous prev.json --current curr.json --out new.json
+dotnet run --project FindingsMigration.Cli -- slice-sql --objects "dbo.Customer,dbo.Order" --out .\out\slice --schema customer --service CustomerDataService
+dotnet run --project FindingsMigration.Cli -- --code-to-db map.json --domain Insight --emit-reconciliation-tests
+```
 
 Owner blue/green demo: [`src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md).
 

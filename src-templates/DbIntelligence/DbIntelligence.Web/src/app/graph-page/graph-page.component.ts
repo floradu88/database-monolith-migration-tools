@@ -17,11 +17,16 @@ import {
   IndexJob,
   BatchIndexJob,
   IntelligenceApiService,
-  StoredProcedureMap
+  StoredProcedureMap,
+  CodeReferenceLocationsDocument,
+  CodeReferenceLocation,
+  PromoteFindingsResponse,
+  PromoteFindingRow
 } from '../services/intelligence-api.service';
 
-type ViewMode = 'graph' | 'code-to-db' | 'procedures';
+type ViewMode = 'graph' | 'code-to-db' | 'procedures' | 'references';
 type IndexMode = 'single' | 'batch';
+type RefSortKey = 'fullPath' | 'line' | 'dbObject' | 'confidence';
 
 @Component({
   selector: 'app-graph-page',
@@ -51,6 +56,20 @@ export class GraphPageComponent implements AfterViewInit, OnDestroy {
   batchJob?: BatchIndexJob;
   codeMap?: CodeToDbMap;
   spMap?: StoredProcedureMap;
+  refDoc?: CodeReferenceLocationsDocument;
+  refFilter = '';
+  refSort: RefSortKey = 'fullPath';
+  refSortAsc = true;
+  /** Selection keys for Code→DB rows (promote package). */
+  selectedCodeKeys = new Set<string>();
+  /** Selection keys for References rows (promote package). */
+  selectedRefKeys = new Set<string>();
+  promoteDomain = '';
+  promoteOutputPath = '';
+  promoteOwner = '';
+  promoteIncludeAmbiguous = false;
+  promotePsCommand = '';
+  promoteHint = '';
   repoPath = '';
   parentFolderPath = '';
   indexMode: IndexMode = 'single';
@@ -124,6 +143,201 @@ export class GraphPageComponent implements AfterViewInit, OnDestroy {
   loadMaps(): void {
     this.api.getCodeToDbMap().subscribe((m) => (this.codeMap = m));
     this.api.getStoredProcedureMap().subscribe((m) => (this.spMap = m));
+    this.api.getCodeReferences().subscribe((m) => (this.refDoc = m));
+  }
+
+  get filteredReferences(): CodeReferenceLocation[] {
+    const rows = this.refDoc?.references ?? [];
+    const q = this.refFilter.trim().toLowerCase();
+    const filtered = !q
+      ? rows
+      : rows.filter(
+          (r) =>
+            (r.fullPath || '').toLowerCase().includes(q) ||
+            (r.location || '').toLowerCase().includes(q) ||
+            (r.dbObject || '').toLowerCase().includes(q) ||
+            (r.codeLabel || '').toLowerCase().includes(q) ||
+            (r.confidence || '').toLowerCase().includes(q)
+        );
+
+    const dir = this.refSortAsc ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = this.refSortValue(a, this.refSort);
+      const bv = this.refSortValue(b, this.refSort);
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+  }
+
+  setRefSort(key: RefSortKey): void {
+    if (this.refSort === key) this.refSortAsc = !this.refSortAsc;
+    else {
+      this.refSort = key;
+      this.refSortAsc = true;
+    }
+  }
+
+  copyLocation(row: CodeReferenceLocation): void {
+    const text = row.location || `${row.fullPath}:${row.line ?? 1}`;
+    void navigator.clipboard?.writeText(text);
+    this.statusMessage = `Copied ${text}`;
+  }
+
+  codeRowKey(e: { codeNodeId: string; dbNodeId: string; sourceFile?: string; line?: number }, index: number): string {
+    return `${e.codeNodeId}|${e.dbNodeId}|${e.sourceFile || ''}|${e.line ?? ''}|${index}`;
+  }
+
+  refRowKey(r: CodeReferenceLocation, index: number): string {
+    return `${r.location || r.fullPath}|${r.line ?? ''}|${r.dbObject || ''}|${index}`;
+  }
+
+  toggleCodeRow(key: string, checked: boolean): void {
+    if (checked) this.selectedCodeKeys.add(key);
+    else this.selectedCodeKeys.delete(key);
+    this.selectedCodeKeys = new Set(this.selectedCodeKeys);
+  }
+
+  toggleRefRow(key: string, checked: boolean): void {
+    if (checked) this.selectedRefKeys.add(key);
+    else this.selectedRefKeys.delete(key);
+    this.selectedRefKeys = new Set(this.selectedRefKeys);
+  }
+
+  isCodeSelected(key: string): boolean {
+    return this.selectedCodeKeys.has(key);
+  }
+
+  isRefSelected(key: string): boolean {
+    return this.selectedRefKeys.has(key);
+  }
+
+  selectAllCodeRows(checked: boolean): void {
+    if (!this.codeMap?.entries) return;
+    this.selectedCodeKeys = new Set(
+      checked
+        ? this.codeMap.entries.map((e, i) => this.codeRowKey(e, i))
+        : []
+    );
+  }
+
+  selectAllRefRows(checked: boolean): void {
+    this.selectedRefKeys = new Set(
+      checked ? this.filteredReferences.map((r, i) => this.refRowKey(r, i)) : []
+    );
+  }
+
+  get selectedPromoteCount(): number {
+    return this.selectedCodeKeys.size + this.selectedRefKeys.size;
+  }
+
+  promoteToDomain(): void {
+    if (!this.promoteDomain.trim()) {
+      this.statusMessage = 'Enter a domain name to promote.';
+      return;
+    }
+    const rows = this.collectSelectedRows();
+    if (rows.length === 0) {
+      this.statusMessage = 'Select one or more Code→DB or References rows.';
+      return;
+    }
+
+    this.statusMessage = 'Building promote package...';
+    this.api
+      .promoteFindings({
+        domainName: this.promoteDomain.trim(),
+        suggestedOutputPath: this.promoteOutputPath.trim() || undefined,
+        ownerTeam: this.promoteOwner.trim() || undefined,
+        includeAmbiguous: this.promoteIncludeAmbiguous,
+        selectedRows: rows
+      })
+      .subscribe({
+        next: (pkg) => {
+          this.downloadPromotePackage(pkg);
+          this.promotePsCommand = pkg.powerShellCommand;
+          this.promoteHint = pkg.instructions;
+          this.statusMessage = `Promote package downloaded (${pkg.packagedCount} rows). Run FindingsMigration.Cli locally — see PowerShell below.`;
+        },
+        error: (err) =>
+          (this.statusMessage =
+            err.error?.message || err.message || `Promote failed: ${err.status}`)
+      });
+  }
+
+  private collectSelectedRows(): PromoteFindingRow[] {
+    const rows: PromoteFindingRow[] = [];
+    this.codeMap?.entries?.forEach((e, i) => {
+      const key = this.codeRowKey(e, i);
+      if (!this.selectedCodeKeys.has(key)) return;
+      rows.push({
+        codeNodeId: e.codeNodeId,
+        codeLabel: e.codeLabel,
+        sourceFile: e.sourceFile,
+        sourceFileFullPath: e.sourceFileFullPath,
+        line: e.line,
+        location: e.location,
+        dbNodeId: e.dbNodeId,
+        dbObject: e.dbObject,
+        dbKind: e.dbKind,
+        relation: e.relation,
+        confidence: e.confidence,
+        pattern: e.pattern,
+        project: e.project
+      });
+    });
+    this.filteredReferences.forEach((r, i) => {
+      const key = this.refRowKey(r, i);
+      if (!this.selectedRefKeys.has(key)) return;
+      rows.push({
+        codeNodeId: r.codeNodeId,
+        codeLabel: r.codeLabel,
+        sourceFile: r.relativePath || r.fullPath,
+        sourceFileFullPath: r.fullPath,
+        line: r.line,
+        location: r.location,
+        dbObject: r.dbObject,
+        dbKind: r.dbKind,
+        relation: r.relation,
+        confidence: r.confidence,
+        pattern: r.pattern,
+        project: r.project
+      });
+    });
+    return rows;
+  }
+
+  private downloadPromotePackage(pkg: PromoteFindingsResponse): void {
+    const blob = new Blob([JSON.stringify(pkg, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `promote-${pkg.domainName}-request.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Also offer the code-to-db map alone for FindingsMigration --code-to-db
+    const mapBlob = new Blob([JSON.stringify(pkg.codeToDbMap, null, 2)], {
+      type: 'application/json'
+    });
+    const mapUrl = URL.createObjectURL(mapBlob);
+    const mapA = document.createElement('a');
+    mapA.href = mapUrl;
+    mapA.download = `promote-${pkg.domainName}-code-to-db-map.json`;
+    mapA.click();
+    URL.revokeObjectURL(mapUrl);
+  }
+
+  private refSortValue(row: CodeReferenceLocation, key: RefSortKey): string | number {
+    switch (key) {
+      case 'line':
+        return row.line ?? 0;
+      case 'dbObject':
+        return (row.dbObject || '').toLowerCase();
+      case 'confidence':
+        return (row.confidence || '').toLowerCase();
+      default:
+        return (row.fullPath || '').toLowerCase();
+    }
   }
 
   setView(view: ViewMode): void {

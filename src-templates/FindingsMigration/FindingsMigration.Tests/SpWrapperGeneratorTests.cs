@@ -120,6 +120,11 @@ public class SpWrapperGeneratorTests
             Assert.Contains("insight.GetInsight", cs);
             Assert.Contains("ExecuteSp<object>", cs);
             Assert.Contains("IDataAccessContext", cs);
+            Assert.Contains(result.WrittenFiles, f => f.EndsWith("GetInsight.migration-manifest.snippet.yml", StringComparison.OrdinalIgnoreCase));
+            var snippet = File.ReadAllText(result.WrittenFiles.First(f => f.EndsWith(".migration-manifest.snippet.yml")));
+            Assert.Contains("type: StoredProcedure", snippet);
+            Assert.Contains("targetService: InsightDataService", snippet);
+            Assert.Contains("wave: insight-001", snippet);
         }
         finally
         {

@@ -96,6 +96,28 @@ public sealed class DomainPackageBuilder
         File.WriteAllText(reviewPath, BuildReviewMarkdown(domain, service, extracted, ambiguous, options.IncludeAmbiguous, spMap), Encoding.UTF8);
         written.Add(reviewPath);
 
+        var apiStubsDir = Path.Combine(outputDirectory, "api-stubs");
+        Directory.CreateDirectory(apiStubsDir);
+        var apiIndex = Path.Combine(apiStubsDir, "API-STUBS.md");
+        File.WriteAllText(apiIndex, BuildApiStubsMarkdown(domain, service, packageEntries), Encoding.UTF8);
+        written.Add(apiIndex);
+        foreach (var group in packageEntries.GroupBy(e => e.CodeLabel, StringComparer.OrdinalIgnoreCase))
+        {
+            var safe = SanitizeFileToken(group.Key);
+            var stubPath = Path.Combine(apiStubsDir, $"{safe}.md");
+            File.WriteAllText(stubPath, BuildApiOperationStub(service, group.Key, group.ToList()), Encoding.UTF8);
+            written.Add(stubPath);
+        }
+
+        if (options.EmitReconciliationTests)
+        {
+            var stubRoot = string.IsNullOrWhiteSpace(options.ServiceRoot)
+                ? outputDirectory
+                : options.ServiceRoot;
+            var recon = new ReconciliationTestStubGenerator().Write(stubRoot, domain, service);
+            written.AddRange(recon.WrittenFiles);
+        }
+
         var packageJson = Path.Combine(outputDirectory, "domain-package.json");
         var summary = new
         {
@@ -138,6 +160,15 @@ public sealed class DomainPackageBuilder
             WrittenFiles = written
         };
     }
+
+    /// <summary>
+    /// Writes a reconciliation xUnit stub into <paramref name="serviceRootOrOut"/> (or package out/).
+    /// </summary>
+    public ReconciliationTestStubResult WriteReconciliationTestStub(
+        string serviceRootOrOut,
+        string domainName,
+        string serviceName) =>
+        new ReconciliationTestStubGenerator().Write(serviceRootOrOut, domainName, serviceName);
 
     private static string BuildDomainYaml(
         string domain,
@@ -259,10 +290,12 @@ public sealed class DomainPackageBuilder
             sb.AppendLine($"    relation: {c.Relation}");
             sb.AppendLine($"    confidence: {c.Confidence}");
             sb.AppendLine($"    pattern: {YamlEscape(c.Pattern ?? "")}");
+            sb.AppendLine($"    data_access_hint: {YamlEscape(DataAccessRecommendation.Recommend(c))}");
         }
         sb.AppendLine();
         sb.AppendLine($"domain: {domain.ToLowerInvariant()}");
         sb.AppendLine("status: draft-from-findings");
+        sb.AppendLine($"data_access_hint: {YamlEscape(DataAccessRecommendation.Recommend(callers[0]))}");
         return sb.ToString();
     }
 
@@ -332,6 +365,19 @@ public sealed class DomainPackageBuilder
         sb.AppendLine("- [ ] Security reviews runtime/migration identities");
         sb.AppendLine("- [ ] AMBIGUOUS edges triaged (accept, reject, or rewrite evidence)");
         sb.AppendLine();
+        sb.AppendLine("## Data access hints (docs/07-data-access-strategy.md)");
+        sb.AppendLine();
+        if (extracted.Count == 0)
+            sb.AppendLine("_No EXTRACTED operations._");
+        else
+        {
+            foreach (var group in extracted.GroupBy(e => e.CodeLabel, StringComparer.OrdinalIgnoreCase).OrderBy(g => g.Key))
+            {
+                var sample = group.First();
+                sb.AppendLine($"- `{group.Key}` → `{sample.DbObject}`: {DataAccessRecommendation.Recommend(sample)}");
+            }
+        }
+        sb.AppendLine();
         sb.AppendLine("## AMBIGUOUS queue");
         sb.AppendLine();
         if (ambiguous.Count == 0)
@@ -340,13 +386,57 @@ public sealed class DomainPackageBuilder
         {
             foreach (var e in ambiguous)
             {
-                sb.AppendLine($"- `{e.CodeLabel}` —{e.Relation}→ `{e.DbObject}` ({e.Pattern}) @ `{e.SourceFile}:{e.Line}`");
+                sb.AppendLine($"- `{e.CodeLabel}` —{e.Relation}→ `{e.DbObject}` ({e.Pattern}) @ `{e.SourceFile}:{e.Line}` — {DataAccessRecommendation.Recommend(e)}");
             }
         }
         sb.AppendLine();
         sb.AppendLine("## Next step");
         sb.AppendLine();
         sb.AppendLine("Run `scripts/New-DomainFromFindings.ps1` to scaffold from the **ShowcaseDataService** golden template, then copy reviewed manifests into kit `manifests/`.");
+        return sb.ToString();
+    }
+
+    private static string BuildApiStubsMarkdown(
+        string domain,
+        string service,
+        List<CodeToDbEntry> entries)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"# API operation stubs — {domain} → {service}");
+        sb.AppendLine();
+        sb.AppendLine("Advisory DAL hints from `docs/07-data-access-strategy.md`. Not runtime routing.");
+        sb.AppendLine();
+        foreach (var group in entries.GroupBy(e => e.CodeLabel, StringComparer.OrdinalIgnoreCase).OrderBy(g => g.Key))
+        {
+            var sample = group.First();
+            sb.AppendLine($"## `{group.Key}`");
+            sb.AppendLine();
+            sb.AppendLine($"- DB: `{sample.DbObject}` ({sample.DbKind})");
+            sb.AppendLine($"- Relation: {sample.Relation}");
+            sb.AppendLine($"- Pattern: {sample.Pattern}");
+            sb.AppendLine($"- {DataAccessRecommendation.Recommend(sample)}");
+            sb.AppendLine();
+        }
+        return sb.ToString();
+    }
+
+    private static string BuildApiOperationStub(string service, string codeLabel, List<CodeToDbEntry> callers)
+    {
+        var sample = callers[0];
+        var sb = new StringBuilder();
+        sb.AppendLine($"# API stub: {codeLabel}");
+        sb.AppendLine();
+        sb.AppendLine($"Target service: {service}");
+        sb.AppendLine($"DB object: {sample.DbObject}");
+        sb.AppendLine($"Kind: {sample.DbKind}");
+        sb.AppendLine($"Relation: {sample.Relation}");
+        sb.AppendLine($"Pattern: {sample.Pattern}");
+        sb.AppendLine();
+        sb.AppendLine(DataAccessRecommendation.Recommend(sample));
+        sb.AppendLine();
+        sb.AppendLine("Call sites:");
+        foreach (var c in callers)
+            sb.AppendLine($"- `{c.SourceFile}:{c.Line}` confidence={c.Confidence}");
         return sb.ToString();
     }
 

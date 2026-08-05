@@ -25,4 +25,12 @@ public sealed class DbIntelligenceOptions
 
     public string? SqlConnectionString { get; set; }
     public int ProcessTimeoutSeconds { get; set; } = 1800;
+
+    /// <summary>
+    /// Large-repo policy: index jobs default <c>RefreshGraphify=false</c> so existing
+    /// <c>graphify-out/graph.json</c> is reused. Set request <c>RefreshGraphify=true</c>
+    /// only when intentionally re-extracting. Graphify import also drops
+    /// <c>node_modules</c> and <c>chunk-*.js</c> noise nodes.
+    /// </summary>
+    public bool DefaultRefreshGraphify { get; set; } = false;
 }

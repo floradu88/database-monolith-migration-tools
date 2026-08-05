@@ -266,4 +266,48 @@ export class IntelligenceApiService {
   }) {
     return this.http.post<CombineGraphsResult>(`${this.base}/graphs/combine`, body);
   }
+
+  /** Builds a downloadable promote package — API does not shell out to FindingsMigration. */
+  promoteFindings(body: PromoteFindingsRequest) {
+    return this.http.post<PromoteFindingsResponse>(`${this.base}/findings/promote`, body);
+  }
+}
+
+export interface PromoteFindingRow {
+  codeNodeId?: string;
+  codeLabel?: string;
+  sourceFile?: string;
+  sourceFileFullPath?: string;
+  line?: number;
+  location?: string;
+  dbNodeId?: string;
+  dbObject?: string;
+  dbKind?: string;
+  relation?: string;
+  confidence?: string;
+  pattern?: string;
+  project?: string;
+}
+
+export interface PromoteFindingsRequest {
+  domainName: string;
+  suggestedOutputPath?: string;
+  ownerTeam?: string;
+  includeAmbiguous?: boolean;
+  selectedRows: PromoteFindingRow[];
+}
+
+export interface PromoteFindingsResponse {
+  schemaVersion: string;
+  domainName: string;
+  suggestedOutputPath?: string;
+  ownerTeam?: string;
+  generatedAt: string;
+  repositoryPath?: string;
+  selectedCount: number;
+  packagedCount: number;
+  skippedAmbiguousCount: number;
+  codeToDbMap: CodeToDbMap;
+  powerShellCommand: string;
+  instructions: string;
 }

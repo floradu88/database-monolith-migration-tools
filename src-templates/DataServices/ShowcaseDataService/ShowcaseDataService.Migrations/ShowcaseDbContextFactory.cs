@@ -35,7 +35,7 @@ public sealed class ShowcaseDbContextFactory : IDesignTimeDbContextFactory<Showc
         }
 
         var options = new DbContextOptionsBuilder<ShowcaseDbContext>()
-            .UseShowcaseSqlServer(ownedCs)
+            .UseShowcaseSqlServer(ownedCs, migrationsAssemblyName: "ShowcaseDataService.Migrations")
             .Options;
 
         return new ShowcaseDbContext(options, Options.Create(database));

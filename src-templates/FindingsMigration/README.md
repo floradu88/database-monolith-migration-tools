@@ -14,6 +14,8 @@ cd ..\DbIntelligence
 
 Future roadmap: [`../../docs/FUTURE-FEATURES.md`](../../docs/FUTURE-FEATURES.md). Cutover demo: [`../DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md`](../DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md).
 
+DbIntelligence Web can download a **promote-request** JSON (`POST /api/findings/promote`) from selected map rows — then run this CLI locally (the API never shells out).
+
 ## What it does
 
 ```text
@@ -21,13 +23,38 @@ code-to-db-map.json (+ optional stored-procedure-map.json)
   → manifests/domains/{domain}.from-findings.yml
   → manifests/migration-waves/{domain}-wave-001.from-findings.yml
   → manifests/objects/*.from-findings.yml
-  → FINDINGS-REVIEW.md (AMBIGUOUS queue)
+  → api-stubs/ (DAL hints from docs/07-data-access-strategy.md)
+  → FINDINGS-REVIEW.md (AMBIGUOUS queue + data-access hints)
   → domain-package.json
+  → optional Tests/*ShadowReconciliationStubTests.cs (--emit-reconciliation-tests)
   → scaffold DataServices/{Name}DataService from Showcase (PowerShell)
-  → optional SQL stubs + C# Sp_* wrappers (generate-sp / New-SpWrappersFromMap.ps1)
+  → optional SQL stubs + C# Sp_* wrappers + migration-manifest.snippet.yml (generate-sp)
 ```
 
 AMBIGUOUS edges are **not** packaged into ownership candidates unless you pass `-IncludeAmbiguous`.
+
+## Incremental re-index diff
+
+Diff two map exports and keep only **new EXTRACTED** edges for the next wave:
+
+```powershell
+dotnet run --project FindingsMigration.Cli -- diff-maps `
+  --previous "...\.db-index\code-to-db-map.prev.json" `
+  --current  "...\.db-index\code-to-db-map.json" `
+  --out ".\out\new-extracted.json"
+```
+
+## SQL project slice (hash + ownership only)
+
+```powershell
+dotnet run --project FindingsMigration.Cli -- slice-sql `
+  --objects "dbo.Customer,dbo.Order" `
+  --out ".\out\Customer-sql-slice" `
+  --schema customer `
+  --service CustomerDataService
+```
+
+Stubs do **not** move real definitions — DBA review required before any deploy.
 
 ## PowerShell
 
@@ -47,11 +74,20 @@ cd src-templates\FindingsMigration
   -CopyManifestsToKit
 ```
 
-CLI `generate-sp`:
+CLI `generate-sp` (also emits `*.migration-manifest.snippet.yml` per procedure):
 
 ```powershell
 dotnet run --project FindingsMigration.Cli -- generate-sp `
   --sp-map "...\stored-procedure-map.json" `
   --service-root "..\DataServices\InsightDataService" `
   --domain Insight --service InsightDataService --schema insight
+```
+
+Package with reconciliation stubs + DAL hints:
+
+```powershell
+dotnet run --project FindingsMigration.Cli -- `
+  --code-to-db "...\code-to-db-map.json" `
+  --domain Insight `
+  --emit-reconciliation-tests
 ```

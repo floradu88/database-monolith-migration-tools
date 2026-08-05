@@ -17,10 +17,18 @@ Turn DbIntelligence JSON maps into draft domain manifests and scaffold DataServi
 ## Current contents
 
 - `FindingsMigration.Contracts/`
-- `FindingsMigration.Core/` (DomainPackageBuilder, SpWrapperGenerator)
-- `FindingsMigration.Cli/` (package + `generate-sp`)
+- `FindingsMigration.Core/` — DomainPackageBuilder, SpWrapperGenerator, CodeToDbDiffService, SqlProjectSliceGenerator, DataAccessRecommendation, ReconciliationTestStubGenerator, DomainSuggestionService, ConfidenceGateService
+- `FindingsMigration.Cli/` — package, `generate-sp`, `suggest-domains`, `confidence-gate`, `diff-maps`, `slice-sql`
 - `FindingsMigration.Tests/`
 - `scripts/Invoke-FindingsMigration.ps1`
 - `scripts/New-DomainFromFindings.ps1`
 - `scripts/New-SpWrappersFromMap.ps1`
 - `README.md`
+
+## Phase 3 packaging notes
+
+- `diff-maps`: only NEW EXTRACTED edges between two `code-to-db-map.json` files.
+- `slice-sql`: hash placeholder + ownership comment stubs only — never move real SQL definitions.
+- API stubs / FINDINGS notes include one-line EF vs Dapper/SP hints from `docs/07-data-access-strategy.md`.
+- `--emit-reconciliation-tests` writes Showcase-aligned xUnit stubs (Skipped until ownership approval).
+- `generate-sp` also emits `*.migration-manifest.snippet.yml` per procedure (object / owner / wave placeholder).
