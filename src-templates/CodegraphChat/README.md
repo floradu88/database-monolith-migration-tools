@@ -2,70 +2,74 @@
 
 ChatGPT-style interface for asking about a **topic** in a repository indexed with Codegraph.
 
-Answers are grounded in Codegraph CLI evidence (`query`, `callers`, `callees`, `impact`, `status`, `files`) — not inventing credentials or calling an external LLM.
+Answers are grounded in Codegraph CLI evidence (`query`, `callers`, `callees`, `impact`, `status`, `files`) — no invented credentials, no external LLM.
 
-Related: DbIntelligence builds/merges indexes and code→DB maps. CodegraphChat is the conversational front-end over Codegraph. **Ensure index** may run local `codegraph init` / `sync`; it does **not** replace DbIntelligence code→DB mapping.
+Related: DbIntelligence builds code→DB maps. CodegraphChat is the conversational front-end. **Ensure index** may run local `codegraph init` / `sync`; it does **not** replace DbIntelligence mapping.
+
+## One command (local)
+
+Path only — installs/checks **fnm** Node + Codegraph (`fnm exec --using=lts-latest`, no admin), builds .NET + Angular, publishes SPA to `Api/wwwroot`, starts API:
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
+
+.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
+```
+
+Open **http://localhost:5091/**
+
+Same pattern as DbIntelligence Ready: user-scoped fnm via `..\DbIntelligence\scripts\Initialize-DbIntelligenceNode.ps1` (not bare system npm).
 
 ## Layout
 
 ```text
 CodegraphChat/
-├── CodegraphChat.Api/             # HTTP :5091 (+ SPA from wwwroot when published)
-├── CodegraphChat.Contracts/       # DTOs
-├── CodegraphChat.Infrastructure/  # CLI runner + intent router + chat service
-├── CodegraphChat.Web/             # Angular 18 UI :4201 (dev) / published into Api/wwwroot
+├── CodegraphChat.Api/             # HTTP :5091 (+ SPA from wwwroot)
+├── CodegraphChat.Contracts/
+├── CodegraphChat.Infrastructure/
+├── CodegraphChat.Web/             # Angular (published into Api/wwwroot; optional :4201)
 ├── CodegraphChat.Tests/
 └── scripts/                       # PowerShell (reuses DbIntelligence fnm helper)
 ```
 
-## Prerequisites
+## Prerequisites (usually automatic)
 
-| Tool | Why |
-|------|-----|
-| .NET 8 SDK | API + tests |
-| Node 18+ / npm (fnm preferred) | Angular UI |
-| `codegraph` on PATH | Symbol index queries |
+Ready installs these when missing:
+
+| Tool | How this kit installs it |
+|------|--------------------------|
+| .NET 8 SDK | Manual / existing |
+| Node 18+ / npm | **fnm** user-scope (`winget --scope user`) via DbIntelligence Node helper |
+| `codegraph` | Prefer `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` |
+
+## Optional: setup only (no start)
 
 ```powershell
-cd ..\DbIntelligence
-.\scripts\Initialize-DbIntelligenceNode.ps1 -Install -InstallCodegraph -Yes
+.\scripts\Setup-CodegraphChat.ps1 -Yes
 ```
 
-## Quick start (single-host)
-
-Builds .NET + Angular, publishes the SPA into `CodegraphChat.Api/wwwroot`, starts API:
+## Optional: Angular hot reload (second terminal)
 
 ```powershell
-cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
-
-.\scripts\Setup-CodegraphChat.ps1 -Yes          # once: tools + build + wwwroot
-.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
-```
-
-Open **http://localhost:5091/** (chat UI served by the API).
-
-## Dual-host (Angular hot reload)
-
-```powershell
-.\scripts\Start-CodegraphChat.ps1 -Force -RepositoryPath "D:\path\to\your\app"   # API :5091
-.\scripts\Start-CodegraphChatWeb.ps1                                             # UI  :4201
+.\scripts\Start-CodegraphChat.ps1 -Force -RepositoryPath "D:\path\to\your\app"
+.\scripts\Start-CodegraphChatWeb.ps1 -Yes    # fnm npm on :4201
 ```
 
 ## Operator scripts
 
 | Script | Purpose |
 |--------|---------|
+| `Invoke-CodegraphChatReady.ps1` | **One command** — fnm + build + start (path only) |
 | `Setup-CodegraphChat.ps1` | Prereqs + build (no start) |
-| `Build-CodegraphChat.ps1` | Restore/build/test; Angular → `Api/wwwroot` |
-| `Invoke-CodegraphChatReady.ps1` | Build + start API bound to a repo path |
+| `Build-CodegraphChat.ps1` | Restore/build/test; Angular via fnm → `Api/wwwroot` |
 | `Start-CodegraphChat.ps1` | API only |
-| `Start-CodegraphChatWeb.ps1` | Angular dev server |
+| `Start-CodegraphChatWeb.ps1` | Angular dev (fnm) |
 
 ## UI features
 
 - Bind mapped repo path (persisted in `localStorage`)
 - **Ensure index** (`codegraph init` or `sync`)
-- Suggestion chips, markdown answers, Copy, symbol follow-ups (about / callers / callees / impact)
+- Suggestion chips, markdown answers, Copy, symbol follow-ups
 - Expandable Codegraph evidence
 
 Example prompts: `tell me about IndexingService`, `who calls "CodegraphClient"`, `impact of EvidenceGraph`, `index status`.
@@ -75,17 +79,17 @@ Example prompts: `tell me about IndexingService`, `who calls "CodegraphClient"`,
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/health` | Codegraph availability |
-| GET/POST | `/api/session` | Bind mapped repository path |
-| POST | `/api/session/ensure-index` | `codegraph init` or `sync` for the bound path |
-| POST | `/api/chat` | Topic question → Codegraph-backed answer |
+| GET/POST | `/api/session` | Bind repository path |
+| POST | `/api/session/ensure-index` | `init` / `sync` |
+| POST | `/api/chat` | Topic → Codegraph-backed answer |
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri http://localhost:5091/api/session -ContentType 'application/json' -Body '{"repositoryPath":"D:\\path\\to\\your\\app"}'
-Invoke-RestMethod -Method Post -Uri http://localhost:5091/api/chat -ContentType 'application/json' -Body '{"message":"who calls IndexingService"}'
+Invoke-RestMethod http://localhost:5091/api/health
+Invoke-RestMethod -Method Post -Uri http://localhost:5091/api/chat -ContentType 'application/json' -Body '{"message":"index status"}'
 ```
 
 ## Notes
 
 - Prefer quoting symbols: `who calls "TopicChatService"`.
-- Mode override forces `query|callers|callees|impact|status|files`.
-- Generated SPA under `Api/wwwroot` is gitignored (except `.gitkeep`); rebuild with `Build-CodegraphChat.ps1`.
+- Generated SPA under `Api/wwwroot` is gitignored (except `.gitkeep`); rebuild with Ready or `Build-CodegraphChat.ps1`.
+- Full kit reference: root [`HOW-TO-USE.md`](../../HOW-TO-USE.md).

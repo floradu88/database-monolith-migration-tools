@@ -173,9 +173,11 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 | `CodegraphChat.Api` | HTTP `:5091` — health, session bind, chat |
 | `CodegraphChat.Infrastructure` | Codegraph CLI client + intent router |
 | `CodegraphChat.Web` | Angular chat UI `:4201` |
-| `scripts/` | PowerShell Ready/Start (reuses DbIntelligence fnm helper) |
+| `scripts/` | PowerShell Ready/Setup/Build/Start (reuses DbIntelligence **fnm** helper) |
 
-**Why use it:** Conversational exploration of symbols, callers, callees, and impact without leaving the kit stack. Complements DbIntelligence (which builds maps) rather than replacing it. Prefer `Setup-CodegraphChat.ps1` / `Build-CodegraphChat.ps1` so the API can serve the SPA from `wwwroot` (single-host on `:5091`).
+**Why use it:** Conversational exploration of symbols, callers, callees, and impact without leaving the kit stack. Complements DbIntelligence (which builds maps) rather than replacing it.
+
+**One command:** `.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"` then open http://localhost:5091/ (fnm Node + Codegraph via `fnm exec --using=lts-latest`, SPA in API `wwwroot`).
 
 | Pros | Cons |
 |------|------|
@@ -212,7 +214,7 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 ## Recommended adoption order
 
 1. Run DbIntelligence on a real app path (`HOW-TO-USE.md`).
-1b. Optional: explore the indexed repo via CodegraphChat topic chat.
+1b. Optional: explore the indexed repo via CodegraphChat — `.\scripts\Invoke-CodegraphChatReady.ps1 "<path>"` → http://localhost:5091/
 2. Review maps; leave AMBIGUOUS on the queue.
 3. FindingsMigration → domain package + Showcase-based scaffold.
 4. Point `SourceFacade` at OnPrem monolith; land `Owned` on OnPrem lab, then Azure or Aws when ready ([`DATABASE-HOSTING.md`](../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md)).

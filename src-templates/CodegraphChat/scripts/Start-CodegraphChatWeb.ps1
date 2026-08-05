@@ -4,10 +4,12 @@
   Start Angular CodegraphChat.Web (http://localhost:4201, proxies /api -> :5091).
 
 .DESCRIPTION
-  Reuses DbIntelligence user-scoped fnm Node helper (no admin).
+  Activates user-scoped fnm Node (DbIntelligence helper). Prefers
+  fnm exec --using=lts-latest -- npm for install/start when fnm is present.
 
 .EXAMPLE
   .\Start-CodegraphChatWeb.ps1
+  .\Start-CodegraphChatWeb.ps1 -Yes
 #>
 [CmdletBinding()]
 param(
@@ -38,21 +40,37 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     . $NodeInit -Quiet
 }
 
-if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+function Invoke-KitNpm {
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$NpmArgs)
+    if (Get-Command fnm -ErrorAction SilentlyContinue) {
+        Write-Host "fnm exec --using=lts-latest -- npm $($NpmArgs -join ' ')" -ForegroundColor DarkGray
+        & fnm exec --using=lts-latest -- npm @NpmArgs
+        return $LASTEXITCODE
+    }
+    & npm @NpmArgs
+    return $LASTEXITCODE
+}
+
+if (-not (Get-Command npm -ErrorAction SilentlyContinue) -and -not (Get-Command fnm -ErrorAction SilentlyContinue)) {
     throw "npm is required. Run ..\DbIntelligence\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes"
 }
 
 Push-Location $Web
 try {
     if (-not (Test-Path "node_modules")) {
-        Write-Host "Installing npm packages..." -ForegroundColor Cyan
-        npm install
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        Write-Host "Installing npm packages (prefer fnm)..." -ForegroundColor Cyan
+        $code = Invoke-KitNpm @("install")
+        if ($code -ne 0) { exit $code }
     }
 
     Write-Host "Starting Angular on http://localhost:4201 ..." -ForegroundColor Cyan
-    Write-Host "Using npm: $((Get-Command npm).Source)" -ForegroundColor DarkGray
-    npm start
+    if (Get-Command fnm -ErrorAction SilentlyContinue) {
+        & fnm exec --using=lts-latest -- npm start
+    }
+    else {
+        Write-Host "Using npm: $((Get-Command npm).Source)" -ForegroundColor DarkGray
+        npm start
+    }
 }
 finally {
     Pop-Location

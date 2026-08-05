@@ -1,8 +1,13 @@
 # How to use this project (PowerShell)
 
-This kit helps you decompose a SQL Server monolith. The **runnable** local stack today is **DbIntelligence** (Codegraph + Graphify + code→SQL maps + Angular UI). SQL scripts under `sql/` are for **DBA review**, not blind production execution.
+This kit helps you decompose a SQL Server monolith. The **runnable** local stacks today are:
 
-All setup and run commands below are **PowerShell**.
+- **DbIntelligence** — Codegraph + Graphify + code→SQL maps + Angular UI
+- **CodegraphChat** — ChatGPT-style topic chat over a Codegraph index (single-host on `:5091`)
+
+SQL scripts under `sql/` are for **DBA review**, not blind production execution.
+
+All setup and run commands below are **PowerShell**. Prefer **fnm** (user-scoped Node, no admin) and Codegraph via `fnm exec --using=lts-latest` — Ready scripts do this for you.
 
 ---
 
@@ -22,7 +27,17 @@ Optional UI afterward:
 .\scripts\Start-DbIntelligenceWeb.ps1   # http://localhost:4200
 ```
 
-### Manual / stepwise (same kit)
+### CodegraphChat (one command — path only)
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
+
+.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
+```
+
+Open http://localhost:5091/ (fnm Node + Codegraph + SPA in API wwwroot).
+
+### Manual / stepwise (DbIntelligence)
 
 ```powershell
 # From the repository root
@@ -88,7 +103,7 @@ npm -v
 codegraph -V
 ```
 
-`Invoke-DbIntelligenceReady.ps1`, `Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, and `Start-DbIntelligenceWeb.ps1` call the Node helper automatically. The C# CLI installer also prefers `fnm exec --using=lts-latest` for Codegraph when fnm is on PATH.
+`Invoke-DbIntelligenceReady.ps1`, `Invoke-CodegraphChatReady.ps1`, `Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, `Build-CodegraphChat.ps1`, `Start-DbIntelligenceWeb.ps1`, and `Start-CodegraphChatWeb.ps1` call the Node helper / prefer `fnm exec --using=lts-latest` automatically. The C# CLI installer also prefers `fnm exec --using=lts-latest` for Codegraph when fnm is on PATH.
 
 ---
 
@@ -416,30 +431,25 @@ src-templates/DbIntelligence/
 
 ---
 
-## CodegraphChat (topic chat over an existing index)
+## CodegraphChat (topic chat — one command)
 
-Separate ChatGPT-style UI for asking about a **topic** in a repo indexed with Codegraph. Answers are Codegraph CLI evidence only (no external LLM, no invented credentials). **Ensure index** may run local `init`/`sync`; it does not replace DbIntelligence code→DB maps.
+Path only. Uses the same **fnm** (no-admin Node) + `fnm exec --using=lts-latest` Codegraph tricks as DbIntelligence. Builds the SPA into `Api/wwwroot` and starts a single-host UI.
 
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
 
-.\scripts\Setup-CodegraphChat.ps1 -Yes
-.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"   # builds SPA into Api/wwwroot + starts :5091
+.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
 ```
 
-Open **http://localhost:5091/** (single-host). Optional hot-reload UI:
-
-```powershell
-.\scripts\Start-CodegraphChatWeb.ps1   # http://localhost:4201
-```
+Open **http://localhost:5091/**
 
 | Script | Purpose |
 |--------|---------|
-| `Setup-CodegraphChat.ps1` | Prereqs + build (no start) |
-| `Build-CodegraphChat.ps1` | Restore/build/test; publish Angular to `Api/wwwroot` |
-| `Invoke-CodegraphChatReady.ps1` | Build + start API bound to a path |
+| `Invoke-CodegraphChatReady.ps1` | One command: fnm + Codegraph + build + start |
+| `Setup-CodegraphChat.ps1` | Prereqs + build only (`-Yes`) |
+| `Build-CodegraphChat.ps1` | Restore/build/test; Angular via fnm → `Api/wwwroot` |
 | `Start-CodegraphChat.ps1` | API only (`-Force`, `-RepositoryPath`) |
-| `Start-CodegraphChatWeb.ps1` | Angular dev server |
+| `Start-CodegraphChatWeb.ps1` | Optional Angular hot reload `:4201` (fnm npm) |
 
 Details: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md).
 

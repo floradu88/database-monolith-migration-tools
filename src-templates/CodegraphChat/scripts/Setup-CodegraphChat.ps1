@@ -59,7 +59,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Build failed with exit code $LASTEXITCODE"
 }
 
-Write-Host "`nSetup complete. Start with:" -ForegroundColor Green
-Write-Host "  .\Start-CodegraphChat.ps1 -Force -RepositoryPath `"D:\path\to\your\app`""
-Write-Host "  (optional hot-reload UI) .\Start-CodegraphChatWeb.ps1"
+Write-Host "`nSetup complete. One-command start:" -ForegroundColor Green
+Write-Host "  .\Invoke-CodegraphChatReady.ps1 `"D:\path\to\your\app`""
+Write-Host "  then open http://localhost:5091/"
 exit 0

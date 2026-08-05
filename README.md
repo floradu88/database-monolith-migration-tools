@@ -91,6 +91,18 @@ cd D:\code\projects\database-monolith-migration-tools\src-templates\DbIntelligen
 
 Installs/checks tools (fnm Node + Codegraph, no admin), builds, health-checks, starts API, indexes the path.
 
+### 1b. CodegraphChat Ready (one command — path only)
+
+Topic chat over a Codegraph index (single-host UI). Same fnm / `fnm exec --using=lts-latest` Node+Codegraph path as DbIntelligence:
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
+
+.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
+```
+
+Open http://localhost:5091/ — details: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
+
 ### 2. Setup kit only (no index)
 
 ```powershell
