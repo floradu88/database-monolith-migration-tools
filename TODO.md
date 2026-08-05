@@ -9,33 +9,33 @@ Nothing here is production cutover automation. Prefer additive, reversible chang
 
 ## DbIntelligence (near-term polish)
 
-- [ ] **Web UI for reference locations** — `GET /api/maps/code-references` and client types exist; graph/maps pages do not yet render the flat `fullPath` + `line` list (filter/sort/open-in-editor).
-- [ ] **Check in / document the reference-locations canvas in-repo** — Cursor canvas lives under the local canvases folder; kit has no committed canvas copy for operators outside Cursor.
-- [ ] **Live canvas data** — canvas uses example rows; optionally load from `code-reference-locations.json` or the API after export.
-- [ ] **Ignore local scan artifacts** — untracked `.codegraph/` and `graphify-out/` under Contracts (and similar) should be gitignored kit-wide.
-- [ ] **Angular “Promote to domain” UX** — select map rows / subgraph → FindingsMigration package write/download ([FUTURE-FEATURES §6](docs/FUTURE-FEATURES.md)).
-- [ ] **Incremental re-index diff** — diff last two `code-to-db-map.json` exports; package only new EXTRACTED edges ([§7](docs/FUTURE-FEATURES.md)).
-- [ ] **Large-repo Graphify policy** — skip refresh when `graphify-out` exists; background refresh; noise filters ([§10](docs/FUTURE-FEATURES.md)).
+- [x] **Web UI for reference locations** — References tab on graph page binds `GET /api/maps/code-references` (filter/sort/copy location).
+- [x] **Check in / document the reference-locations canvas in-repo** — [`src-templates/DbIntelligence/docs/reference-locations-canvas.md`](src-templates/DbIntelligence/docs/reference-locations-canvas.md) (operator table + API/JSON load notes).
+- [x] **Live canvas data** — Angular References / Code→DB tabs load live API data after index/export; offline table template in the canvas doc.
+- [x] **Ignore local scan artifacts** — root `.gitignore` includes `.codegraph/`, `graphify-out/`, `.db-index/`.
+- [x] **Angular “Promote to domain” UX** — multi-select on Code→DB / References + `POST /api/findings/promote` downloads promote-request JSON; run FindingsMigration.Cli locally (no API shell-out) ([FUTURE-FEATURES §6](docs/FUTURE-FEATURES.md)).
+- [x] **Incremental re-index diff** — diff last two `code-to-db-map.json` exports; package only new EXTRACTED edges ([§7](docs/FUTURE-FEATURES.md)).
+- [x] **Large-repo Graphify policy** — skip refresh when `graphify-out` exists; background refresh; noise filters ([§10](docs/FUTURE-FEATURES.md)).
 - [ ] **Findings catalog database** — today maps are in-memory + JSON only; optional durable catalog later ([§5](docs/FUTURE-FEATURES.md)).
 
 ---
 
 ## FindingsMigration / domain packaging
 
-- [ ] **Domain suggestion from graph communities** — propose Billing/Onboarding/etc. from Graphify communities + path prefixes instead of a single `-DomainName` ([§1](docs/FUTURE-FEATURES.md)).
-- [ ] **CI confidence gates** — fail PRs on missing owned-schema edges or rising AMBIGUOUS without review ack ([§2](docs/FUTURE-FEATURES.md)).
-- [ ] **Richer SP-centric packaging** — wrappers/stubs shipped; fuller packaging aligned to `migration-manifest.example.yml` still open ([§3](docs/FUTURE-FEATURES.md)).
-- [ ] **SQL project slice generator** — additive SourceMonolith / target `*.Database` stubs from owned objects (hash + ownership only) ([§4](docs/FUTURE-FEATURES.md)).
-- [ ] **EF vs Dapper vs SP recommendation per operation** — attach hints from `docs/07-data-access-strategy.md` onto packaged API stubs ([§8](docs/FUTURE-FEATURES.md)).
-- [ ] **Reconciliation test stubs per promoted domain** — wire generated domains to `Tests/Reconciliation.Tests` patterns ([§9](docs/FUTURE-FEATURES.md)).
+- [x] **Domain suggestion from graph communities** — `findings-migrate suggest-domains --graph` (advisory; packaging still requires `--domain`).
+- [x] **CI confidence gates** — `.github/workflows/ci.yml` + `confidence-gate` CLI; AMBIGUOUS ack via `validation/AMBIGUOUS-ACK.md`.
+- [x] **Richer SP-centric packaging** — wrappers/stubs + `migration-manifest.snippet.yml` per procedure ([§3](docs/FUTURE-FEATURES.md)).
+- [x] **SQL project slice generator** — additive SourceMonolith / target `*.Database` stubs from owned objects (hash + ownership only) ([§4](docs/FUTURE-FEATURES.md)).
+- [x] **EF vs Dapper vs SP recommendation per operation** — attach hints from `docs/07-data-access-strategy.md` onto packaged API stubs ([§8](docs/FUTURE-FEATURES.md)).
+- [x] **Reconciliation test stubs per promoted domain** — wire generated domains to `Tests/Reconciliation.Tests` patterns ([§9](docs/FUTURE-FEATURES.md)).
 
 ---
 
 ## Data services / BuildingBlocks
 
-- [ ] **CustomerDataService** — remains a thin example (`NotImplementedException` data access); do not treat as golden. Complete only if intentionally upgraded or remove/replace later.
-- [ ] **Showcase JWT / Managed Identity** — placeholder flags only (`Auth:RequireJwt`); no real IdP/MI wiring or secrets.
-- [ ] **Showcase SQL Pre/PostDeploy** — stubs + ownership attributes; no real DBA-approved deploy pipeline.
+- [x] **CustomerDataService** — documented as non-golden / `NotImplementedException` thin example; Showcase is the scaffold source (README clarified).
+- [x] **Showcase JWT / Managed Identity** — placeholder flags clarified (`Auth:RequireJwt` lab-off); [`AUTH.md`](src-templates/DataServices/ShowcaseDataService/AUTH.md) + Program/appsettings comments; no real IdP/MI secrets.
+- [x] **Showcase SQL Pre/PostDeploy** — stubs remain; [`Scripts/README.md`](src-templates/DataServices/ShowcaseDataService/ShowcaseDataService.Database/Scripts/README.md) states human-gated apply only.
 - [ ] **Real EKS/cloud cutover** — Helm + Compose blue/green templates exist; no live cluster, traffic weights, or cloud resource provisioning.
 - [ ] **Other SourceMonolith / DataService folders** — mostly README/scaffold; not buildable golden paths (except Showcase).
 
@@ -43,13 +43,14 @@ Nothing here is production cutover automation. Prefer additive, reversible chang
 
 ## MigrationControlPlane
 
+- [x] **Roadmap scaffold** — [`src-templates/MigrationControlPlane/ROADMAP.md`](src-templates/MigrationControlPlane/ROADMAP.md) documents Waves DB / API / worker milestones (docs only).
 - [ ] **Full product** — waves DB, operators, CDC engine, orchestration API/worker — template shells/docs only. Showcase demonstrates wave *behavior* via flags + blue-green, not the control plane ([§11](docs/FUTURE-FEATURES.md)).
 
 ---
 
 ## Platform SQL / ops (kit scripts, human-gated)
 
-- [ ] Apply / harden `sql/` discovery, telemetry, audit, RBAC scripts against a real lab SQL Server (never auto against production).
+- [x] **LocalDB lab apply guide** — [`sql/LAB-APPLY.md`](sql/LAB-APPLY.md) (sqlcmd against LocalDB only; discovery-safe script list). Harden against a real lab SQL Server still optional.
 - [ ] Wire Query Store / XEvents / SQL Audit collection into DbIntelligence evidence beyond current repo scan + tool graphs.
 - [ ] End-to-end lab cutover rehearsal using checklists under `checklists/` with real dual DBs.
 
@@ -67,7 +68,7 @@ Nothing here is production cutover automation. Prefer additive, reversible chang
 
 ## Suggested next picks
 
-1. DbIntelligence Web list for `code-references` (closes the UI gap for the new JSON/API).
-2. `.gitignore` for `.codegraph/` / `graphify-out/`.
-3. Domain suggestion from communities **or** CI confidence gates (highest leverage on FindingsMigration).
-4. MigrationControlPlane only when wave orchestration is needed beyond Showcase flags.
+1. Lab cutover rehearsal with `checklists/` + dual LocalDB databases.
+2. Wire Query Store / XEvents / SQL Audit into DbIntelligence evidence (beyond repo scan).
+3. MigrationControlPlane product work only when wave orchestration is needed beyond Showcase flags (see ROADMAP.md).
+4. Optional findings catalog database (maps remain JSON/in-memory today).

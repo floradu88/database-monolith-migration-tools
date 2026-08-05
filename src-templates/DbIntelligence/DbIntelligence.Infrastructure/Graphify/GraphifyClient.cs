@@ -70,6 +70,9 @@ public sealed class GraphifyClient : IGraphifyClient
 
         foreach (var node in dto.Nodes)
         {
+            if (IsNoiseNode(node))
+                continue;
+
             graph.UpsertNode(new GraphNode
             {
                 Id = string.IsNullOrWhiteSpace(node.Id) ? GraphIds.Concept(node.Label) : node.Id,
@@ -83,11 +86,15 @@ public sealed class GraphifyClient : IGraphifyClient
             });
         }
 
+        var retainedIds = new HashSet<string>(graph.Nodes.Select(n => n.Id), StringComparer.OrdinalIgnoreCase);
+
         foreach (var edge in dto.AllEdges)
         {
             var from = edge.FromId;
             var to = edge.ToId;
             if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to))
+                continue;
+            if (!retainedIds.Contains(from) || !retainedIds.Contains(to))
                 continue;
 
             graph.UpsertEdge(new GraphEdge
@@ -101,6 +108,26 @@ public sealed class GraphifyClient : IGraphifyClient
         }
 
         return graph;
+    }
+
+    /// <summary>
+    /// Large-repo noise filter: skip <c>node_modules</c> and webpack/vite <c>chunk-*.js</c>
+    /// paths when importing Graphify graphs (god-node pollution).
+    /// </summary>
+    internal static bool IsNoiseNode(GraphifyNodeDto node)
+    {
+        var path = $"{node.SourceFile}|{node.Label}|{node.Id}";
+        if (path.Contains("node_modules", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Match .../chunk-abc123.js or chunk-vendors.js style build artifacts
+        if (System.Text.RegularExpressions.Regex.IsMatch(
+                path,
+                @"chunk-[^/\\]+\.js",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return true;
+
+        return false;
     }
 
     private static EdgeEvidence? BuildEvidence(GraphifyEdgeDto edge)

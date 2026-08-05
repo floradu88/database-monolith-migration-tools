@@ -8,10 +8,15 @@
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ShowcaseDataService.Application\ShowcaseDataService.Application.csproj" />
     <ProjectReference Include="..\ShowcaseDataService.Infrastructure\ShowcaseDataService.Infrastructure.csproj" />
+    <ProjectReference Include="..\ShowcaseDataService.Migrations\ShowcaseDataService.Migrations.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Observability\Observability.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Migration\Migration.csproj" />
   </ItemGroup>

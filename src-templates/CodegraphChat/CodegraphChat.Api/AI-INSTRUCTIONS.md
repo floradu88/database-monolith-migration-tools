@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Minimal ASP.NET Core host for the Codegraph topic chat API (`/api/health`, `/api/session`, `/api/chat`).
+Minimal ASP.NET Core host for the Codegraph topic chat API (`/api/health`, `/api/session`, `/api/session/ensure-index`, `/api/chat`). Prefer `../scripts/Invoke-CodegraphChatReady.ps1` (path only; fnm Node + SPA in wwwroot).
 
 ## Rules
 

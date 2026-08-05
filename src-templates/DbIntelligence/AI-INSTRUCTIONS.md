@@ -17,6 +17,7 @@ Concrete DbIntelligence implementation: orchestrate Codegraph/Graphify CLIs, sca
 9. Prefer user-scoped Node via `scripts/Initialize-DbIntelligenceNode.ps1` (fnm + winget `--scope user`) over admin Node installers.
 10. Prefer Codegraph via `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` whenever fnm is present.
 11. Treat the live store as **in-memory only** (`FileIntelligenceStore`); do not assume a database catalog exists. Durable output is JSON/MD/HTML under each project's `.db-index/` (default).
+12. Large-repo Graphify: leave `RefreshGraphify=false` (default) so existing `graphify-out/graph.json` is reused; import filters `node_modules` and `chunk-*.js` noise.
 
 
 ## Current subfolders

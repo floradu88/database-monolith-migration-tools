@@ -40,6 +40,15 @@ if ($RepositoryPath) {
 }
 
 Write-Host "Starting CodegraphChat.Api on http://localhost:$Port ..." -ForegroundColor Cyan
+$wwwIndex = Join-Path $Api "wwwroot\index.html"
+if (Test-Path $wwwIndex) {
+    Write-Host "SPA found in wwwroot - open http://localhost:$Port/ for the chat UI." -ForegroundColor Green
+    Write-Host "Dev hot-reload UI remains available via .\Start-CodegraphChatWeb.ps1 (:4201)." -ForegroundColor DarkGray
+}
+else {
+    Write-Host "No SPA in wwwroot yet. Run .\Build-CodegraphChat.ps1 or .\Start-CodegraphChatWeb.ps1 (:4201)." -ForegroundColor Yellow
+}
+
 Push-Location $Api
 try {
     dotnet run --project .\CodegraphChat.Api.csproj --no-launch-profile

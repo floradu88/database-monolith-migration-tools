@@ -10,7 +10,7 @@
   Connection resolution (first wins):
     1. -SqlConnectionString
     2. $env:DbIntelligence__SqlConnectionString
-    3. -UseShowcaseLocalDefaults → Showcase LocalDB Owned from kit appsettings.json
+    3. -UseShowcaseLocalDefaults -> Showcase LocalDB Owned from kit appsettings.json
 
   Does not invent production credentials. Never runs destructive SQL.
 
@@ -30,7 +30,7 @@
   Optional schema filter (e.g. showcase). When omitted, all non-ms_shipped procedures are exported.
 
 .PARAMETER IncludeEncrypted
-  Include encrypted modules (definition will be NULL — a stub comment is written). Default: skip encrypted.
+  Include encrypted modules (definition will be NULL - a stub comment is written). Default: skip encrypted.
 
 .PARAMETER ListOnly
   Write only a name list (schema.procedure per line), not full definitions.
@@ -176,7 +176,7 @@ $sb = New-Object System.Text.StringBuilder
 
 if ($ListOnly) {
     $sb = New-Object System.Text.StringBuilder
-    [void]$sb.AppendLine("# Stored procedure list — $($rows.Count) entries")
+    [void]$sb.AppendLine("# Stored procedure list - $($rows.Count) entries")
     [void]$sb.AppendLine("# GeneratedAt: $([DateTimeOffset]::UtcNow.ToString('o'))")
     foreach ($r in $rows) {
         [void]$sb.AppendLine("$($r.SchemaName).$($r.ProcedureName)")

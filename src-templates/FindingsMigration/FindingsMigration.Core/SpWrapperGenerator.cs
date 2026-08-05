@@ -24,8 +24,10 @@ public sealed class SpWrapperGenerator
 
         var sqlDir = Path.Combine(serviceRoot, $"{serviceName}.Database", "Programmability", "Generated");
         var csDir = Path.Combine(serviceRoot, $"{serviceName}.Infrastructure", "StoredProcedures", "Generated");
+        var manifestDir = Path.Combine(serviceRoot, "manifests", "objects");
         Directory.CreateDirectory(sqlDir);
         Directory.CreateDirectory(csDir);
+        Directory.CreateDirectory(manifestDir);
 
         var written = new List<string>();
         foreach (var proc in spMap.Procedures)
@@ -49,6 +51,13 @@ public sealed class SpWrapperGenerator
                 File.WriteAllText(sqlPath, BuildSqlStub(schema, proc, leaf, template), Encoding.UTF8);
                 written.Add(sqlPath);
                 EnsureSqlProjBuildInclude(serviceRoot, serviceName, $"Programmability\\Generated\\{safeName}.sql");
+
+                var snippetPath = Path.Combine(manifestDir, $"{safeName}.migration-manifest.snippet.yml");
+                File.WriteAllText(
+                    snippetPath,
+                    BuildMigrationManifestSnippet(domainName, serviceName, schema, proc, leaf),
+                    Encoding.UTF8);
+                written.Add(snippetPath);
             }
 
             var wrapperBase = SanitizeIdentifier(template ?? proc.Name);
@@ -117,6 +126,56 @@ public sealed class SpWrapperGenerator
             return [StoredProcedureName.NormalizeProcedureName(proc.Name)];
 
         return [];
+    }
+
+    private static string BuildMigrationManifestSnippet(
+        string domainName,
+        string serviceName,
+        string schema,
+        StoredProcedureEntry proc,
+        string procedureLeaf)
+    {
+        var sourceObject = string.IsNullOrWhiteSpace(proc.Schema)
+            ? procedureLeaf
+            : $"{proc.Schema}.{procedureLeaf}";
+        var callers = proc.Callers.Count == 0
+            ? "    - TBD"
+            : string.Join(Environment.NewLine, proc.Callers.Select(c => $"    - {c}"));
+
+        return $"""
+            # Snippet aligned with src-templates/migration-manifest.example.yml — review before commit.
+            source:
+              server: source-sql
+              database: {proc.Database ?? "MonolithDb"}
+              schema: {proc.Schema ?? "dbo"}
+              object: {sourceObject}
+              type: StoredProcedure
+
+            usage:
+              applications:
+            {callers}
+              unknownCallers: false
+
+            ownership:
+              targetService: {serviceName}
+              targetSchema: {schema}
+              confidence: 0.75
+              approvedBy: null  # required before cutover
+
+            migration:
+              strategy: FacadeThenMove
+              targetObject: {schema}.{procedureLeaf}
+              synchronization: TBD
+              rollback: SwitchFacadeToLegacy
+              wave: {domainName.ToLowerInvariant()}-001  # placeholder — assign in migration-waves
+
+            validation:
+              - ResultSetComparison
+              - NullSemanticsComparison
+
+            domain: {domainName.ToLowerInvariant()}
+            status: draft-from-findings
+            """;
     }
 
     private static string BuildSqlStub(string schema, StoredProcedureEntry proc, string procedureLeaf, string? template)

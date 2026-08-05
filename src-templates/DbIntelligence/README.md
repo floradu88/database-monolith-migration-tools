@@ -114,7 +114,11 @@ Health:
 5. Optional SQL inventory  
 6. Merge + export maps  
 
+**Large-repo Graphify policy:** `RefreshGraphify` defaults to **false**. When `graphify-out/graph.json` already exists, the index job reuses it instead of re-running extract (which can take many minutes on big trees). Pass `refreshGraphify: true` only for an intentional refresh. On import, Graphify nodes under `node_modules` and build artifacts matching `chunk-*.js` are filtered out to reduce god-node noise.
+
 Artifacts: under `{repo}/.db-index/` — `graph.json`, `code-to-db-map.json`, `stored-procedure-map.json`, `code-reference-locations.json`, `GRAPH_REPORT.md`, `findings.html`.
+
+Operator doc for the References tab / offline table: [`docs/reference-locations-canvas.md`](docs/reference-locations-canvas.md).
 
 ### Index via API (PowerShell)
 
@@ -123,6 +127,7 @@ $body = @{
   targetRepositoryPath = "D:\path\to\repo"
   runCodegraph         = $true
   runGraphify          = $true
+  refreshGraphify      = $false   # default; set $true only to force re-extract
   runRepositoryScan    = $true
   runSqlScan           = $true
   sqlConnectionString  = "Server=(localdb)\mssqllocaldb;Database=ShowcaseOwned;Trusted_Connection=True;TrustServerCertificate=True"
@@ -188,7 +193,9 @@ dotnet user-secrets set "DbIntelligence:SqlConnectionString" "Server=(localdb)\m
 | `GET /api/explore?q=` | Neighborhood |
 | `GET /api/graphs/unified` | Graph JSON |
 | `GET /api/maps/code-to-db` | Code→DB map |
+| `GET /api/maps/code-references` | Flat reference locations (References tab) |
 | `GET /api/maps/stored-procedures` | SP map |
+| `POST /api/findings/promote` | Build downloadable promote-request JSON (no shell-out) |
 | `POST /api/export` | Write artifacts |
 
 ## Safety

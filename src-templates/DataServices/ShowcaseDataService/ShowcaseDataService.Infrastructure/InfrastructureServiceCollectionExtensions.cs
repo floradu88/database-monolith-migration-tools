@@ -164,7 +164,7 @@ public static class InfrastructureServiceCollectionExtensions
         }
 
         services.AddDbContext<ShowcaseDbContext>((sp, options) =>
-            options.UseShowcaseSqlServer(ownedCs));
+            options.UseShowcaseSqlServer(ownedCs, migrationsAssemblyName: "ShowcaseDataService.Migrations"));
 
         services.AddScoped<ISpGetShowcaseSummary, SpGetShowcaseSummary>();
         services.AddScoped<ISpGetShowcaseReport, SpGetShowcaseReport>();

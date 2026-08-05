@@ -46,6 +46,8 @@
     <Build Include="Contract\DatabaseContract.sql" />
     <Build Include="Programmability\GetShowcaseSummary.sql" />
     <Build Include="Programmability\usp_Showcase_Sales_Summary.sql" />
+    <Build Include="Programmability\usp_Showcase_Sales_Detail.sql" />
+    <Build Include="Programmability\usp_Showcase_Inventory_Summary.sql" />
     <Build Include="Programmability\usp_Showcase_Inventory_Detail.sql" />
     <!-- FindingsMigration writes stubs under Programmability\Generated\ — add each Build Include when promoting. -->
     <PreDeploy Include="Scripts\PreDeploy.sql" />

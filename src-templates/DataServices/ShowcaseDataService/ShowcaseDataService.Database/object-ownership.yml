@@ -18,6 +18,8 @@ sql_project:
     - deployment.v_DatabaseContractHealth
     - showcase.GetShowcaseSummary
     - showcase.usp_Showcase_Sales_Summary
+    - showcase.usp_Showcase_Sales_Detail
+    - showcase.usp_Showcase_Inventory_Summary
     - showcase.usp_Showcase_Inventory_Detail
     - security / RBAC grants (PostDeploy stubs)
 

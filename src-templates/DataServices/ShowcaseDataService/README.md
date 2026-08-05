@@ -14,7 +14,8 @@ Buildable, replicable data-service template for this kit. **CustomerDataService*
 - Headers: `X-Data-Access-Route`, `X-Blue-Green-Slot`, `X-Data-Access-Method` (EfCore|StoredProcedure|PlainSql)
 - Owner dashboard at `/` (shadow diffs, DAL speed, SLO p95/error counters)
 - Benchmark: `GET /api/showcase/items/{id}/benchmark`
-- JWT/MI-ready auth placeholder (`Auth:RequireJwt`)
+- JWT/MI-ready auth placeholder (`Auth:RequireJwt` lab-off by default — [`AUTH.md`](AUTH.md))
+- Pre/PostDeploy human-gated — [`ShowcaseDataService.Database/Scripts/README.md`](ShowcaseDataService.Database/Scripts/README.md)
 - Deploy: Docker Compose + EKS Helm (blue + green)
 
 ## Database layout
@@ -36,8 +37,22 @@ Deploy order: PreDeploy → EF migrations → dacpac → Cutover ups → PostDep
 ## Run locally
 
 ```powershell
-cd src-templates\DataServices\ShowcaseDataService\ShowcaseDataService.Api
+# One-time LocalDB lab (Owned + SourceFacade DBs, EF Items, Showcase SPs)
+cd src-templates\DataServices\ShowcaseDataService
+.\scripts\Initialize-ShowcaseLocalDb.ps1
+
+cd ShowcaseDataService.Api
 dotnet run
+```
+
+Export SPs after init:
+
+```powershell
+cd src-templates\DbIntelligence
+.\scripts\Export-DatabaseStoredProcedures.ps1 `
+  -OutputFile "$env:TEMP\ShowcaseOwned-procedures.sql" `
+  -UseShowcaseLocalDefaults
+```
 # http://localhost:5080 (or launchSettings) · Swagger · /
 ```
 

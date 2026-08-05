@@ -6,6 +6,7 @@ public interface ICodegraphClient
 {
     Task<(bool Available, string Detail)> CheckAsync(CancellationToken cancellationToken = default);
     Task<CliResult> StatusAsync(string repositoryPath, CancellationToken cancellationToken = default);
+    Task<CliResult> EnsureIndexAsync(string repositoryPath, CancellationToken cancellationToken = default);
     Task<CliResult> QueryAsync(string repositoryPath, string search, int limit, CancellationToken cancellationToken = default);
     Task<CliResult> CallersAsync(string repositoryPath, string symbol, int limit, CancellationToken cancellationToken = default);
     Task<CliResult> CalleesAsync(string repositoryPath, string symbol, int limit, CancellationToken cancellationToken = default);
@@ -43,6 +44,39 @@ public sealed class CodegraphClient : ICodegraphClient
             workingDirectory: repositoryPath,
             timeoutSeconds: _options.ProcessTimeoutSeconds,
             cancellationToken: cancellationToken);
+
+    public async Task<CliResult> EnsureIndexAsync(string repositoryPath, CancellationToken cancellationToken = default)
+    {
+        var status = await StatusAsync(repositoryPath, cancellationToken);
+        var hasIndex = Directory.Exists(Path.Combine(repositoryPath, ".codegraph")) ||
+                       (status.Succeeded &&
+                        (status.StandardOutput.Contains(".codegraph", StringComparison.OrdinalIgnoreCase)
+                         || status.StandardOutput.Contains("indexed", StringComparison.OrdinalIgnoreCase)
+                         || LooksLikeJson(status.StandardOutput)));
+
+        if (hasIndex)
+        {
+            return await _runner.RunAsync(
+                _options.CodegraphExecutable,
+                ["sync", repositoryPath],
+                workingDirectory: repositoryPath,
+                timeoutSeconds: Math.Max(_options.ProcessTimeoutSeconds, 300),
+                cancellationToken: cancellationToken);
+        }
+
+        return await _runner.RunAsync(
+            _options.CodegraphExecutable,
+            ["init", repositoryPath],
+            workingDirectory: repositoryPath,
+            timeoutSeconds: Math.Max(_options.ProcessTimeoutSeconds, 600),
+            cancellationToken: cancellationToken);
+    }
+
+    private static bool LooksLikeJson(string text)
+    {
+        var trimmed = text.TrimStart();
+        return trimmed.StartsWith('{') || trimmed.StartsWith('[');
+    }
 
     public Task<CliResult> QueryAsync(string repositoryPath, string search, int limit, CancellationToken cancellationToken = default) =>
         _runner.RunAsync(

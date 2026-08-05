@@ -73,6 +73,45 @@ public class GraphifyImportTests
     }
 
     [Fact]
+    public async Task Import_filters_node_modules_and_chunk_js_noise()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "dbintel-graphify-noise-" + Guid.NewGuid().ToString("N"));
+        var outDir = Path.Combine(root, "graphify-out");
+        Directory.CreateDirectory(outDir);
+
+        File.WriteAllText(Path.Combine(outDir, "graph.json"), """
+            {
+              "nodes": [
+                {"id":"keep","label":"App.cs","source_file":"src/App.cs","file_type":"code"},
+                {"id":"nm","label":"lodash.js","source_file":"node_modules/lodash/lodash.js","file_type":"code"},
+                {"id":"chunk","label":"chunk-abc123.js","source_file":"dist/chunk-abc123.js","file_type":"code"}
+              ],
+              "links": [
+                {"source":"keep","target":"nm","relation":"imports","confidence":"EXTRACTED"},
+                {"source":"keep","target":"chunk","relation":"imports","confidence":"EXTRACTED"}
+              ]
+            }
+            """);
+
+        try
+        {
+            var client = new GraphifyClient(
+                new CliProcessRunner(),
+                Options.Create(new DbIntelligenceOptions()));
+
+            var graph = await client.ImportGraphJsonAsync(root);
+            Assert.NotNull(graph);
+            Assert.Single(graph!.Nodes);
+            Assert.Equal("keep", graph.Nodes.First().Id);
+            Assert.Empty(graph.Edges);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Deserialize_graphify_document_maps_links()
     {
         var json = """

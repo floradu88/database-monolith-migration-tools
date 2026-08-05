@@ -15,9 +15,12 @@ builder.Services.AddShowcaseObservability("ShowcaseDataService");
 builder.Services.AddShowcaseInfrastructure(builder.Configuration);
 
 var auth = builder.Configuration.GetSection(ShowcaseAuthOptions.SectionName).Get<ShowcaseAuthOptions>() ?? new();
+// Lab default: Auth:RequireJwt = false (see AUTH.md). Do not invent IdP secrets here.
+// When enabling JWT, set Authority/Audience from a real IdP; SQL MI / connection auth is separate (DATABASE-HOSTING.md).
 if (auth.RequireJwt)
 {
-    // JWT / MI-ready placeholder — set Auth:Authority / Audience / ManagedIdentityClientId from real env values.
+    // JWT / MI-ready placeholder — set Auth:Authority / Audience / ManagedIdentityClientId from real env values
+    // (Key Vault / user-secrets). Never commit production credentials.
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {

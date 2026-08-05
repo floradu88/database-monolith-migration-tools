@@ -17,6 +17,8 @@ export interface SessionConfigDto {
   indexDetail?: string;
   codegraphAvailable: boolean;
   codegraphVersion?: string;
+  ensureSucceeded?: boolean;
+  ensureDetail?: string;
 }
 
 export interface ChatMessageDto {
@@ -56,6 +58,10 @@ export class ChatApiService {
 
   setSession(repositoryPath: string): Observable<SessionConfigDto> {
     return this.http.post<SessionConfigDto>('/api/session', { repositoryPath });
+  }
+
+  ensureIndex(): Observable<SessionConfigDto> {
+    return this.http.post<SessionConfigDto>('/api/session/ensure-index', {});
   }
 
   chat(message: string, conversationId?: string, mode?: string): Observable<ChatResponse> {

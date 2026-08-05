@@ -1,8 +1,13 @@
 # How to use this project (PowerShell)
 
-This kit helps you decompose a SQL Server monolith. The **runnable** local stack today is **DbIntelligence** (Codegraph + Graphify + code→SQL maps + Angular UI). SQL scripts under `sql/` are for **DBA review**, not blind production execution.
+This kit helps you decompose a SQL Server monolith. The **runnable** local stacks today are:
 
-All setup and run commands below are **PowerShell**.
+- **DbIntelligence** — Codegraph + Graphify + code→SQL maps + Angular UI
+- **CodegraphChat** — ChatGPT-style topic chat over a Codegraph index (single-host on `:5091`)
+
+SQL scripts under `sql/` are for **DBA review**, not blind production execution.
+
+All setup and run commands below are **PowerShell**. Prefer **fnm** (user-scoped Node, no admin) and Codegraph via `fnm exec --using=lts-latest` — Ready scripts do this for you.
 
 ---
 
@@ -22,7 +27,17 @@ Optional UI afterward:
 .\scripts\Start-DbIntelligenceWeb.ps1   # http://localhost:4200
 ```
 
-### Manual / stepwise (same kit)
+### CodegraphChat (one command — path only)
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
+
+.\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
+```
+
+Open http://localhost:5091/ (fnm Node + Codegraph + SPA in API wwwroot).
+
+### Manual / stepwise (DbIntelligence)
 
 ```powershell
 # From the repository root
@@ -88,7 +103,7 @@ npm -v
 codegraph -V
 ```
 
-`Invoke-DbIntelligenceReady.ps1`, `Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, and `Start-DbIntelligenceWeb.ps1` call the Node helper automatically. The C# CLI installer also prefers `fnm exec --using=lts-latest` for Codegraph when fnm is on PATH.
+`Invoke-DbIntelligenceReady.ps1`, `Invoke-CodegraphChatReady.ps1`, `Install-DbIntelligencePrereqs.ps1`, `Setup-DbIntelligence.ps1`, `Build-DbIntelligence.ps1`, `Build-CodegraphChat.ps1`, `Start-DbIntelligenceWeb.ps1`, and `Start-CodegraphChatWeb.ps1` call the Node helper / prefer `fnm exec --using=lts-latest` automatically. The C# CLI installer also prefers `fnm exec --using=lts-latest` for Codegraph when fnm is on PATH.
 
 ---
 
@@ -269,6 +284,13 @@ cd src-templates\DbIntelligence
 
 LocalDB databases `ShowcaseOwned` / `ShowcaseSource` must exist (publish Showcase SQL project / migrations first); otherwise the SQL scan fails while code-inferred names still print.
 
+**One-command lab publish + SP export assert:**
+
+```powershell
+cd src-templates\DataServices\ShowcaseDataService
+.\scripts\Initialize-ShowcaseLocalDb.ps1
+```
+
 ### Export all stored procedures to a .sql file
 
 Read-only dump of `sys.procedures` definitions to a full output path:
@@ -416,21 +438,25 @@ src-templates/DbIntelligence/
 
 ---
 
-## CodegraphChat (topic chat over an existing index)
+## CodegraphChat (topic chat — one command)
 
-Separate ChatGPT-style UI for asking about a **topic** in a repo you already mapped with Codegraph. Answers are Codegraph CLI evidence only (no external LLM, no invented credentials).
+Path only. Uses the same **fnm** (no-admin Node) + `fnm exec --using=lts-latest` Codegraph tricks as DbIntelligence. Builds the SPA into `Api/wwwroot` and starts a single-host UI.
 
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphChat
 
-# Terminal 1 — API :5091 (bound to your mapped path)
 .\scripts\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
-
-# Terminal 2 — Angular UI :4201
-.\scripts\Start-CodegraphChatWeb.ps1
 ```
 
-Then open http://localhost:4201 and ask e.g. `tell me about IndexingService`, `who calls CodegraphClient`, `impact of EvidenceGraph`, or `index status`.
+Open **http://localhost:5091/**
+
+| Script | Purpose |
+|--------|---------|
+| `Invoke-CodegraphChatReady.ps1` | One command: fnm + Codegraph + build + start |
+| `Setup-CodegraphChat.ps1` | Prereqs + build only (`-Yes`) |
+| `Build-CodegraphChat.ps1` | Restore/build/test; Angular via fnm → `Api/wwwroot` |
+| `Start-CodegraphChat.ps1` | API only (`-Force`, `-RepositoryPath`) |
+| `Start-CodegraphChatWeb.ps1` | Optional Angular hot reload `:4201` (fnm npm) |
 
 Details: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md).
 
@@ -496,6 +522,14 @@ cd src-templates\FindingsMigration
 ```
 
 Produces draft manifests + optional `DataServices\InsightDataService` scaffold from the **ShowcaseDataService** golden template (SP stubs/wrappers when a SP map is provided). `CustomerDataService` remains a thin example only. Review `FINDINGS-REVIEW.md` before ownership approval.
+
+Additional CLI (see FindingsMigration README):
+
+```powershell
+dotnet run --project FindingsMigration.Cli -- diff-maps --previous prev.json --current curr.json --out new.json
+dotnet run --project FindingsMigration.Cli -- slice-sql --objects "dbo.Customer,dbo.Order" --out .\out\slice --schema customer --service CustomerDataService
+dotnet run --project FindingsMigration.Cli -- --code-to-db map.json --domain Insight --emit-reconciliation-tests
+```
 
 Owner blue/green demo: [`src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md).
 

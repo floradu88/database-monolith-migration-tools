@@ -321,6 +321,7 @@ public sealed class IndexJobRequest
     /// When true, always re-run <c>graphify extract</c>.
     /// When false (default), reuse <c>graphify-out/graph.json</c> if it already exists
     /// (important for large repos where extract can take many minutes).
+    /// Prefer leaving this false; pass true only for intentional refresh.
     /// </summary>
     public bool RefreshGraphify { get; set; } = false;
 
@@ -488,4 +489,62 @@ public sealed class CombinedProjectLoadDto
     public string? Message { get; set; }
     public int? NodeCount { get; set; }
     public int? EdgeCount { get; set; }
+}
+
+/// <summary>
+/// Build a downloadable FindingsMigration promote package from selected map/reference rows.
+/// The API never shells out; operators run FindingsMigration.Cli locally.
+/// </summary>
+public sealed class PromoteFindingsRequest
+{
+    public string DomainName { get; set; } = string.Empty;
+
+    /// <summary>Optional hint for <c>--out</c> when running FindingsMigration.Cli.</summary>
+    public string? SuggestedOutputPath { get; set; }
+
+    public string? OwnerTeam { get; set; }
+
+    /// <summary>When false (default), AMBIGUOUS rows are excluded from the packaged map.</summary>
+    public bool IncludeAmbiguous { get; set; }
+
+    /// <summary>Selected Code→DB or References rows from the Angular UI.</summary>
+    public List<PromoteFindingRowDto> SelectedRows { get; set; } = [];
+}
+
+public sealed class PromoteFindingRowDto
+{
+    public string? CodeNodeId { get; set; }
+    public string? CodeLabel { get; set; }
+    public string? SourceFile { get; set; }
+    public string? SourceFileFullPath { get; set; }
+    public int? Line { get; set; }
+    public string? Location { get; set; }
+    public string? DbNodeId { get; set; }
+    public string? DbObject { get; set; }
+    public string? DbKind { get; set; }
+    public string? Relation { get; set; }
+    public string? Confidence { get; set; }
+    public string? Pattern { get; set; }
+    public string? Project { get; set; }
+}
+
+public sealed class PromoteFindingsResponse
+{
+    public string SchemaVersion { get; set; } = "1.0";
+    public string DomainName { get; set; } = string.Empty;
+    public string? SuggestedOutputPath { get; set; }
+    public string? OwnerTeam { get; set; }
+    public DateTimeOffset GeneratedAt { get; set; }
+    public string? RepositoryPath { get; set; }
+    public int SelectedCount { get; set; }
+    public int PackagedCount { get; set; }
+    public int SkippedAmbiguousCount { get; set; }
+
+    /// <summary>Filtered code-to-db map suitable for FindingsMigration.Cli <c>--code-to-db</c>.</summary>
+    public CodeToDbMapDto CodeToDbMap { get; set; } = new();
+
+    /// <summary>Suggested PowerShell to run FindingsMigration.Cli after saving this JSON.</summary>
+    public string PowerShellCommand { get; set; } = string.Empty;
+
+    public string Instructions { get; set; } = string.Empty;
 }

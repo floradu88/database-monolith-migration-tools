@@ -43,6 +43,7 @@
       <button type="button" [class.active]="view === 'graph'" (click)="setView('graph')">Graph</button>
       <button type="button" [class.active]="view === 'code-to-db'" (click)="setView('code-to-db')">Code→DB</button>
       <button type="button" [class.active]="view === 'procedures'" (click)="setView('procedures')">Procedures</button>
+      <button type="button" [class.active]="view === 'references'" (click)="setView('references')">References</button>
     </div>
   </div>
 
@@ -52,9 +53,19 @@
     </section>
 
     <section class="table-panel" *ngIf="view === 'code-to-db'">
+      <p class="meta live-note">
+        Live map from <code>GET /api/maps/code-to-db</code> after index/export. Select rows to promote.
+      </p>
       <table *ngIf="codeMap">
         <thead>
           <tr>
+            <th class="check-col">
+              <input
+                type="checkbox"
+                title="Select all"
+                (change)="selectAllCodeRows($any($event.target).checked)"
+              />
+            </th>
             <th>Project</th>
             <th>Code</th>
             <th>DB object</th>
@@ -64,7 +75,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let e of codeMap.entries">
+          <tr *ngFor="let e of codeMap.entries; let i = index">
+            <td class="check-col">
+              <input
+                type="checkbox"
+                [checked]="isCodeSelected(codeRowKey(e, i))"
+                (change)="toggleCodeRow(codeRowKey(e, i), $any($event.target).checked)"
+              />
+            </td>
             <td>{{ e.project || '—' }}</td>
             <td>{{ e.codeLabel }}</td>
             <td>{{ e.dbObject }}</td>
@@ -86,6 +104,59 @@
       </article>
     </section>
 
+    <section class="table-panel" *ngIf="view === 'references'">
+      <p class="meta live-note">
+        Live data from <code>GET /api/maps/code-references</code> (same as
+        <code>code-reference-locations.json</code>). See
+        <code>docs/reference-locations-canvas.md</code>.
+      </p>
+      <div class="ref-toolbar">
+        <input
+          type="search"
+          [(ngModel)]="refFilter"
+          placeholder="Filter path / location / DB object / confidence"
+        />
+        <span class="ref-count">{{ filteredReferences.length }} / {{ refDoc?.count || 0 }}</span>
+      </div>
+      <table *ngIf="refDoc">
+        <thead>
+          <tr>
+            <th class="check-col">
+              <input
+                type="checkbox"
+                title="Select all filtered"
+                (change)="selectAllRefRows($any($event.target).checked)"
+              />
+            </th>
+            <th (click)="setRefSort('fullPath')">Full path</th>
+            <th (click)="setRefSort('line')">Line</th>
+            <th>Location</th>
+            <th (click)="setRefSort('dbObject')">DB object</th>
+            <th (click)="setRefSort('confidence')">Confidence</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of filteredReferences; let i = index">
+            <td class="check-col">
+              <input
+                type="checkbox"
+                [checked]="isRefSelected(refRowKey(r, i))"
+                (change)="toggleRefRow(refRowKey(r, i), $any($event.target).checked)"
+              />
+            </td>
+            <td class="mono">{{ r.fullPath }}</td>
+            <td>{{ r.line }}</td>
+            <td class="mono">{{ r.location }}</td>
+            <td>{{ r.dbObject }}</td>
+            <td>{{ r.confidence }}</td>
+            <td><button type="button" (click)="copyLocation(r)">Copy</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <p *ngIf="!refDoc">Load an index / export maps to populate code references.</p>
+    </section>
+
     <aside class="detail">
       <h2>Detail</h2>
       <ng-container *ngIf="selected; else emptyDetail">
@@ -104,6 +175,30 @@
       <ng-template #emptyDetail>
         <p>Select a node on the graph.</p>
       </ng-template>
+
+      <div class="promote" *ngIf="view === 'code-to-db' || view === 'references'">
+        <h2>Promote to domain</h2>
+        <p class="meta">
+          {{ selectedPromoteCount }} selected · downloads a promote-request JSON + filtered
+          <code>code-to-db-map</code>. Run FindingsMigration.Cli locally — API does not shell out.
+        </p>
+        <input type="text" [(ngModel)]="promoteDomain" placeholder="Domain name (e.g. Billing)" />
+        <input
+          type="text"
+          [(ngModel)]="promoteOutputPath"
+          placeholder="Optional --out path"
+        />
+        <input type="text" [(ngModel)]="promoteOwner" placeholder="Optional owner team" />
+        <label class="check">
+          <input type="checkbox" [(ngModel)]="promoteIncludeAmbiguous" />
+          Include AMBIGUOUS (review risk)
+        </label>
+        <button type="button" (click)="promoteToDomain()" [disabled]="!selectedPromoteCount">
+          Promote to domain
+        </button>
+        <p class="meta" *ngIf="promoteHint">{{ promoteHint }}</p>
+        <pre *ngIf="promotePsCommand">{{ promotePsCommand }}</pre>
+      </div>
 
       <div class="jobs">
         <h2>Index</h2>

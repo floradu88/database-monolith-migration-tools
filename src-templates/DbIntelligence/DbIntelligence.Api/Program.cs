@@ -262,6 +262,102 @@ api.MapPost("/export", async (ExportRequest request, IIntelligenceStore store, I
     return Results.Ok(new { outputDirectory = output });
 });
 
+// Builds a downloadable promote-request JSON only — never shells out to FindingsMigration.
+api.MapPost("/findings/promote", (PromoteFindingsRequest request, IIntelligenceStore store) =>
+{
+    if (string.IsNullOrWhiteSpace(request.DomainName))
+        return Results.BadRequest(new { message = "DomainName is required." });
+    if (request.SelectedRows is null || request.SelectedRows.Count == 0)
+        return Results.BadRequest(new { message = "Select at least one Code→DB or References row." });
+
+    var domain = request.DomainName.Trim();
+    var owner = string.IsNullOrWhiteSpace(request.OwnerTeam) ? "TBD" : request.OwnerTeam.Trim();
+    var outHint = string.IsNullOrWhiteSpace(request.SuggestedOutputPath)
+        ? Path.Combine("src-templates", "FindingsMigration", "out", domain)
+        : request.SuggestedOutputPath.Trim();
+
+    var skippedAmbiguous = 0;
+    var entries = new List<CodeToDbEntryDto>();
+    foreach (var row in request.SelectedRows)
+    {
+        var confidence = string.IsNullOrWhiteSpace(row.Confidence) ? "EXTRACTED" : row.Confidence.Trim();
+        if (!request.IncludeAmbiguous &&
+            confidence.Equals("AMBIGUOUS", StringComparison.OrdinalIgnoreCase))
+        {
+            skippedAmbiguous++;
+            continue;
+        }
+
+        var dbObject = row.DbObject?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(dbObject))
+            continue;
+
+        entries.Add(new CodeToDbEntryDto
+        {
+            CodeNodeId = row.CodeNodeId ?? "",
+            CodeLabel = row.CodeLabel ?? row.CodeNodeId ?? "",
+            SourceFile = row.SourceFile,
+            SourceFileFullPath = row.SourceFileFullPath,
+            Line = row.Line,
+            Location = row.Location,
+            DbNodeId = row.DbNodeId ?? "",
+            DbObject = dbObject,
+            DbKind = row.DbKind ?? "",
+            Relation = string.IsNullOrWhiteSpace(row.Relation) ? "references" : row.Relation,
+            Confidence = confidence,
+            Pattern = row.Pattern,
+            Project = row.Project
+        });
+    }
+
+    if (entries.Count == 0)
+        return Results.BadRequest(new
+        {
+            message = skippedAmbiguous > 0
+                ? "No rows packaged. AMBIGUOUS selections were skipped; enable IncludeAmbiguous or pick EXTRACTED/INFERRED rows."
+                : "No rows packaged. Selected rows need a DB object."
+        });
+
+    var repoPath = store.CurrentGraph?.Meta.TargetRepositoryPath;
+    var mapFileName = $"promote-{domain}-code-to-db-map.json";
+    var ps = $"""
+        # 1) Save the promote response body (or its codeToDbMap) as {mapFileName}
+        # 2) From the kit root, package locally — API does not run this:
+        cd src-templates\FindingsMigration
+        dotnet run --project FindingsMigration.Cli -- `
+          --code-to-db ".\{mapFileName}" `
+          --domain "{domain}" `
+          --owner "{owner}" `
+          --out "{outHint}"
+        """;
+
+    var response = new PromoteFindingsResponse
+    {
+        SchemaVersion = "1.0",
+        DomainName = domain,
+        SuggestedOutputPath = outHint,
+        OwnerTeam = owner,
+        GeneratedAt = DateTimeOffset.UtcNow,
+        RepositoryPath = repoPath,
+        SelectedCount = request.SelectedRows.Count,
+        PackagedCount = entries.Count,
+        SkippedAmbiguousCount = skippedAmbiguous,
+        CodeToDbMap = new CodeToDbMapDto
+        {
+            GeneratedAt = DateTimeOffset.UtcNow,
+            RepositoryPath = repoPath,
+            Entries = entries
+        },
+        PowerShellCommand = ps.Trim(),
+        Instructions =
+            "Download this JSON, extract codeToDbMap to a file, then run FindingsMigration.Cli locally. " +
+            "DbIntelligence.Api never shells out. AMBIGUOUS findings stay review-only unless IncludeAmbiguous was set. " +
+            "Scaffold from ShowcaseDataService — not CustomerDataService."
+    };
+
+    return Results.Ok(response);
+});
+
 api.MapPost("/graphs/combine", async (CombineGraphsRequest request, ICombinedGraphService combined) =>
 {
     try

@@ -98,6 +98,18 @@ public sealed class DomainPackageOptions
     public string TargetSchema { get; init; } = "";
     public string OwnerTeam { get; init; } = "TBD";
     public bool IncludeAmbiguous { get; init; }
+
+    /// <summary>
+    /// When true, write a minimal xUnit reconciliation stub under the package
+    /// <c>Tests/</c> folder (or <see cref="ServiceRoot"/> <c>*.Tests</c> when set).
+    /// </summary>
+    public bool EmitReconciliationTests { get; init; }
+
+    /// <summary>
+    /// Optional scaffolded DataService root used when emitting reconciliation stubs
+    /// into <c>{TargetService}.Tests</c>.
+    /// </summary>
+    public string? ServiceRoot { get; init; }
 }
 
 public sealed class DomainPackageResult

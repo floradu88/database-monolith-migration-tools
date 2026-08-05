@@ -1,7 +1,10 @@
 ﻿# CustomerDataService
 
-**Thin example only** — incomplete host/types. Do **not** use as the FindingsMigration scaffold source.
+**Not the golden template.** Thin / incomplete example host. Data-access paths may throw `NotImplementedException`. Do **not** use as the FindingsMigration scaffold source or as a second production-ready service.
 
-Golden (buildable) template: [`../ShowcaseDataService/`](../ShowcaseDataService/) — SP façade, blue/green, Docker/Helm, owner dashboard.
+| Use this | Not this |
+|----------|----------|
+| [`../ShowcaseDataService/`](../ShowcaseDataService/) — golden DB-as-a-Service (SP façade, blue/green, Docker/Helm, tests) | CustomerDataService for new domains |
 
-Ops / discovery: [../../../HOW-TO-USE.md](../../../HOW-TO-USE.md) · FindingsMigration: [../../FindingsMigration/README.md](../../FindingsMigration/README.md)
+Ops / discovery: [../../../HOW-TO-USE.md](../../../HOW-TO-USE.md) · FindingsMigration: [../../FindingsMigration/README.md](../../FindingsMigration/README.md) · Showcase auth: [`../ShowcaseDataService/AUTH.md`](../ShowcaseDataService/AUTH.md)
+

@@ -4,5 +4,7 @@
 CodegraphChat.Web/node_modules/
 CodegraphChat.Web/dist/
 CodegraphChat.Web/.angular/
+CodegraphChat.Api/wwwroot/**
+!CodegraphChat.Api/wwwroot/.gitkeep
 *.user
 *.suo

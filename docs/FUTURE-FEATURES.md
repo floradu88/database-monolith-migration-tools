@@ -62,7 +62,9 @@ From owned DB objects, emit additive SQL project stubs under `SourceMonolith` / 
 **Later:** persist maps into an intelligence catalog (entities in `docs/09-data-model-and-api.md`) instead of file-only JSON — still no production writes without DBA review. Until then, FindingsMigration always reads **exported JSON files**, not a database.
 
 ### 6. Angular “Promote to domain” UX
-In DbIntelligence.Web: select subgraph / map rows → call FindingsMigration → download or write package under kit `manifests/` + `src-templates/DataServices/`.
+**Shipped (v1):** Code→DB / References multi-select + `POST /api/findings/promote` builds a downloadable promote-request JSON and filtered `code-to-db-map`; operators run FindingsMigration.Cli locally (API does not shell out). See graph-page promote panel and [`src-templates/DbIntelligence/docs/reference-locations-canvas.md`](../src-templates/DbIntelligence/docs/reference-locations-canvas.md).
+
+**Later:** optional write into kit `manifests/` from a reviewed CLI-only path; subgraph selection on the canvas.
 
 ### 7. Incremental re-index diff
 Diff last two `code-to-db-map.json` exports; only package **new** EXTRACTED edges into the next wave.
