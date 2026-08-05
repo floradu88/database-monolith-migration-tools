@@ -1,0 +1,234 @@
+:host {
+  --ink: #1b1f24;
+  --muted: #5b6570;
+  --paper: #f3efe6;
+  --panel: #fffdf8;
+  --line: #d7d0c4;
+  --accent: #0f4c5c;
+  --accent-2: #c45c26;
+  --user: #0f4c5c;
+  --assistant: #fffdf8;
+  display: block;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(15, 76, 92, 0.12), transparent 42%),
+    linear-gradient(160deg, #f7f2e8 0%, #ebe4d7 55%, #e4ddd0 100%);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+.shell {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 100vh;
+}
+
+.brand {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.tagline {
+  margin: 0.6rem 0 0.4rem;
+  color: var(--muted);
+  max-width: 42rem;
+  line-height: 1.45;
+}
+
+.tagline code,
+.bind-row code,
+.evidence code {
+  font-family: "IBM Plex Mono", Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.bind-row label,
+.toolbar label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.row,
+.toolbar,
+.composer {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.row input,
+.composer textarea,
+select {
+  flex: 1;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 0.35rem;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  color: var(--ink);
+}
+
+button {
+  border: 0;
+  border-radius: 0.35rem;
+  background: var(--accent);
+  color: #f7f2e8;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--line);
+}
+
+.pill {
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.pill.ok { color: var(--accent); }
+.pill.warn { color: var(--accent-2); }
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background: rgba(255, 253, 248, 0.72);
+  overflow: hidden;
+}
+
+.toolbar {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+  justify-content: space-between;
+}
+
+.messages {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: calc(100vh - 22rem);
+}
+
+.bubble {
+  max-width: 92%;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--assistant);
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: rgba(15, 76, 92, 0.08);
+  border-color: rgba(15, 76, 92, 0.25);
+}
+
+.bubble.system {
+  align-self: stretch;
+  background: transparent;
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.meta {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.mode {
+  color: var(--accent-2);
+}
+
+.body {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+details {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+}
+
+.evidence {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(15, 76, 92, 0.04);
+}
+
+.evidence pre,
+.evidence .err {
+  margin: 0.35rem 0 0;
+  max-height: 12rem;
+  overflow: auto;
+  font-family: "IBM Plex Mono", Consolas, monospace;
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+}
+
+.ok { color: var(--accent); }
+.fail, .err { color: var(--accent-2); }
+
+.typing {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.composer {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--line);
+  align-items: flex-end;
+}
+
+.composer textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+@media (max-width: 640px) {
+  .row, .composer, .toolbar { flex-direction: column; align-items: stretch; }
+  .messages { max-height: calc(100vh - 28rem); }
+}

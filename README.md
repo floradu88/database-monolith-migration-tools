@@ -28,13 +28,16 @@ It includes:
 ├── sql/                      # Discovery, telemetry, audit, RBAC scripts
 ├── manifests/                # Domain + migration-wave examples
 ├── src-templates/            # .NET / SQL project scaffolds
+│   ├── DbIntelligence/       # Index + evidence graph UI
+│   ├── CodegraphChat/        # Topic chat over an existing Codegraph index
+│   └── …                     # DataServices, FindingsMigration, …
 ├── checklists/               # Cutover and split checklists
 └── validation/               # Checksums + validation summary
 ```
 
 ## Start here
 
-1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + kit overview)
+1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + CodegraphChat + kit overview)
 2. **[`docs/PROJECT-GUIDE.md`](docs/PROJECT-GUIDE.md)** — all kit projects, why use them, pros/cons
 3. **[`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)** — findings → domain project roadmap + template
 4. **[`src-templates/DataServices/ShowcaseDataService/`](src-templates/DataServices/ShowcaseDataService/)** — golden DB-as-a-Service template + [`SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md) + [`DATABASE-HOSTING.md`](src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md) (OnPrem / Azure / Aws)

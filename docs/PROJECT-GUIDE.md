@@ -164,6 +164,27 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 
 ---
 
+## 7b. CodegraphChat (`src-templates/CodegraphChat/`)
+
+**Purpose:** ChatGPT-style topic Q&A over a repository you already indexed with Codegraph.
+
+| Subproject | Role |
+|------------|------|
+| `CodegraphChat.Api` | HTTP `:5091` — health, session bind, chat |
+| `CodegraphChat.Infrastructure` | Codegraph CLI client + intent router |
+| `CodegraphChat.Web` | Angular chat UI `:4201` |
+| `scripts/` | PowerShell Ready/Start (reuses DbIntelligence fnm helper) |
+
+**Why use it:** Conversational exploration of symbols, callers, callees, and impact without leaving the kit stack. Complements DbIntelligence (which builds maps) rather than replacing it.
+
+| Pros | Cons |
+|------|------|
+| Same .NET 8 + Angular 18 + PowerShell/fnm patterns | Requires an existing `.codegraph/` index |
+| Answers grounded in CLI evidence (no LLM key) | Not a code→DB map or ownership tool |
+| Intent routing for query/callers/impact/status | Symbol detection benefits from quoting names |
+
+---
+
 ## 8. Kit support folders (repo root)
 
 | Path | Why use it |
@@ -190,6 +211,7 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 ## Recommended adoption order
 
 1. Run DbIntelligence on a real app path (`HOW-TO-USE.md`).
+1b. Optional: explore the indexed repo via CodegraphChat topic chat.
 2. Review maps; leave AMBIGUOUS on the queue.
 3. FindingsMigration → domain package + Showcase-based scaffold.
 4. Point `SourceFacade` at OnPrem monolith; land `Owned` on OnPrem lab, then Azure or Aws when ready ([`DATABASE-HOSTING.md`](../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md)).

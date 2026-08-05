@@ -124,11 +124,20 @@ $body = @{
   runCodegraph         = $true
   runGraphify          = $true
   runRepositoryScan    = $true
-  runSqlScan           = $false
+  runSqlScan           = $true
+  sqlConnectionString  = "Server=(localdb)\mssqllocaldb;Database=ShowcaseOwned;Trusted_Connection=True;TrustServerCertificate=True"
 } | ConvertTo-Json
 
 Invoke-RestMethod -Uri "http://localhost:5088/api/index/jobs" `
   -Method Post -Body $body -ContentType "application/json"
+```
+
+SP-focused helper (infers Showcase LocalDB placeholders from kit `appsettings.json` + enum tokens):
+
+```powershell
+.\scripts\Invoke-DbIntelligenceExtractSps.ps1 -UseShowcaseLocalDefaults
+.\scripts\Invoke-DbIntelligenceIndex.ps1 -RepositoryPath "D:\path\to\repo" -SqlConnectionString "<non-prod cs>"
+.\scripts\Export-DatabaseStoredProcedures.ps1 -OutputFile "D:\exports\all-sps.sql" -SqlConnectionString "<non-prod cs>"
 ```
 
 ## Solution projects
@@ -165,7 +174,8 @@ Open [`../DatabaseModernization.sln`](../DatabaseModernization.sln).
 ```powershell
 $env:DbIntelligence__TargetRepositoryPath = "D:\path\to\repo"
 cd DbIntelligence.Api
-dotnet user-secrets set "DbIntelligence:SqlConnectionString" "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True"
+# Prefer Showcase LocalDB placeholders from appsettings.json (no secrets), or set explicitly:
+dotnet user-secrets set "DbIntelligence:SqlConnectionString" "Server=(localdb)\mssqllocaldb;Database=ShowcaseOwned;Trusted_Connection=True;TrustServerCertificate=True"
 ```
 
 ## API surface (summary)
