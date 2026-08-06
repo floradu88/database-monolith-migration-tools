@@ -4,8 +4,8 @@
   Start Angular CodegraphChat.Web (http://localhost:4201, proxies /api -> :5091).
 
 .DESCRIPTION
-  Activates user-scoped fnm Node (DbIntelligence helper). Prefers
-  fnm exec --using=lts-latest -- npm for install/start when fnm is present.
+  Activates user-scoped fnm Node (DbIntelligence helper), then runs npm directly —
+  same pattern as Start-DbIntelligenceWeb.ps1. Do not use `fnm exec -- npm` on Windows.
 
 .EXAMPLE
   .\Start-CodegraphChatWeb.ps1
@@ -40,37 +40,32 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     . $NodeInit -Quiet
 }
 
-function Invoke-KitNpm {
-    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$NpmArgs)
-    if (Get-Command fnm -ErrorAction SilentlyContinue) {
-        Write-Host "fnm exec --using=lts-latest -- npm $($NpmArgs -join ' ')" -ForegroundColor DarkGray
-        & fnm exec --using=lts-latest -- npm @NpmArgs
-        return $LASTEXITCODE
+foreach ($name in @("npm_config_devdir", "NPM_CONFIG_DEVDIR")) {
+    if (Test-Path "Env:$name") {
+        Remove-Item "Env:$name" -ErrorAction SilentlyContinue
     }
-    & npm @NpmArgs
-    return $LASTEXITCODE
 }
 
-if (-not (Get-Command npm -ErrorAction SilentlyContinue) -and -not (Get-Command fnm -ErrorAction SilentlyContinue)) {
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     throw "npm is required. Run ..\DbIntelligence\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes"
+}
+
+$npmCmd = if (Get-Command npm.cmd -ErrorAction SilentlyContinue) { "npm.cmd" } else { "npm" }
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+    $PSNativeCommandUseErrorActionPreference = $false
 }
 
 Push-Location $Web
 try {
     if (-not (Test-Path "node_modules")) {
-        Write-Host "Installing npm packages (prefer fnm)..." -ForegroundColor Cyan
-        $code = Invoke-KitNpm @("install")
-        if ($code -ne 0) { exit $code }
+        Write-Host "Installing npm packages..." -ForegroundColor Cyan
+        & $npmCmd install
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
 
     Write-Host "Starting Angular on http://localhost:4201 ..." -ForegroundColor Cyan
-    if (Get-Command fnm -ErrorAction SilentlyContinue) {
-        & fnm exec --using=lts-latest -- npm start
-    }
-    else {
-        Write-Host "Using npm: $((Get-Command npm).Source)" -ForegroundColor DarkGray
-        npm start
-    }
+    Write-Host "Using $npmCmd : $((Get-Command $npmCmd).Source)" -ForegroundColor DarkGray
+    & $npmCmd start
 }
 finally {
     Pop-Location

@@ -16,7 +16,7 @@ Uses DbIntelligence `Initialize-DbIntelligenceNode.ps1` (fnm, no admin) and Code
 
 1. Read this folder's `README.md` and root `HOW-TO-USE.md`.
 2. Prefer `scripts/Invoke-CodegraphChatReady.ps1` (path only) for local run — do not invent alternate Node installers.
-3. Prefer Codegraph via `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` when fnm is present.
+3. Prefer Codegraph via `fnm exec --using=lts-latest -- npm.cmd i -g @colbymchenry/codegraph` on Windows (`npm` on non-Windows) when fnm is present. For Angular npm ci/build/start, activate fnm with the DbIntelligence Node helper and call `npm` on PATH — do not use `fnm exec -- npm` (Windows cannot spawn `npm.ps1`).
 4. Do not invent credentials, production repository paths, or LLM API keys.
 5. Keep SQL/DB concerns out of this project.
 6. Publish Angular with Ready/`Build-CodegraphChat.ps1` into `CodegraphChat.Api/wwwroot` (gitignored except `.gitkeep`).

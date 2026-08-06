@@ -74,23 +74,29 @@ if (-not $SkipWeb) {
         Write-Warning "npm not found; skipping Angular restore. Run .\Initialize-DbIntelligenceNode.ps1 -Install -Yes or pass -SkipWeb."
     }
     else {
+        $npmCmd = if (Get-Command npm.cmd -ErrorAction SilentlyContinue) { "npm.cmd" } else { "npm" }
+        if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+            $PSNativeCommandUseErrorActionPreference = $false
+        }
+
         Write-Host "Installing Angular dependencies ..." -ForegroundColor Cyan
+        Write-Host "Using $npmCmd : $((Get-Command $npmCmd).Source)" -ForegroundColor DarkGray
         Push-Location $Web
         try {
             if (Test-Path "package-lock.json") {
-                npm ci
+                & $npmCmd ci
                 if ($LASTEXITCODE -ne 0) {
                     Write-Warning "npm ci failed; falling back to npm install"
-                    npm install
+                    & $npmCmd install
                 }
             }
             else {
-                npm install
+                & $npmCmd install
             }
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
             Write-Host "Building Angular (development) ..." -ForegroundColor Cyan
-            npm run build -- --configuration=development
+            & $npmCmd run build -- --configuration=development
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         }
         finally {

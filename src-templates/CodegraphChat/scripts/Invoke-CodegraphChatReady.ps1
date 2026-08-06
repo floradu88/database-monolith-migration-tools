@@ -5,9 +5,9 @@
 
 .DESCRIPTION
   Only the project path is required. Everything else is auto-confirmed:
-    1. User-scoped fnm Node + Codegraph (fnm exec --using=lts-latest) via DbIntelligence helper
+    1. User-scoped fnm Node + Codegraph via DbIntelligence helper (fnm env activation; Codegraph install uses fnm exec -- npm.cmd on Windows)
     2. Restore + build + test CodegraphChat.sln
-    3. npm via activated fnm; Angular production build published to Api/wwwroot
+    3. npm via activated fnm PATH (same as DbIntelligence — not `fnm exec -- npm`); Angular published to Api/wwwroot
     4. Start API on :5091 bound to the repository path (single-host UI at http://localhost:5091/)
 
 .PARAMETER RepositoryPath
@@ -58,7 +58,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $codegraphOk = [bool](Get-Command codegraph -ErrorAction SilentlyContinue)
 if (-not $codegraphOk) {
-    throw "codegraph not on PATH. Prefer: fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph"
+    throw "codegraph not on PATH. Prefer: fnm exec --using=lts-latest -- npm.cmd i -g @colbymchenry/codegraph  (Windows) or npm on non-Windows"
 }
 
 $npmCmd = Get-Command npm -ErrorAction SilentlyContinue
@@ -71,7 +71,7 @@ if (-not (Test-Path $dotCodegraph)) {
     Write-Warning "No .codegraph under $RepoFull yet. Use Ensure index in the UI after start, or: codegraph init `"$RepoFull`"."
 }
 
-Write-Host "`n[2/3] Build (.NET + Angular via fnm npm -> Api/wwwroot)..." -ForegroundColor Cyan
+Write-Host "`n[2/3] Build (.NET + Angular via activated fnm npm -> Api/wwwroot)..." -ForegroundColor Cyan
 $buildArgs = @{ Yes = $true }
 if ($SkipWeb) { $buildArgs.SkipWeb = $true }
 if ($SkipTests) { $buildArgs.SkipTests = $true }

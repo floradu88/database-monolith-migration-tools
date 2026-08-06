@@ -187,9 +187,11 @@ function Install-DbIntelligenceCodegraph {
             Write-Warning "Could not provision Node via fnm; falling back to PATH npm..."
         }
         else {
-            $fnmExecCmd = "fnm exec --using=$NodeVersion -- npm i -g $CodegraphPackage"
+            # fnm exec cannot spawn npm.ps1 on Windows; use npm.cmd there.
+            $npmExe = if ($env:OS -match 'Windows') { 'npm.cmd' } else { 'npm' }
+            $fnmExecCmd = "fnm exec --using=$NodeVersion -- $npmExe i -g $CodegraphPackage"
             Write-NodeInfo "fnm detected - installing Codegraph with: $fnmExecCmd"
-            & fnm exec --using=$NodeVersion -- npm i -g $CodegraphPackage
+            & fnm exec --using=$NodeVersion -- $npmExe i -g $CodegraphPackage
             if ($LASTEXITCODE -eq 0) {
                 Update-DbIntelligenceSessionPath
                 $null = Enable-DbIntelligenceFnm
@@ -204,13 +206,14 @@ function Install-DbIntelligenceCodegraph {
         }
     }
 
-    if (-not (Test-DbIntelligenceCommand "npm")) {
+    $npmPathExe = if ($env:OS -match 'Windows') { 'npm.cmd' } else { 'npm' }
+    if (-not (Test-DbIntelligenceCommand $npmPathExe) -and -not (Test-DbIntelligenceCommand "npm")) {
         Write-Warning "npm not available; cannot install Codegraph. Run with -Install first."
         return $false
     }
 
-    Write-NodeInfo "Installing Codegraph with PATH npm: npm i -g $CodegraphPackage"
-    & npm i -g $CodegraphPackage
+    Write-NodeInfo "Installing Codegraph with PATH npm: $npmPathExe i -g $CodegraphPackage"
+    & $npmPathExe i -g $CodegraphPackage
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "npm i -g $CodegraphPackage failed (exit $LASTEXITCODE)."
         return $false

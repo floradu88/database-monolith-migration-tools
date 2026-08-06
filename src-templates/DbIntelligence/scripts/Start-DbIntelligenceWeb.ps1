@@ -39,17 +39,22 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     throw "npm is required. Run .\Initialize-DbIntelligenceNode.ps1 -Install -Yes"
 }
 
+$npmCmd = if (Get-Command npm.cmd -ErrorAction SilentlyContinue) { "npm.cmd" } else { "npm" }
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
+
 Push-Location $Web
 try {
     if (-not (Test-Path "node_modules")) {
         Write-Host "Installing npm packages..." -ForegroundColor Cyan
-        npm install
+        & $npmCmd install
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
 
     Write-Host "Starting Angular on http://localhost:4200 ..." -ForegroundColor Cyan
-    Write-Host "Using npm: $((Get-Command npm).Source)" -ForegroundColor DarkGray
-    npm start
+    Write-Host "Using $npmCmd : $((Get-Command $npmCmd).Source)" -ForegroundColor DarkGray
+    & $npmCmd start
 }
 finally {
     Pop-Location
