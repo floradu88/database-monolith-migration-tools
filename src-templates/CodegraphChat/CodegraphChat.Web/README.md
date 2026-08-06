@@ -9,11 +9,11 @@ cd ..\scripts
 .\Invoke-CodegraphChatReady.ps1 "D:\path\to\your\app"
 ```
 
-Open http://localhost:5091/ (SPA published to `../CodegraphChat.Api/wwwroot` via **fnm** npm).
+Open http://localhost:5091/ (SPA published to `../CodegraphChat.Api/wwwroot` via activated **fnm** npm — same as DbIntelligence).
 
 ## Optional: hot reload on :4201
 
-Activates user-scoped fnm Node (DbIntelligence helper); prefers `fnm exec --using=lts-latest -- npm`:
+Activates user-scoped fnm Node (DbIntelligence helper), then runs `npm` on PATH (not `fnm exec -- npm`):
 
 ```powershell
 cd ..\scripts

@@ -71,6 +71,9 @@ if (-not $SkipWeb) {
         throw "Missing DbIntelligence Node helper: $NodeInit"
     }
 
+    # Same pattern as Build-DbIntelligence.ps1: activate fnm into this shell (fnm env),
+    # then call npm directly. Do NOT use `fnm exec -- npm` — on Windows that tries to
+    # spawn npm.ps1 and fails with "Can't spawn program: program not found".
     . $NodeInit -Quiet
     if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
         Write-Warning "npm not found; installing user-scoped fnm Node (no admin)..."
@@ -83,51 +86,47 @@ if (-not $SkipWeb) {
         . $NodeInit -Quiet
     }
 
-    function Invoke-KitNpm {
-        param([Parameter(ValueFromRemainingArguments = $true)][string[]]$NpmArgs)
-        if (Get-Command fnm -ErrorAction SilentlyContinue) {
-            Write-Host "fnm exec --using=lts-latest -- npm $($NpmArgs -join ' ')" -ForegroundColor DarkGray
-            & fnm exec --using=lts-latest -- npm @NpmArgs
-            return $LASTEXITCODE
+    # Cursor/agent sandboxes may inject npm_config_devdir which npm 11+ rejects.
+    foreach ($name in @("npm_config_devdir", "NPM_CONFIG_DEVDIR")) {
+        if (Test-Path "Env:$name") {
+            Remove-Item "Env:$name" -ErrorAction SilentlyContinue
         }
-        Write-Host "npm $($NpmArgs -join ' ')  (fnm not on PATH; using activated npm)" -ForegroundColor DarkGray
-        & npm @NpmArgs
-        return $LASTEXITCODE
     }
 
-    if (-not (Get-Command npm -ErrorAction SilentlyContinue) -and -not (Get-Command fnm -ErrorAction SilentlyContinue)) {
-        Write-Warning "npm/fnm not found; skipping Angular build. Run ..\DbIntelligence\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes or pass -SkipWeb."
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        Write-Warning "npm not found; skipping Angular build. Run ..\DbIntelligence\scripts\Initialize-DbIntelligenceNode.ps1 -Install -Yes or pass -SkipWeb."
     }
     else {
-        Write-Host "Installing Angular dependencies (prefer fnm exec --using=lts-latest)..." -ForegroundColor Cyan
+        # Prefer npm.cmd on Windows so stderr warnings are not wrapped by npm.ps1 under $ErrorActionPreference Stop.
+        $npmCmd = if (Get-Command npm.cmd -ErrorAction SilentlyContinue) { "npm.cmd" } else { "npm" }
+        $npxCmd = if (Get-Command npx.cmd -ErrorAction SilentlyContinue) { "npx.cmd" } else { "npx" }
+        if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+            $PSNativeCommandUseErrorActionPreference = $false
+        }
+
+        Write-Host "Installing Angular dependencies ..." -ForegroundColor Cyan
+        Write-Host "Using $npmCmd : $((Get-Command $npmCmd).Source)" -ForegroundColor DarkGray
         Push-Location $Web
         try {
             if (Test-Path "package-lock.json") {
-                $code = Invoke-KitNpm @("ci")
-                if ($code -ne 0) {
+                & $npmCmd ci
+                if ($LASTEXITCODE -ne 0) {
                     Write-Warning "npm ci failed; falling back to npm install"
-                    $code = Invoke-KitNpm @("install")
+                    & $npmCmd install
                 }
             }
             else {
-                $code = Invoke-KitNpm @("install")
+                & $npmCmd install
             }
-            if ($code -ne 0) { exit $code }
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
             Write-Host "Building Angular (production) ..." -ForegroundColor Cyan
-            $code = Invoke-KitNpm @("exec", "--", "ng", "build", "--configuration", "production")
-            if ($code -ne 0) {
-                # Fallback when npm exec path is awkward under fnm
-                if (Get-Command fnm -ErrorAction SilentlyContinue) {
-                    & fnm exec --using=lts-latest -- npx ng build --configuration production
-                    $code = $LASTEXITCODE
-                }
-                else {
-                    & npx ng build --configuration production
-                    $code = $LASTEXITCODE
-                }
+            & $npmCmd run build -- --configuration=production
+            if ($LASTEXITCODE -ne 0) {
+                Write-Warning "npm run build failed; trying npx ng build"
+                & $npxCmd ng build --configuration production
             }
-            if ($code -ne 0) { exit $code }
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
             $distRoot = Join-Path $Web "dist\codegraph-chat.web"
             $browser = Join-Path $distRoot "browser"

@@ -395,11 +395,13 @@ public sealed class PrerequisiteInstaller : IPrerequisiteInstaller
                     cancellationToken: cancellationToken);
             }
 
-            var fnmCmd = $"fnm exec --using={fnmNode} -- npm i -g {package}";
+            // fnm exec cannot spawn npm.ps1 on Windows; use npm.cmd there.
+            var npmExe = OperatingSystem.IsWindows() ? "npm.cmd" : "npm";
+            var fnmCmd = $"fnm exec --using={fnmNode} -- {npmExe} i -g {package}";
             await output.WriteLineAsync($"fnm detected — installing Codegraph with: {fnmCmd}");
             var viaFnm = await _runner.RunAsync(
                 "fnm",
-                ["exec", $"--using={fnmNode}", "--", "npm", "i", "-g", package],
+                ["exec", $"--using={fnmNode}", "--", npmExe, "i", "-g", package],
                 timeoutSeconds: 600,
                 cancellationToken: cancellationToken);
             if (viaFnm.Succeeded)
@@ -413,9 +415,10 @@ public sealed class PrerequisiteInstaller : IPrerequisiteInstaller
             await output.WriteLineAsync("Retrying with PATH npm...");
         }
 
-        await output.WriteLineAsync($"Installing Codegraph with: npm i -g {package}");
+        var pathNpm = OperatingSystem.IsWindows() ? "npm.cmd" : "npm";
+        await output.WriteLineAsync($"Installing Codegraph with: {pathNpm} i -g {package}");
         var npm = await _runner.RunAsync(
-            "npm",
+            pathNpm,
             ["i", "-g", package],
             timeoutSeconds: 600,
             cancellationToken: cancellationToken);
