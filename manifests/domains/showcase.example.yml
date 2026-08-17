@@ -22,6 +22,19 @@ cutover:
   sql_project: ShowcaseDataService.Database
   cutover_scripts: ShowcaseDataService.Database/Cutover
   strategy: FacadeThenMove
+dbo_core_parallel_write:
+  enabled: true
+  source_schema: dbo
+  owned_schema: core
+  tables:
+    - dbo.ShowcaseWorkItem
+    - core.ShowcaseWorkItem
+  history: delta_only
+  coverage: stored_procedure_writes_only
+  dbo_extras: expected
+  mismatch: evidence_only
+  integrity_proc: core.usp_TableIntegrity_Check
+  integrity_rule: core_subset_of_dbo
 read_scaling:
   replica_safe_operations:
     - GetShowcaseSummary

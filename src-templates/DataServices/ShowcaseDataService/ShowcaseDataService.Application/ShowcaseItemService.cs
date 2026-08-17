@@ -14,6 +14,7 @@ public sealed class ShowcaseItemService : IShowcaseItemService
     private readonly IShadowCompareStore _shadowStore;
     private readonly IDataAccessTimingStore _timingStore;
     private readonly IShowcaseSloCounter _slo;
+    private readonly IParallelWriteStore _parallelStore;
     private readonly MigrationRoutingOptions _options;
     private readonly ShowcaseSloOptions _sloOptions;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -23,6 +24,7 @@ public sealed class ShowcaseItemService : IShowcaseItemService
         IShadowCompareStore shadowStore,
         IDataAccessTimingStore timingStore,
         IShowcaseSloCounter slo,
+        IParallelWriteStore parallelStore,
         IOptions<MigrationRoutingOptions> options,
         IOptions<ShowcaseSloOptions> sloOptions,
         IHttpContextAccessor httpContextAccessor)
@@ -31,6 +33,7 @@ public sealed class ShowcaseItemService : IShowcaseItemService
         _shadowStore = shadowStore;
         _timingStore = timingStore;
         _slo = slo;
+        _parallelStore = parallelStore;
         _options = options.Value;
         _sloOptions = sloOptions.Value;
         _httpContextAccessor = httpContextAccessor;
@@ -75,6 +78,21 @@ public sealed class ShowcaseItemService : IShowcaseItemService
         var stats = BuildStats("GetShowcaseSummary");
         var fastest = stats.Where(s => s.IsFastest).Select(s => s.Method).FirstOrDefault();
         var slo = _slo.Snapshot(_sloOptions);
+        var parallel = _parallelStore.Snapshot();
+        var parallelDto = new ParallelWriteDashboardDto(
+            parallel.Calls,
+            parallel.DboFailures,
+            parallel.CoreFailures,
+            parallel.CoreTimeouts,
+            parallel.IntegrityChecks,
+            parallel.IntegrityMismatches,
+            parallel.DboP95Ms,
+            parallel.CoreP95Ms,
+            parallel.LastIntegrityMatch,
+            _parallelStore.RecentCalls(20).Select(c => new ParallelWriteCallDto(
+                c.Operation, c.BusinessKey, c.DboSucceeded, c.CoreSucceeded, c.CoreTimedOut,
+                c.DboDurationMs, c.CoreDurationMs, c.CoreError, c.CalledAt)).ToList(),
+            _parallelStore.RecentIntegrity(10).Select(ShowcaseWorkItemService.ToDto).ToList());
         return new ShowcaseDashboardDto(
             ResolveSlot().ToString(),
             ResolveRoute().ToString(),
@@ -93,7 +111,8 @@ public sealed class ShowcaseItemService : IShowcaseItemService
                 slo.P95Ms,
                 _sloOptions.ReadLatencyP95MsBudget,
                 slo.WithinLatencyBudget,
-                slo.WithinErrorBudget));
+                slo.WithinErrorBudget),
+            parallelDto);
     }
 
     public async Task<AccessBenchmarkDto> BenchmarkAccessAsync(Guid id, CancellationToken cancellationToken = default)

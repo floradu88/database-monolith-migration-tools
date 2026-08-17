@@ -29,6 +29,9 @@ param(
     [string]$PackageDirectory,
     [string]$ServiceName = "",
     [string]$StoredProcedureMap = "",
+    [switch]$ParallelDboCore,
+    [string]$SourceSchema = "dbo",
+    [string]$OwnedSchema = "core",
     [switch]$CopyManifestsToKit,
     [switch]$Force
 )
@@ -92,7 +95,7 @@ Scaffolded from ``ShowcaseDataService`` (golden DB-as-a-Service template) via Fi
 - Findings package: $PackageDirectory
 - Review ``FINDINGS-REVIEW.md`` in the package before claiming ownership.
 - Keep SQL database project ownership and EF migrations ownership non-overlapping.
-- FacadeThenMove: SourceFacade (Blue) → Shadow → Owned (Green). See SHOWCASE-CUTOVER.md patterns.
+- FacadeThenMove: SourceFacade (Blue) → Shadow → ParallelWrite (dbo+core) → Owned (Green). See SHOWCASE-CUTOVER.md patterns.
 
 Generated: $(Get-Date -Format o)
 "@
@@ -109,7 +112,13 @@ if ($spMapPath -and (Test-Path $spMapPath)) {
     Write-Host "Generating SP stubs/wrappers from $spMapPath" -ForegroundColor Cyan
     $genScript = Join-Path $PSScriptRoot "New-SpWrappersFromMap.ps1"
     if (-not (Test-Path $genScript)) { throw "Missing $genScript" }
-    & $genScript -StoredProcedureMap $spMapPath -ServiceRoot $dest -DomainName $DomainName -ServiceName $ServiceName -TargetSchema $schemaLower
+    $parallelSplat = @{}
+    if ($ParallelDboCore) {
+        $parallelSplat["ParallelDboCore"] = $true
+        $parallelSplat["SourceSchema"] = $SourceSchema
+        $parallelSplat["OwnedSchema"] = $OwnedSchema
+    }
+    & $genScript -StoredProcedureMap $spMapPath -ServiceRoot $dest -DomainName $DomainName -ServiceName $ServiceName -TargetSchema $schemaLower @parallelSplat
 }
 
 if ($CopyManifestsToKit) {

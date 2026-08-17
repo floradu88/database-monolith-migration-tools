@@ -20,6 +20,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 ## Current files
 
 - `Observability.csproj`
+- `ObservabilityServiceCollectionExtensions.cs`
 - `README.md`
 
 ## Completion report

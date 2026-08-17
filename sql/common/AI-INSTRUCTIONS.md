@@ -39,6 +39,12 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `29-session-context-bootstrap.sql`
 - `30-post-migration-legacy-access-report.sql`
 - `31-ddl-security-audit-template.sql`
+- `40-create-core-schema.sql`
+- `41-clone-table-to-core.sql`
+- `42-register-dual-write-pair.sql`
+- `43-core-sp-clone-template.sql`
+- `44-table-integrity-check.sql`
+- `45-dual-write-rbac.sql`
 
 ## Completion report
 

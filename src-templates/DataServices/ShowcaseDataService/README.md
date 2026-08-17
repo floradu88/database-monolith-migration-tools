@@ -11,8 +11,9 @@ Buildable, replicable data-service template for this kit. **CustomerDataService*
 - **Single .NET config place** — `Database` in `appsettings.json` (`Schema`, `Owned` / `SourceFacade` endpoints). Host providers: **OnPrem | Azure | Aws** (see [`DATABASE-HOSTING.md`](DATABASE-HOSTING.md)). Env: `Database__Owned__Provider`, `Database__Owned__ConnectionString`, …
 - **Templated SP names** — use enums/constants for `$"{ValueA}_{ValueB}"` holes (`ShowcaseProcedureNames` + `StoredProcedureName`). DbIntelligence expands them for discovery; FindingsMigration emits per-combination SQL stubs.
 - Fluent `ExecuteSP` / `ExecuteSql` / `ExecuteEf` with mapping + latency compare
-- Headers: `X-Data-Access-Route`, `X-Blue-Green-Slot`, `X-Data-Access-Method` (EfCore|StoredProcedure|PlainSql)
-- Owner dashboard at `/` (shadow diffs, DAL speed, SLO p95/error counters)
+- Headers: `X-Data-Access-Route` (SourceFacade|Owned|Shadow|ParallelWrite), `X-Blue-Green-Slot`, `X-Data-Access-Method` (EfCore|StoredProcedure|PlainSql)
+- Owner dashboard at `/` (shadow diffs, dbo→core parallel writes, table integrity, DAL speed, SLO p95/error counters)
+- Work items: `POST /api/showcase/work-items`, `DELETE /api/showcase/work-items/{id}`, `GET /api/showcase/work-items/integrity`
 - Benchmark: `GET /api/showcase/items/{id}/benchmark`
 - JWT/MI-ready auth placeholder (`Auth:RequireJwt` lab-off by default — [`AUTH.md`](AUTH.md))
 - Pre/PostDeploy human-gated — [`ShowcaseDataService.Database/Scripts/README.md`](ShowcaseDataService.Database/Scripts/README.md)

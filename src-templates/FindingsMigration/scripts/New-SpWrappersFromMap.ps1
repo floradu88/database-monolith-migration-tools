@@ -13,7 +13,10 @@ param(
     [string]$DomainName,
     [Parameter(Mandatory = $true)]
     [string]$ServiceName,
-    [string]$TargetSchema = ""
+    [string]$TargetSchema = "",
+    [switch]$ParallelDboCore,
+    [string]$SourceSchema = "dbo",
+    [string]$OwnedSchema = "core"
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +27,7 @@ if (-not (Test-Path $StoredProcedureMap)) { throw "SP map missing: $StoredProced
 if (-not (Test-Path $ServiceRoot)) { throw "Service root missing: $ServiceRoot" }
 
 $schemaArg = if ($TargetSchema) { @("--schema", $TargetSchema) } else { @() }
+$parallelArg = if ($ParallelDboCore) { @("--parallel-dbo-core", "--source-schema", $SourceSchema, "--owned-schema", $OwnedSchema) } else { @() }
 
 & dotnet run --project $cli -c Release -- `
     generate-sp `
@@ -31,7 +35,8 @@ $schemaArg = if ($TargetSchema) { @("--schema", $TargetSchema) } else { @() }
     --service-root $ServiceRoot `
     --domain $DomainName `
     --service $ServiceName `
-    @schemaArg
+    @schemaArg `
+    @parallelArg
 
 if ($LASTEXITCODE -ne 0) { throw "generate-sp failed with exit $LASTEXITCODE" }
 Write-Host "SP wrappers generated under $ServiceRoot" -ForegroundColor Green

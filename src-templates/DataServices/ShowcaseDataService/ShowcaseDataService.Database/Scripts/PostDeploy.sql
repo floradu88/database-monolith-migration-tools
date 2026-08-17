@@ -25,5 +25,6 @@ GO
 
 -- Example grants (do not invent principals):
 -- GRANT SELECT, EXECUTE ON SCHEMA::showcase TO [app_rw];
+-- GRANT SELECT, EXECUTE ON SCHEMA::core TO [app_rw];
 -- GRANT SELECT ON OBJECT::[deployment].[v_DatabaseContractHealth] TO [app_ro];
 GO

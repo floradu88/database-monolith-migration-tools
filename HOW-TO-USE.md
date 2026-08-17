@@ -493,6 +493,7 @@ dotnet build src-templates\DatabaseModernization.sln -c Release
 dotnet test src-templates\DbIntelligence\DbIntelligence.Tests\DbIntelligence.Tests.csproj -c Release
 dotnet test src-templates\FindingsMigration\FindingsMigration.Tests\FindingsMigration.Tests.csproj -c Release
 dotnet test src-templates\CodegraphChat\CodegraphChat.Tests\CodegraphChat.Tests.csproj -c Release
+dotnet test src-templates\Tests\Reconciliation.Tests\Reconciliation.Tests.csproj -c Release
 ```
 
 ---
@@ -544,6 +545,22 @@ Also run Showcase tests:
 
 ```powershell
 dotnet test src-templates\DataServices\ShowcaseDataService\ShowcaseDataService.Tests\ShowcaseDataService.Tests.csproj -c Release
+dotnet test src-templates\Tests\Reconciliation.Tests\Reconciliation.Tests.csproj -c Release
+```
+
+dbo → core parallel-write quality window (same database, **SP writes only** into core, dbo extras expected, evidence-only mismatches):
+
+```powershell
+cd src-templates\FindingsMigration
+.\scripts\New-DboCoreDualWriteFromMap.ps1 `
+  -StoredProcedureMap "...\stored-procedure-map.json" `
+  -ServiceRoot "..\DataServices\InsightDataService" `
+  -DomainName Insight `
+  -ServiceName InsightDataService
+# Or: generate-sp --parallel-dbo-core --source-schema dbo --owned-schema core
+# DBA: sql/common/40-create-core-schema.sql through 45-dual-write-rbac.sql
+# Checklist: checklists/dbo-to-core-sp-quality.md
+# Demo: X-Data-Access-Route: ParallelWrite · POST /api/showcase/work-items · GET /api/showcase/work-items/integrity
 ```
 
 Roadmap: [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md).

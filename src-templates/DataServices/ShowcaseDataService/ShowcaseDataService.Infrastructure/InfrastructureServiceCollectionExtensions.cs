@@ -126,6 +126,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.Configure<MigrationRoutingOptions>(configuration.GetSection(MigrationRoutingOptions.SectionName));
         services.Configure<ShowcaseAuthOptions>(configuration.GetSection(ShowcaseAuthOptions.SectionName));
         services.Configure<ShowcaseSloOptions>(configuration.GetSection(ShowcaseSloOptions.SectionName));
+        services.Configure<ShowcaseWorkItemProcedureNames>(configuration.GetSection(ShowcaseWorkItemProcedureNames.SectionName));
 
         var ownedCs = database.ResolveOwnedConnectionString();
         var sourceCs = database.ResolveSourceFacadeConnectionString();
@@ -146,6 +147,8 @@ public static class InfrastructureServiceCollectionExtensions
         });
 
         services.AddSingleton<IShadowCompareStore, InMemoryShadowCompareStore>();
+        services.AddSingleton<IParallelWriteStore, InMemoryParallelWriteStore>();
+        services.AddSingleton<IParallelWriteExecutor, ParallelWriteExecutor>();
         services.AddSingleton<IDataAccessTimingStore, InMemoryDataAccessTimingStore>();
         services.AddSingleton<IShowcaseSloCounter, InMemoryShowcaseSloCounter>();
         services.AddSingleton<IDbConnectionFactory>(_ => new SqlConnectionFactory(name =>
@@ -169,7 +172,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ISpGetShowcaseSummary, SpGetShowcaseSummary>();
         services.AddScoped<ISpGetShowcaseReport, SpGetShowcaseReport>();
         services.AddScoped<IShowcaseDataAccess, ShowcaseDataAccess>();
+        services.AddScoped<IShowcaseWorkItemAccess, ShowcaseWorkItemAccess>();
         services.AddScoped<IShowcaseItemService, ShowcaseItemService>();
+        services.AddScoped<IShowcaseWorkItemService, ShowcaseWorkItemService>();
         return services;
     }
 }

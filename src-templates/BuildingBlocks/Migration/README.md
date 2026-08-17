@@ -2,7 +2,7 @@
 
 Kit template for `Migration`. Read this folder's `AI-INSTRUCTIONS.md` before changing behavior.
 
-This scaffold is intentionally minimal — wire approved package versions and references when adopting it in a real solution. Prefer additive, reversible changes; do not invent production credentials.
+Route/slot/method options, shadow compare, and dbo→core `ParallelWrite` executor (metrics + evidence store). Not a control-plane product.
 
 ## Related
 

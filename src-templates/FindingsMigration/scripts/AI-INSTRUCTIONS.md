@@ -7,7 +7,8 @@ PowerShell wrappers for packaging findings and scaffolding DataService projects.
 ## Scripts
 
 - `Invoke-FindingsMigration.ps1` — run CLI against code-to-db / SP maps
-- `New-DomainFromFindings.ps1` — copy `CustomerDataService` template + optional copy manifests into kit
+- `scripts/New-DomainFromFindings.ps1` — copy Showcase golden template + optional copy manifests into kit; `-ParallelDboCore` for dbo→core clones
+- `scripts/New-DboCoreDualWriteFromMap.ps1` — generate-sp `--parallel-dbo-core` wrapper
 
 ## Rules
 

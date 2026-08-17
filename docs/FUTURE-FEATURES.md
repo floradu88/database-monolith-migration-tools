@@ -75,6 +75,9 @@ Attach A/B hints from kit `docs/07-data-access-strategy.md` onto each packaged A
 ### 9. Shadow-read / reconciliation stubs
 Generate empty test projects wired to `Tests/Reconciliation.Tests` patterns for each promoted domain. *(Showcase ships shadow unit/reconciliation tests as the golden pattern.)*
 
+### 9b. dbo → core parallel-write quality window (**shipped**)
+Same-database cloned tables + paired SPs; app calls both in parallel; **SP writes only** into core (dbo may have more rows from other writers); integrity is `core ⊆ dbo`, evidence only. Kit SQL `sql/common/40`–`45`; Showcase `ParallelWrite` route; FindingsMigration `--parallel-dbo-core` / `New-DboCoreDualWriteFromMap.ps1`. Checklist: `checklists/dbo-to-core-sp-quality.md`.
+
 ### 10. Large-repo Graphify policy
 Default `refreshGraphify: false` when `graphify-out/graph.json` exists; background refresh job; exclude `node_modules` / build `chunk-*.js` noise from god-node reports.
 

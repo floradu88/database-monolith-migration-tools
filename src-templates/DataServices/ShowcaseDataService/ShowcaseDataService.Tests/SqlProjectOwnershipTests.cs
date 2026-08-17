@@ -18,6 +18,8 @@ public class SqlProjectOwnershipTests
         var path = Path.Combine(DatabaseRoot, "object-ownership.yml");
         Assert.True(File.Exists(path), $"Missing {path}");
         var yml = File.ReadAllText(path);
+        Assert.Contains("core.ShowcaseWorkItem", yml);
+        Assert.Contains("dbo.ShowcaseWorkItem", yml);
         Assert.Contains("showcase.GetShowcaseSummary", yml);
         Assert.Contains("showcase.Items", yml);
         Assert.Contains("ShowcaseDataService.Database", yml);
@@ -31,6 +33,8 @@ public class SqlProjectOwnershipTests
         var sqlproj = File.ReadAllText(Path.Combine(DatabaseRoot, "ShowcaseDataService.Database.sqlproj"));
         Assert.Contains(@"Build Include=""Programmability\GetShowcaseSummary.sql""", sqlproj);
         Assert.Contains(@"Build Include=""Contract\DatabaseContract.sql""", sqlproj);
+        Assert.Contains(@"Build Include=""Tables\core.ShowcaseWorkItem.sql""", sqlproj);
+        Assert.Contains(@"Build Include=""Programmability\dbo.usp_ShowcaseWorkItem_Upsert.sql""", sqlproj);
         Assert.DoesNotContain(@"Tables\Items.sql", sqlproj);
         Assert.Contains(@"None Include=""Reference\EfOwned\Items.reference.sql""", sqlproj);
         Assert.Contains(@"None Include=""Cutover\**\*.sql""", sqlproj);

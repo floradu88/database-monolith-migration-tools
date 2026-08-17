@@ -6,7 +6,13 @@ public enum DataAccessRoute
 {
     SourceFacade = 0,
     Owned = 1,
-    Shadow = 2
+    /// <summary>Read-only compare of source vs owned. Never dual-write.</summary>
+    Shadow = 2,
+    /// <summary>
+    /// Independent dbo + core stored-procedure writes in parallel.
+    /// dbo is the caller result; core failures are evidence only.
+    /// </summary>
+    ParallelWrite = 3
 }
 
 public enum BlueGreenSlot
@@ -25,6 +31,10 @@ public sealed class MigrationRoutingOptions
     public string RouteHeaderName { get; set; } = "X-Data-Access-Route";
     public string SlotHeaderName { get; set; } = "X-Blue-Green-Slot";
     public string MethodHeaderName { get; set; } = "X-Data-Access-Method";
+    /// <summary>Cancel the core SP independently so dbo latency stays the SLO.</summary>
+    public int ParallelWriteCoreTimeoutMs { get; set; } = 2000;
+    public string SourceSchema { get; set; } = "dbo";
+    public string OwnedSchema { get; set; } = "core";
 }
 
 public sealed class ShadowCompareResult

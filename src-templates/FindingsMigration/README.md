@@ -28,7 +28,8 @@ code-to-db-map.json (+ optional stored-procedure-map.json)
   → domain-package.json
   → optional Tests/*ShadowReconciliationStubTests.cs (--emit-reconciliation-tests)
   → scaffold DataServices/{Name}DataService from Showcase (PowerShell)
-  → optional SQL stubs + C# Sp_* wrappers + migration-manifest.snippet.yml (generate-sp)
+  → optional SQL stubs + C# Sp_* wrappers + migration-manifest.snippet.yml (generate-sp / New-SpWrappersFromMap.ps1)
+  → optional dbo→core parallel-write artifacts (--parallel-dbo-core / New-DboCoreDualWriteFromMap.ps1)
 ```
 
 AMBIGUOUS edges are **not** packaged into ownership candidates unless you pass `-IncludeAmbiguous`.
@@ -82,6 +83,24 @@ dotnet run --project FindingsMigration.Cli -- generate-sp `
   --service-root "..\DataServices\InsightDataService" `
   --domain Insight --service InsightDataService --schema insight
 ```
+
+dbo → core (write SPs only, same database; dbo may have extra non-SP rows):
+
+```powershell
+.\scripts\New-DboCoreDualWriteFromMap.ps1 `
+  -StoredProcedureMap "...\stored-procedure-map.json" `
+  -ServiceRoot "..\DataServices\InsightDataService" `
+  -DomainName Insight --ServiceName InsightDataService
+
+# equivalent CLI
+dotnet run --project FindingsMigration.Cli -- generate-sp `
+  --sp-map "...\stored-procedure-map.json" `
+  --service-root "..\DataServices\InsightDataService" `
+  --domain Insight --service InsightDataService `
+  --parallel-dbo-core --source-schema dbo --owned-schema core
+```
+
+Review `DBO-CORE-PARALLEL-WRITE.md`. Deploy `sql/common/40`–`45` only after DBA review. Do not copy historical dbo rows.
 
 Package with reconciliation stubs + DAL hints:
 

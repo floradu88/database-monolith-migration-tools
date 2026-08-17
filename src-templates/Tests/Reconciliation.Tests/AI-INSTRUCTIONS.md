@@ -20,6 +20,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 ## Current files
 
 - `README.md`
+- `TableIntegrityComparerTests.cs`
 - `Reconciliation.Tests.csproj`
 
 ## Completion report

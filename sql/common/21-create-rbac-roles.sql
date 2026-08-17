@@ -11,4 +11,7 @@ GO
 -- GRANT SELECT ON SCHEMA::[app] TO ds_readonly;
 -- GRANT CONTROL ON SCHEMA::[app] TO ds_migration;
 -- GRANT VIEW DEFINITION TO ds_operations;
+-- dbo → core parallel-write window: see 45-dual-write-rbac.sql
+-- GRANT EXECUTE ON SCHEMA::[dbo] TO ds_runtime;
+-- GRANT EXECUTE ON SCHEMA::[core] TO ds_runtime;
 -- Avoid db_owner for runtime identities.

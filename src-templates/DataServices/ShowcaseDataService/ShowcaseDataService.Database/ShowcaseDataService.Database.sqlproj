@@ -36,6 +36,7 @@
     <Folder Include="Contract\" />
     <Folder Include="Programmability\" />
     <Folder Include="Programmability\Generated\" />
+    <Folder Include="Tables\" />
     <Folder Include="Scripts\" />
     <Folder Include="Cutover\" />
     <Folder Include="Reference\EfOwned\" />
@@ -49,6 +50,14 @@
     <Build Include="Programmability\usp_Showcase_Sales_Detail.sql" />
     <Build Include="Programmability\usp_Showcase_Inventory_Summary.sql" />
     <Build Include="Programmability\usp_Showcase_Inventory_Detail.sql" />
+    <Build Include="Tables\dbo.ShowcaseWorkItem.sql" />
+    <Build Include="Tables\core.ShowcaseWorkItem.sql" />
+    <Build Include="Tables\core.DualWriteControl.sql" />
+    <Build Include="Programmability\dbo.usp_ShowcaseWorkItem_Upsert.sql" />
+    <Build Include="Programmability\dbo.usp_ShowcaseWorkItem_Delete.sql" />
+    <Build Include="Programmability\core.usp_ShowcaseWorkItem_Upsert.sql" />
+    <Build Include="Programmability\core.usp_ShowcaseWorkItem_Delete.sql" />
+    <Build Include="Programmability\core.usp_DualWriteSupport.sql" />
     <!-- FindingsMigration writes stubs under Programmability\Generated\ — add each Build Include when promoting. -->
     <PreDeploy Include="Scripts\PreDeploy.sql" />
     <PostDeploy Include="Scripts\PostDeploy.sql" />

@@ -18,6 +18,8 @@ Use with the Showcase golden demo: [`src-templates/DataServices/ShowcaseDataServ
 - [ ] Synchronization lag within threshold
 - [ ] Reconciliation passed
 - [ ] Shadow-read mismatch zero for critical fields
+- [ ] dbo→core parallel-write integrity mismatch zero for the delta window ([`dbo-to-core-sp-quality.md`](dbo-to-core-sp-quality.md))
+- [ ] Parallel-write core timeout / failure evidence reviewed (dbo still source of truth)
 - [ ] Canary / blue-green weight switch approved (Showcase: Helm `ingress.greenWeight`)
 - [ ] Canary SLOs passed
 - [ ] Capacity and connection budget passed

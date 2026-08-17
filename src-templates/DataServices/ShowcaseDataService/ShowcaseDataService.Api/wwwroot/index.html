@@ -27,8 +27,10 @@
   <header>
     <h1>Showcase Data Service — Blue/Green Owner Dashboard</h1>
     <p>
-      <code>X-Data-Access-Route</code> · <code>X-Data-Access-Method</code> (EfCore|StoredProcedure|PlainSql) ·
-      benchmark <code>GET /api/showcase/items/{id}/benchmark</code>
+      <code>X-Data-Access-Route</code> (SourceFacade|Owned|Shadow|ParallelWrite) ·
+      <code>X-Data-Access-Method</code> (EfCore|StoredProcedure|PlainSql) ·
+      work items <code>POST /api/showcase/work-items</code> · integrity <code>GET /api/showcase/work-items/integrity</code>
+      · benchmark <code>GET /api/showcase/items/{id}/benchmark</code>
     </p>
   </header>
   <main>
@@ -38,11 +40,29 @@
     <div class="card"><h2>Fastest DAL</h2><div class="value" id="fastest">—</div></div>
     <div class="card"><h2>SLO p95 / budget</h2><div class="value" id="slo">—</div></div>
     <div class="card"><h2>Errors %</h2><div class="value" id="err">—</div></div>
+    <div class="card"><h2>Parallel writes</h2><div class="value" id="pw">—</div></div>
+    <div class="card"><h2>Core fail / timeout</h2><div class="value" id="pwcore">—</div></div>
+    <div class="card"><h2>Integrity</h2><div class="value" id="pwinteg">—</div></div>
+    <div class="card"><h2>dbo/core p95</h2><div class="value" id="pwp95">—</div></div>
     <section class="wide">
       <h2>EF vs ExecuteSP vs ExecuteSql</h2>
       <table>
         <thead><tr><th>Operation</th><th>Method</th><th>Samples</th><th>Avg ms</th><th>P95</th><th>Min</th><th>Max</th></tr></thead>
         <tbody id="stats"></tbody>
+      </table>
+    </section>
+    <section class="wide">
+      <h2>Recent dbo → core parallel writes</h2>
+      <table>
+        <thead><tr><th>When</th><th>Op</th><th>Key</th><th>dbo ms</th><th>core ms</th><th>dbo</th><th>core</th><th>timeout</th><th>core error</th></tr></thead>
+        <tbody id="pwrows"></tbody>
+      </table>
+    </section>
+    <section class="wide">
+      <h2>Table integrity (delta since T0)</h2>
+      <table>
+        <thead><tr><th>When</th><th>Match</th><th>dbo rows</th><th>core (SP only)</th><th>dbo extras (ok)</th><th>core not in dbo</th><th>ms</th><th>diff</th></tr></thead>
+        <tbody id="integrows"></tbody>
       </table>
     </section>
     <section class="wide">
@@ -64,6 +84,11 @@
       const slo = d.slo || {};
       document.getElementById('slo').innerHTML = `<span class="${slo.withinLatencyBudget ? 'ok' : 'bad'}">${slo.p95Ms ?? 0}</span> / ${slo.latencyBudgetMs ?? 200}`;
       document.getElementById('err').innerHTML = `<span class="${slo.withinErrorBudget ? 'ok' : 'bad'}">${slo.errorRatePercent ?? 0}%</span> (${slo.errors ?? 0}/${slo.requests ?? 0})`;
+      const pw = d.parallelWrite || {};
+      document.getElementById('pw').textContent = pw.calls ?? 0;
+      document.getElementById('pwcore').innerHTML = `<span class="${(pw.coreFailures || pw.coreTimeouts) ? 'bad' : 'ok'}">${pw.coreFailures ?? 0} / ${pw.coreTimeouts ?? 0}</span>`;
+      document.getElementById('pwinteg').innerHTML = `<span class="${pw.lastIntegrityMatch ? 'ok' : 'bad'}">${pw.lastIntegrityMatch ? 'match' : 'mismatch'}</span> (${pw.integrityMismatches ?? 0}/${pw.integrityChecks ?? 0})`;
+      document.getElementById('pwp95').textContent = `${pw.dboP95Ms ?? 0} / ${pw.coreP95Ms ?? 0} ms`;
       const stats = document.getElementById('stats');
       stats.innerHTML = '';
       (d.accessMethodStats || []).forEach(x => {
@@ -71,6 +96,20 @@
         tr.className = x.isFastest ? 'fast' : '';
         tr.innerHTML = `<td>${x.operation}</td><td>${x.method}</td><td>${x.samples}</td><td>${x.avgMs}</td><td>${x.p95Ms}</td><td>${x.minMs}</td><td>${x.maxMs}</td>`;
         stats.appendChild(tr);
+      });
+      const pwbody = document.getElementById('pwrows');
+      pwbody.innerHTML = '';
+      (pw.recentCalls || []).forEach(x => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${x.calledAt}</td><td>${x.operation}</td><td>${x.businessKey}</td><td>${x.dboDurationMs}</td><td>${x.coreDurationMs}</td><td class="${x.dboSucceeded ? 'ok' : 'bad'}">${x.dboSucceeded}</td><td class="${x.coreSucceeded ? 'ok' : 'bad'}">${x.coreSucceeded}</td><td>${x.coreTimedOut}</td><td>${x.coreError || ''}</td>`;
+        pwbody.appendChild(tr);
+      });
+      const integ = document.getElementById('integrows');
+      integ.innerHTML = '';
+      (pw.recentIntegrity || []).forEach(x => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${x.checkedAt}</td><td class="${x.isMatch ? 'ok' : 'bad'}">${x.isMatch}</td><td>${x.dboDeltaCount}</td><td>${x.coreCount}</td><td>${x.missingInCoreCount}</td><td>${x.missingInDboCount}</td><td>${x.durationMs}</td><td>${x.sampleDiff || ''}</td>`;
+        integ.appendChild(tr);
       });
       const body = document.getElementById('rows');
       body.innerHTML = '';

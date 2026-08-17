@@ -10,7 +10,7 @@ Golden DB-as-a-Service template. Prefer this over CustomerDataService when scaff
 4. Set `Owned:Provider` / `SourceFacade:Provider` to `OnPrem`, `Azure`, or `Aws` and use `DATABASE-HOSTING.md` patterns; do not invent cloud resources or credentials.
 5. For `$"{a}_{b}"` / `{ValueA}_{ValueB}` procedure names, map holes to enums or constants (`ShowcaseProcedureNames` / `StoredProcedureName`) so discovery can expand concrete SPs.
 6. AMBIGUOUS DbIntelligence findings are not ownership — keep on review queue.
-7. SourceFacade may call monolith SPs; Owned uses target DB; Shadow compares reads only (no dual-write).
+7. SourceFacade may call monolith SPs; Owned uses target DB; Shadow compares reads only (no dual-write). `ParallelWrite` fans out dbo + core SPs on writes (dbo is caller result; core failure is evidence).
 8. When behavior changes, update docs, manifests, tests, RBAC notes, observability, and rollback together.
 9. Never auto-execute destructive SQL.
 10. When changing `Database:Schema`, update matching SQL project scripts in the same change (SSDT is not bound to appsettings).

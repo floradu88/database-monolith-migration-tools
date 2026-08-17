@@ -118,6 +118,7 @@ public class ShowcaseItemServiceTests
             store ?? new InMemoryShadowCompareStore(),
             timings ?? new InMemoryDataAccessTimingStore(),
             new InMemoryShowcaseSloCounter(),
+            new InMemoryParallelWriteStore(),
             Options.Create(new MigrationRoutingOptions
             {
                 DefaultRoute = route,

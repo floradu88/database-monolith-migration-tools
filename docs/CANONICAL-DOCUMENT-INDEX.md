@@ -3,6 +3,7 @@
 ## How to run / operate locally
 
 - `../HOW-TO-USE.md` — PowerShell setup, run, index, batch (`D:\code\projects` / `C:\code`); prefer `Invoke-DbIntelligenceReady.ps1` (path only); fnm Node; Codegraph via `fnm exec --using=lts-latest`
+- `../checklists/dbo-to-core-sp-quality.md` — dbo→core parallel-write integrity window
 - `PROJECT-GUIDE.md` — kit projects, why use them, pros/cons (OnPrem/Azure/Aws hosting summary links)
 - `../src-templates/DbIntelligence/README.md` — DbIntelligence project how-to
 - `../src-templates/DbIntelligence/scripts/Invoke-DbIntelligenceReady.ps1` — path-only one-shot (prereqs → build → health → API → index)

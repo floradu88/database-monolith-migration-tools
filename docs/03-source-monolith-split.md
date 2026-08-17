@@ -71,6 +71,8 @@ Builds and publishes the complete current monolith database.
 - Cyclic dependencies are recorded as migration blockers.
 - The `Legacy` project is temporary and measured.
 
+Logical schema split (`dbo` → `core`) is a **later wave**, not the first split. Use cloned tables, parallel independent stored procedures, and `core.usp_TableIntegrity_Check` (`sql/common/40`–`45`). Cover **SP writes only**: do not copy historical dbo rows; dbo may keep extra data from EF, jobs, and ad-hoc SQL. Integrity is `core ⊆ dbo`.
+
 ## Suggested file structure
 
 ```text

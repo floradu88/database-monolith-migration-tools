@@ -71,6 +71,21 @@ items.MapPut("/items/{id:guid}", async (Guid id, ShowcaseUpdateRequest body, ISh
 
 items.MapGet("/dashboard", (IShowcaseItemService service) => Results.Ok(service.GetDashboard()));
 
+items.MapPost("/work-items", async (ShowcaseWorkItemRequest body, IShowcaseWorkItemService service, CancellationToken ct) =>
+{
+    await service.UpsertAsync(body, ct);
+    return Results.Accepted();
+});
+
+items.MapDelete("/work-items/{externalId:guid}", async (Guid externalId, IShowcaseWorkItemService service, CancellationToken ct) =>
+{
+    await service.DeleteAsync(externalId, ct);
+    return Results.NoContent();
+});
+
+items.MapGet("/work-items/integrity", async (IShowcaseWorkItemService service, CancellationToken ct) =>
+    Results.Ok(await service.CheckIntegrityAsync(ct)));
+
 items.MapGet("/items/{id:guid}/benchmark", async (Guid id, IShowcaseItemService service, CancellationToken ct) =>
     Results.Ok(await service.BenchmarkAccessAsync(id, ct)));
 

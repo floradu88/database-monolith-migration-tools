@@ -6,9 +6,10 @@ Golden **SQL project** for hybrid DB-as-a-Service ownership. Desired-state defin
 
 | Area | Path |
 |------|------|
-| Schemas | `Security/Schemas.sql` |
+| Schemas | `Security/Schemas.sql` (`showcase`, `deployment`, `core`) |
 | Contract / version surface | `Contract/DatabaseContract.sql` |
 | Stored procedures | `Programmability/` (+ `Generated/` from FindingsMigration) |
+| dbo/core write demo | `Tables/dbo.ShowcaseWorkItem.sql`, `Tables/core.ShowcaseWorkItem.sql` (SqlProject, not EF) |
 | Pre / Post deploy | `Scripts/` |
 
 ## Does not own

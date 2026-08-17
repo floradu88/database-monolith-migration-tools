@@ -12,17 +12,18 @@ Turn DbIntelligence JSON maps into draft domain manifests and scaffold DataServi
 4. Keep SQL project ownership and EF migrations ownership non-overlapping in generated YAML.
 5. Prefer additive changes; do not silently overwrite kit `manifests/` without `-CopyManifestsToKit` intent.
 6. Indexing prerequisites (Node/fnm, Codegraph via `fnm exec`, API) live under `../DbIntelligence/scripts/` — do not invent alternate install paths.
-7. Agent playbook: given maps → package → `New-DomainFromFindings` (Showcase) → generate wrappers → wire façade (SourceFacade/Owned/Shadow) → blue+green → shadow evidence on dashboard → human approve.
+7. Agent playbook: given maps → package → `New-DomainFromFindings` (Showcase) → generate wrappers (`-ParallelDboCore` when migrating write SPs dbo→core) → wire façade (SourceFacade/Owned/Shadow/ParallelWrite) → blue+green → shadow + table-integrity evidence on dashboard → human approve.
 
 ## Current contents
 
 - `FindingsMigration.Contracts/`
-- `FindingsMigration.Core/` — DomainPackageBuilder, SpWrapperGenerator, CodeToDbDiffService, SqlProjectSliceGenerator, DataAccessRecommendation, ReconciliationTestStubGenerator, DomainSuggestionService, ConfidenceGateService
-- `FindingsMigration.Cli/` — package, `generate-sp`, `suggest-domains`, `confidence-gate`, `diff-maps`, `slice-sql`
+- `FindingsMigration.Core/` — DomainPackageBuilder, SpWrapperGenerator, DualWriteArtifactGenerator, CodeToDbDiffService, SqlProjectSliceGenerator, DataAccessRecommendation, ReconciliationTestStubGenerator, DomainSuggestionService, ConfidenceGateService
+- `FindingsMigration.Cli/` — package, `generate-sp` (`--parallel-dbo-core`), `suggest-domains`, `confidence-gate`, `diff-maps`, `slice-sql`
 - `FindingsMigration.Tests/`
 - `scripts/Invoke-FindingsMigration.ps1`
 - `scripts/New-DomainFromFindings.ps1`
 - `scripts/New-SpWrappersFromMap.ps1`
+- `scripts/New-DboCoreDualWriteFromMap.ps1`
 - `README.md`
 
 ## Phase 3 packaging notes

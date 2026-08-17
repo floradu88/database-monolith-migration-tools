@@ -65,6 +65,7 @@ Discovered
 - CDC where later approved;
 - dual-read comparison;
 - short-lived controlled dual write;
+- **parallel dbo + core stored procedures** (same database; dbo is caller result; core is SP-write-only subset; extra dbo rows from other writers are expected — see `sql/common/40`–`45` and `checklists/dbo-to-core-sp-quality.md`);
 - event-driven projection;
 - read-only extraction.
 

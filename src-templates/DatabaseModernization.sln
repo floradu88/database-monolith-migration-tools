@@ -73,6 +73,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodegraphChat.Infrastructur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodegraphChat.Tests", "CodegraphChat\CodegraphChat.Tests\CodegraphChat.Tests.csproj", "{7F6BB04A-18A7-439D-9638-C239410AC181}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reconciliation.Tests", "Tests\Reconciliation.Tests\Reconciliation.Tests.csproj", "{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -443,6 +445,18 @@ Global
 		{7F6BB04A-18A7-439D-9638-C239410AC181}.Release|x64.Build.0 = Release|Any CPU
 		{7F6BB04A-18A7-439D-9638-C239410AC181}.Release|x86.ActiveCfg = Release|Any CPU
 		{7F6BB04A-18A7-439D-9638-C239410AC181}.Release|x86.Build.0 = Release|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Debug|x64.Build.0 = Debug|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Debug|x86.Build.0 = Debug|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Release|x64.ActiveCfg = Release|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Release|x64.Build.0 = Release|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Release|x86.ActiveCfg = Release|Any CPU
+		{B8E1C0A1-7D2E-4F3A-9B11-55AA00CC1111}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

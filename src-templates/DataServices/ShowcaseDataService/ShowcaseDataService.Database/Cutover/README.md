@@ -21,4 +21,5 @@ Rollback: apply matching `*.down.sql` in reverse order, then redeploy previous d
 
 ## Naming
 
-`{ordinal}_{slug}.up.sql` and `{ordinal}_{slug}.down.sql` — keep pairs in sync.
+- `{ordinal}_{slug}.up.sql` / matching `*.down.sql` — keep pairs in sync.
+- `003_register_workitem_pair` registers the dbo/core ShowcaseWorkItem DualWritePair (delta-only; down disables the pair, does not DROP core).

@@ -245,7 +245,16 @@ public sealed class DomainPackageBuilder
             var n = string.IsNullOrWhiteSpace(p.Schema) ? p.Name : $"{p.Schema}.{p.Name}";
             sb.AppendLine($"  - object: {YamlEscape(n)}");
             sb.AppendLine("    type: StoredProcedure");
-            sb.AppendLine("    strategy: FacadeThenMove");
+            var hasWrites = p.Writes.Count > 0;
+            sb.AppendLine(hasWrites
+                ? "    strategy: ParallelDboCore"
+                : "    strategy: FacadeThenMove");
+            if (hasWrites)
+            {
+                sb.AppendLine("    writes: parallel_dbo_core");
+                sb.AppendLine("    tables: delta_only");
+                sb.AppendLine("    integrity: evidence");
+            }
         }
         return sb.ToString();
     }
@@ -334,6 +343,20 @@ public sealed class DomainPackageBuilder
         sb.AppendLine("tables_written:");
         foreach (var t in proc.Writes)
             sb.AppendLine($"  - {YamlEscape(t)}");
+        if (proc.Writes.Count > 0)
+        {
+            sb.AppendLine("dual_write:");
+            sb.AppendLine("  topology: same_database");
+            sb.AppendLine("  source_schema: dbo");
+            sb.AppendLine("  owned_schema: core");
+            sb.AppendLine("  invocation: parallel_independent_sps");
+            sb.AppendLine("  history: delta_only");
+            sb.AppendLine("  coverage: stored_procedure_writes_only");
+            sb.AppendLine("  dbo_extras: expected");
+            sb.AppendLine("  mismatch: evidence_only");
+            sb.AppendLine("  integrity_rule: core_subset_of_dbo");
+            sb.AppendLine("  integrity_proc: core.usp_TableIntegrity_Check");
+        }
         sb.AppendLine($"domain: {domain.ToLowerInvariant()}");
         sb.AppendLine("status: draft-from-findings");
         return sb.ToString();
@@ -458,9 +481,10 @@ public sealed class DomainPackageBuilder
 
         This copies `DataServices/ShowcaseDataService` (golden) → `DataServices/{service}` with name replacements.
         Pass `-StoredProcedureMap` (or place `stored-procedure-map.json` in the package folder) to emit SQL stubs + Dapper `Sp_*` wrappers.
+        Pass `-ParallelDboCore` to emit dbo→core table clones, core SP stubs, and ParallelWrite wrappers.
         It does **not** register ownership or run SQL.
 
-        Agent playbook: given `code-to-db-map.json` / SP map → package → scaffold Showcase → wire façade (SourceFacade/Owned/Shadow) → open blue+green → run shadow → present `/` dashboard.
+        Agent playbook: given `code-to-db-map.json` / SP map → package → scaffold Showcase → generate-sp `--parallel-dbo-core` → wire façade (SourceFacade/Owned/Shadow/ParallelWrite) → open blue+green → run shadow + table integrity → present `/` dashboard.
         """;
 
     private static string SanitizeName(string name)

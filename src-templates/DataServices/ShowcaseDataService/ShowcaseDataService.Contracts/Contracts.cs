@@ -35,7 +35,56 @@ public sealed record ShowcaseDashboardDto(
     IReadOnlyList<ShadowDiffDto> RecentDiffs,
     IReadOnlyList<AccessMethodStatDto> AccessMethodStats,
     string? FastestMethodHint,
-    SloCountersDto Slo);
+    SloCountersDto Slo,
+    ParallelWriteDashboardDto ParallelWrite);
+
+public sealed record ParallelWriteDashboardDto(
+    int Calls,
+    int DboFailures,
+    int CoreFailures,
+    int CoreTimeouts,
+    int IntegrityChecks,
+    int IntegrityMismatches,
+    long DboP95Ms,
+    long CoreP95Ms,
+    bool LastIntegrityMatch,
+    IReadOnlyList<ParallelWriteCallDto> RecentCalls,
+    IReadOnlyList<TableIntegrityDto> RecentIntegrity);
+
+public sealed record ParallelWriteCallDto(
+    string Operation,
+    string BusinessKey,
+    bool DboSucceeded,
+    bool CoreSucceeded,
+    bool CoreTimedOut,
+    long DboDurationMs,
+    long CoreDurationMs,
+    string? CoreError,
+    DateTimeOffset CalledAt);
+
+public sealed record TableIntegrityDto(
+    string PairName,
+    bool IsMatch,
+    int DboDeltaCount,
+    int CoreCount,
+    int MissingInCoreCount,
+    int MissingInDboCount,
+    long DurationMs,
+    string? SampleDiff,
+    DateTimeOffset CheckedAt);
+
+public sealed record ShowcaseWorkItemRequest(Guid ExternalId, string Name, string Status);
+
+public sealed record TableIntegritySqlRow(
+    int? PairId,
+    bool IsMatch,
+    int DboDeltaCount,
+    int CoreCount,
+    int MissingInCoreCount,
+    int MissingInDboCount,
+    int DurationMs,
+    string? SampleDiff,
+    DateTimeOffset CheckedAtUtc);
 
 public sealed record ShadowDiffDto(
     string Operation,

@@ -131,4 +131,50 @@ public class SpWrapperGeneratorTests
             Directory.Delete(root, recursive: true);
         }
     }
+
+    [Fact]
+    public void Generate_parallel_dbo_core_emits_clones_and_playbook()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "sp-gen-pw-" + Guid.NewGuid().ToString("N"));
+        var service = "InsightDataService";
+        var serviceRoot = Path.Combine(root, service);
+        Directory.CreateDirectory(Path.Combine(serviceRoot, $"{service}.Database"));
+        Directory.CreateDirectory(Path.Combine(serviceRoot, $"{service}.Infrastructure"));
+
+        try
+        {
+            var map = new StoredProcedureMapDocument
+            {
+                Procedures =
+                [
+                    new StoredProcedureEntry
+                    {
+                        Name = "usp_Insight_Upsert",
+                        Schema = "dbo",
+                        Callers = ["InsightApp.Save"],
+                        Reads = [],
+                        Writes = ["dbo.Insight"]
+                    }
+                ]
+            };
+
+            var result = new SpWrapperGenerator().Generate(
+                map,
+                serviceRoot,
+                "Insight",
+                "insight",
+                service,
+                new SpGenerationOptions { ParallelDboCore = true, SourceSchema = "dbo", OwnedSchema = "core" });
+            Assert.Contains(result.WrittenFiles, f => f.EndsWith("DBO-CORE-PARALLEL-WRITE.md", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.WrittenFiles, f => f.Contains("ParallelDboCoreWriter.cs", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(result.WrittenFiles, f => f.Contains("core.Insight.sql", StringComparison.OrdinalIgnoreCase));
+            var playbook = File.ReadAllText(result.WrittenFiles.First(f => f.EndsWith("DBO-CORE-PARALLEL-WRITE.md")));
+            Assert.Contains("ParallelWrite", playbook);
+            Assert.Contains("stored-procedure writes only", playbook, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
 }

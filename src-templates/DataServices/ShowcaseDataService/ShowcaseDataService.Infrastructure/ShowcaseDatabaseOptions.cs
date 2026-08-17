@@ -19,6 +19,12 @@ public sealed class ShowcaseDatabaseOptions
     /// <summary>SQL schema / namespace for owned objects (e.g. showcase, or dbo during early façade).</summary>
     public string Schema { get; set; } = DefaultSchema;
 
+    /// <summary>Legacy schema for parallel-write quality window (same database).</summary>
+    public string LegacySchema { get; set; } = "dbo";
+
+    /// <summary>Owned candidate schema for parallel-write quality window (same database).</summary>
+    public string CoreSchema { get; set; } = "core";
+
     /// <summary>Schema for contract / deployment metadata tables.</summary>
     public string DeploymentSchema { get; set; } = DefaultDeploymentSchema;
 

@@ -12,6 +12,21 @@ public interface IShowcaseItemService
     Task<AccessBenchmarkDto> BenchmarkAccessAsync(Guid id, CancellationToken cancellationToken = default);
 }
 
+public interface IShowcaseWorkItemService
+{
+    Task UpsertAsync(ShowcaseWorkItemRequest request, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid externalId, CancellationToken cancellationToken = default);
+    Task<TableIntegrityDto> CheckIntegrityAsync(CancellationToken cancellationToken = default);
+}
+
+public interface IShowcaseWorkItemAccess
+{
+    Task UpsertAsync(ShowcaseWorkItemRequest request, string procedureName, string connectionName, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid externalId, string procedureName, string connectionName, CancellationToken cancellationToken = default);
+    Task<TableIntegritySqlRow?> CheckIntegrityAsync(string connectionName, CancellationToken cancellationToken = default);
+    Task LogCallAsync(ParallelWriteCallResult call, string connectionName, CancellationToken cancellationToken = default);
+}
+
 public interface IShowcaseDataAccess
 {
     Task<ShowcaseSummaryDto?> GetSummaryAsync(Guid id, string connectionName, DataAccessMethod method, CancellationToken cancellationToken = default);

@@ -40,6 +40,7 @@ Monitor:
 
 - source/target calls;
 - shadow comparisons;
+- dbo→core parallel-write calls, dbo/core duration histograms, core timeouts, table-integrity mismatch rate;
 - mismatch rate;
 - sync lag;
 - backfill throughput;
@@ -60,7 +61,10 @@ Monitor:
 Availability: 99.9%
 Read p95: <250 ms
 Write p95: <500 ms
+dbo parallel-write p95: <500 ms (caller SLO)
+core parallel-write p95: observed; timeout budget 2000 ms (evidence, not caller error)
 DB timeout rate: <0.1%
 Critical-field mismatch: 0
+dbo→core delta integrity mismatch: 0 (cutover gate; live writes stay evidence-only)
 Audit delivery delay: <15 min
 ```

@@ -2,7 +2,7 @@
 
 Kit template for `Observability`. Read this folder's `AI-INSTRUCTIONS.md` before changing behavior.
 
-This scaffold is intentionally minimal — wire approved package versions and references when adopting it in a real solution. Prefer additive, reversible changes; do not invent production credentials.
+OpenTelemetry traces + metrics (including `BuildingBlocks.Migration.ParallelWrite` meter/activity source). Console exporter is for local demo; replace with approved collectors in real environments. Do not invent production credentials.
 
 ## Related
 

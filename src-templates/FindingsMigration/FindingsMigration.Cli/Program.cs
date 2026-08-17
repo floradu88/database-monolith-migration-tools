@@ -8,7 +8,7 @@ static int Usage()
 
         Usage:
           findings-migrate --code-to-db <path> --domain <Name> [--out <dir>] [options]
-          findings-migrate generate-sp --sp-map <path> --service-root <dir> --domain <Name> --service <Name> [--schema <name>]
+          findings-migrate generate-sp --sp-map <path> --service-root <dir> --domain <Name> --service <Name> [--schema <name>] [--parallel-dbo-core] [--source-schema dbo] [--owned-schema core]
           findings-migrate suggest-domains --graph <graph.json> [--min-nodes <n>] [--out <file>]
           findings-migrate confidence-gate --code-to-db <path> --manifests <dir> [--owned-schema <name>] [--ambiguous-baseline <file>] [--review-ack <file>]
           findings-migrate diff-maps --previous <path> --current <path> [--out <file>]
@@ -34,6 +34,9 @@ static int Usage()
           --domain <Name>         Required.
           --service <Name>        Required. e.g. InsightDataService
           --schema <name>         Optional. Default: lowercased domain
+          --parallel-dbo-core     Emit dbo→core clones, core SP stubs, ParallelWrite wrapper, cutover register
+          --source-schema <name>  Optional. Default: dbo
+          --owned-schema <name>   Optional. Default: core
 
         suggest-domains options:
           --graph <path>          Required. graph.json (Graphify/DbIntelligence)
@@ -83,6 +86,9 @@ if (string.Equals(argsList[0], "generate-sp", StringComparison.OrdinalIgnoreCase
     var domainSp = GetOpt("--domain");
     var serviceSp = GetOpt("--service");
     var schemaSp = GetOpt("--schema") ?? "";
+    var parallel = HasFlag("--parallel-dbo-core");
+    var sourceSchema = GetOpt("--source-schema") ?? "dbo";
+    var ownedSchema = GetOpt("--owned-schema") ?? "core";
     if (string.IsNullOrWhiteSpace(spMapPath) || string.IsNullOrWhiteSpace(serviceRoot) ||
         string.IsNullOrWhiteSpace(domainSp) || string.IsNullOrWhiteSpace(serviceSp))
         return Usage();
@@ -90,7 +96,18 @@ if (string.Equals(argsList[0], "generate-sp", StringComparison.OrdinalIgnoreCase
     try
     {
         var gen = new SpWrapperGenerator();
-        var result = gen.GenerateFromMapFile(spMapPath, serviceRoot, domainSp, schemaSp, serviceSp);
+        var result = gen.GenerateFromMapFile(
+            spMapPath,
+            serviceRoot,
+            domainSp,
+            schemaSp,
+            serviceSp,
+            new SpGenerationOptions
+            {
+                ParallelDboCore = parallel,
+                SourceSchema = sourceSchema,
+                OwnedSchema = ownedSchema
+            });
         Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
         return 0;
     }

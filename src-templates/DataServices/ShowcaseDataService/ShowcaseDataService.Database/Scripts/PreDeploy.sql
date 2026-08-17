@@ -12,3 +12,9 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'deployment')
     EXEC(N'CREATE SCHEMA [deployment]');
 GO
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'core')
+    EXEC(N'CREATE SCHEMA [core]');
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'dbo')
+    EXEC(N'CREATE SCHEMA [dbo]');
+GO

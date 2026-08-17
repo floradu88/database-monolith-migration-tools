@@ -16,10 +16,12 @@ public sealed class SpWrapperGenerator
         string serviceRoot,
         string domainName,
         string targetSchema,
-        string serviceName)
+        string serviceName,
+        SpGenerationOptions? options = null)
     {
+        options ??= new SpGenerationOptions();
         var schema = string.IsNullOrWhiteSpace(targetSchema)
-            ? domainName.ToLowerInvariant()
+            ? (options.ParallelDboCore ? options.OwnedSchema : domainName.ToLowerInvariant())
             : targetSchema;
 
         var sqlDir = Path.Combine(serviceRoot, $"{serviceName}.Database", "Programmability", "Generated");
@@ -75,6 +77,8 @@ public sealed class SpWrapperGenerator
         File.WriteAllText(scaffoldNote, BuildNote(domainName, serviceName, spMap, written), Encoding.UTF8);
         written.Add(scaffoldNote);
 
+        DualWriteArtifactGenerator.Emit(spMap, serviceRoot, serviceName, options, written);
+
         return new SpGenerationResult
         {
             ProcedureCount = spMap.Procedures.Count(p =>
@@ -88,7 +92,8 @@ public sealed class SpWrapperGenerator
         string serviceRoot,
         string domainName,
         string targetSchema,
-        string serviceName)
+        string serviceName,
+        SpGenerationOptions? options = null)
     {
         if (!File.Exists(storedProcedureMapPath))
             throw new FileNotFoundException("stored-procedure map not found", storedProcedureMapPath);
@@ -98,7 +103,7 @@ public sealed class SpWrapperGenerator
             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
             ?? new StoredProcedureMapDocument();
 
-        return Generate(spMap, serviceRoot, domainName, targetSchema, serviceName);
+        return Generate(spMap, serviceRoot, domainName, targetSchema, serviceName, options);
     }
 
     private static List<string> ResolveConcreteNames(StoredProcedureEntry proc, string? template)
@@ -301,6 +306,8 @@ public sealed class SpWrapperGenerator
         sb.AppendLine("- `SourceFacade` / Blue — call source monolith connection");
         sb.AppendLine("- `Owned` / Green — call target owned DB");
         sb.AppendLine("- `Shadow` — compare both on reads; never dual-write");
+        sb.AppendLine("- `ParallelWrite` — dbo SP + core SP in parallel (writes); dbo is caller result; core failure is evidence");
+        sb.AppendLine("- Kit SQL: `sql/common/40-create-core-schema.sql` through `45-dual-write-rbac.sql`");
         sb.AppendLine();
         sb.AppendLine("## Procedures");
         sb.AppendLine();

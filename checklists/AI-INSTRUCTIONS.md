@@ -21,6 +21,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 
 - `production-cutover.md`
 - `source-project-split.md`
+- `dbo-to-core-sp-quality.md`
 
 ## Completion report
 

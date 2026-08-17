@@ -20,7 +20,11 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 ## Current files
 
 - `Migration.csproj`
-- `README.md`
+- `Routing.cs`
+- `ParallelWriteInstrumentation.cs`
+- `ParallelWriteExecutor.cs`
+- `ParallelWriteStore.cs`
+- `TableIntegrityComparer.cs`
 
 ## Completion report
 

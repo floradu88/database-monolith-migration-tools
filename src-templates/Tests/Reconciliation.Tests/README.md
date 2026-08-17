@@ -2,7 +2,7 @@
 
 Kit template for `Reconciliation.Tests`. Read this folder's `AI-INSTRUCTIONS.md` before changing behavior.
 
-This scaffold is intentionally minimal — wire approved package versions and references when adopting it in a real solution. Prefer additive, reversible changes; do not invent production credentials.
+This scaffold now includes dbo→core table-integrity and parallel-write executor tests (`TableIntegrityComparerTests`, `ParallelWriteExecutorTests`). Prefer additive, reversible changes; do not invent production credentials.
 
 ## Related
 

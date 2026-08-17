@@ -21,6 +21,19 @@ sql_project:
     - showcase.usp_Showcase_Sales_Detail
     - showcase.usp_Showcase_Inventory_Summary
     - showcase.usp_Showcase_Inventory_Detail
+    - dbo.ShowcaseWorkItem
+    - dbo.usp_ShowcaseWorkItem_Upsert
+    - dbo.usp_ShowcaseWorkItem_Delete
+    - core schema
+    - core.ShowcaseWorkItem
+    - core.usp_ShowcaseWorkItem_Upsert
+    - core.usp_ShowcaseWorkItem_Delete
+    - core.DualWritePair
+    - core.DualWriteCallLog
+    - core.DualWriteEvidence
+    - core.usp_RegisterDualWritePair
+    - core.usp_LogDualWriteCall
+    - core.usp_TableIntegrity_Check
     - security / RBAC grants (PostDeploy stubs)
 
 ef_migrations:

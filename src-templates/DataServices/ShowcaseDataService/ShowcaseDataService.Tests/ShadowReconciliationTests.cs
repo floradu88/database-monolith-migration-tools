@@ -21,6 +21,7 @@ public class ShadowReconciliationTests
             store,
             new InMemoryDataAccessTimingStore(),
             new InMemoryShowcaseSloCounter(),
+            new InMemoryParallelWriteStore(),
             Options.Create(new MigrationRoutingOptions
             {
                 DefaultRoute = DataAccessRoute.Shadow,

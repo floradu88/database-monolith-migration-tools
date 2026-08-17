@@ -73,7 +73,20 @@ docker compose --profile blue up --build
 
 ### 6. Shadow compare (evidence)
 
-Send reads with `X-Data-Access-Route: Shadow`. Open `/` dashboard — matching vs mismatching shadow diffs. **No dual-write.**
+Send reads with `X-Data-Access-Route: Shadow`. Open `/` dashboard — matching vs mismatching shadow diffs. **Shadow never dual-writes.**
+
+### 6b. Parallel write (dbo → core quality window)
+
+Same database. `dbo.usp_ShowcaseWorkItem_*` writes `dbo.ShowcaseWorkItem`; `core.usp_ShowcaseWorkItem_*` writes `core.ShowcaseWorkItem`. **SP writes only** — do not copy dbo history; EF/jobs/ad-hoc SQL on dbo are expected extras. Integrity is `core ⊆ dbo`. Apply `Cutover/003_register_workitem_pair.up.sql` after dacpac.
+
+```powershell
+# Header on writes:
+# X-Data-Access-Route: ParallelWrite
+curl.exe -X POST http://localhost:5081/api/showcase/work-items -H "Content-Type: application/json" -H "X-Data-Access-Route: ParallelWrite" -d "{`"externalId`":`"11111111-1111-1111-1111-111111111111`",`"name`":`"demo`",`"status`":`"Active`"}"
+curl.exe http://localhost:5081/api/showcase/work-items/integrity
+```
+
+Dashboard `/` shows dbo/core p95, core failures/timeouts, and integrity match. Core SP failure does **not** fail the caller. Kit SQL: `sql/common/40`–`45`. Checklist: [`checklists/dbo-to-core-sp-quality.md`](../../../checklists/dbo-to-core-sp-quality.md).
 
 ### 7. Green (Owned)
 
