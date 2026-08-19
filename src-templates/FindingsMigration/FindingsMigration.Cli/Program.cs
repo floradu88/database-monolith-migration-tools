@@ -13,6 +13,7 @@ static int Usage()
           findings-migrate confidence-gate --code-to-db <path> --manifests <dir> [--owned-schema <name>] [--ambiguous-baseline <file>] [--review-ack <file>]
           findings-migrate diff-maps --previous <path> --current <path> [--out <file>]
           findings-migrate slice-sql --objects <comma-list> --out <dir> --schema <name> --service <name> [--owner <team>]
+          findings-migrate sp-hierarchy --sp-map <path> --sp-name <name> [--inventory <file>] [--out <file>] [--format tree|json]
 
         Package options:
           --code-to-db <path>     Required. code-to-db-map.json from DbIntelligence
@@ -61,6 +62,13 @@ static int Usage()
           --schema <name>         Required. Target schema
           --service <name>        Required. Owning DataService name
           --owner <team>          Optional. Default: TBD
+
+        sp-hierarchy options:
+          --sp-map <path>         Required. stored-procedure-map.json from FindingsMigration (not raw DbIntelligence output)
+          --sp-name <name>        Required. Root stored procedure FQN (e.g. dbo.usp_GetCustomerSummary)
+          --inventory <file>     Optional. JSON snapshot produced from sql/common/50-sp-dependency-hierarchy.sql
+          --format <tree|json>    Optional. Default: json
+          --out <file>            Optional. When set, write output to this path.
         """);
     return 2;
 }
@@ -233,6 +241,60 @@ if (string.Equals(argsList[0], "slice-sql", StringComparison.OrdinalIgnoreCase))
             GetOpt("--owner"));
         Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
         Console.WriteLine($"SQL slice written to: {Path.GetFullPath(outDirSlice)}");
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine(ex.Message);
+        return 1;
+    }
+}
+
+if (string.Equals(argsList[0], "sp-hierarchy", StringComparison.OrdinalIgnoreCase))
+{
+    var spMapPath = GetOpt("--sp-map");
+    var spName = GetOpt("--sp-name");
+    var inventory = GetOpt("--inventory");
+    var outFile = GetOpt("--out");
+    var format = GetOpt("--format") ?? "json";
+
+    if (string.IsNullOrWhiteSpace(spMapPath) || string.IsNullOrWhiteSpace(spName))
+        return Usage();
+
+    try
+    {
+        if (!File.Exists(spMapPath))
+            throw new FileNotFoundException("SP map missing", spMapPath);
+
+        var spMapDoc = System.Text.Json.JsonSerializer.Deserialize<StoredProcedureMapDocument>(
+            File.ReadAllText(spMapPath),
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        ) ?? new StoredProcedureMapDocument();
+
+        var analyzer = new SpHierarchyAnalyzer();
+        var result = analyzer.Analyze(spMapDoc, spName, inventory);
+
+        string output;
+        if (string.Equals(format, "tree", StringComparison.OrdinalIgnoreCase))
+        {
+            output = analyzer.RenderTree(result);
+        }
+        else
+        {
+            output = System.Text.Json.JsonSerializer.Serialize(
+                result,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+
+        if (!string.IsNullOrWhiteSpace(outFile))
+        {
+            var dir = Path.GetDirectoryName(outFile);
+            if (!string.IsNullOrWhiteSpace(dir))
+                Directory.CreateDirectory(dir);
+            File.WriteAllText(outFile, output);
+        }
+
+        Console.WriteLine(output);
         return 0;
     }
     catch (Exception ex)

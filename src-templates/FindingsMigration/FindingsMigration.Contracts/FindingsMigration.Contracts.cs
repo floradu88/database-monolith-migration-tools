@@ -122,3 +122,51 @@ public sealed class DomainPackageResult
     public int ProcedureCount { get; init; }
     public List<string> WrittenFiles { get; init; } = [];
 }
+
+public sealed class SpHierarchyResult
+{
+    [JsonPropertyName("rootProcedure")]
+    public string RootProcedure { get; set; } = "";
+
+    [JsonPropertyName("dependencies")]
+    public List<SpDependencyNode> Dependencies { get; set; } = [];
+}
+
+public sealed class SpDependencyNode
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = "";
+
+    [JsonPropertyName("schema")]
+    public string Schema { get; set; } = "";
+
+    [JsonPropertyName("kind")]
+    public string Kind { get; set; } = ""; // TABLE, VIEW, PROCEDURE, FUNCTION, TYPE
+
+    [JsonPropertyName("depth")]
+    public int Depth { get; set; }
+
+    [JsonPropertyName("parentProcedure")]
+    public string? ParentProcedure { get; set; }
+
+    [JsonPropertyName("columnUsage")]
+    public TableColumnUsage? ColumnUsage { get; set; }
+
+    [JsonPropertyName("children")]
+    public List<SpDependencyNode> Children { get; set; } = [];
+}
+
+public sealed class TableColumnUsage
+{
+    [JsonPropertyName("totalColumns")]
+    public int TotalColumns { get; set; }
+
+    [JsonPropertyName("usedColumns")]
+    public int UsedColumns { get; set; }
+
+    [JsonPropertyName("used")]
+    public List<string> Used { get; set; } = [];
+
+    [JsonPropertyName("unused")]
+    public List<string> Unused { get; set; } = [];
+}
