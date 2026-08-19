@@ -279,6 +279,29 @@ dotnet run --project .\FindingsMigration.Cli -c Release -- `
 
 Review `FINDINGS-REVIEW.md` before ownership approval. See [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md) and [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md).
 
+### 5b. SP dependency hierarchy (table + column usage)
+
+Analyze which tables, columns, views, types, and functions a stored procedure depends on:
+
+```powershell
+cd src-templates\FindingsMigration
+
+# Extract inventory from live DB + analyze in one step
+.\scripts\Get-SpHierarchy.ps1 `
+  -StoredProcedureMap "...\stored-procedure-map.json" `
+  -SpName "dbo.usp_GetCustomerSummary" `
+  -SqlConnectionString "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True" `
+  -Format tree
+
+# Without DB (SP-map-only fallback)
+.\scripts\Get-SpHierarchy.ps1 `
+  -StoredProcedureMap "...\stored-procedure-map.json" `
+  -SpName "dbo.usp_GetCustomerSummary" `
+  -Format tree
+```
+
+Detail: [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md) (inventory JSON contract, CLI flags, example tree output).
+
 ### 6. Restore / build / test the solution
 
 ```powershell
@@ -309,6 +332,8 @@ start src-templates\DatabaseModernization.sln
 | `Invoke-DbIntelligenceBatchIndex.ps1` | Index every child under a parent (`D:\code\projects` or `C:\code`) |
 | `Invoke-FindingsMigration.ps1` | Package JSON maps → draft domain package |
 | `New-DomainFromFindings.ps1` | Scaffold DataService from Customer template |
+| `Get-SpHierarchy.ps1` | SP dependency tree (tables, columns, views, types, functions) |
+| `Export-SpDependencyInventory.ps1` | Extract SP dependency inventory from live SQL Server |
 
 Details: [`HOW-TO-USE.md`](HOW-TO-USE.md), [`src-templates/DbIntelligence/README.md`](src-templates/DbIntelligence/README.md).
 

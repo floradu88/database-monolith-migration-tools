@@ -33,10 +33,13 @@ public sealed class SpHierarchyAnalyzer
                         ?? new SpDependencyInventoryDocument();
         }
 
-        if (inventory is not null && inventory.ProcedureEdges.Count > 0)
+        if (inventory is not null &&
+            (inventory.ProcedureEdges.Count > 0 || inventory.TableColumnUsage.Count > 0 ||
+             inventory.TypeDependencies.Count > 0 || inventory.ViewDependencies.Count > 0 ||
+             inventory.FunctionDependencies.Count > 0))
             return AnalyzeFromInventory(normalizedRoot, inventory);
 
-        // Fallback: no inventory => best-effort: show tables from spMap reads/writes only.
+        // Fallback: no inventory => best-effort from spMap reads/writes + callers.
         return AnalyzeFromSpMapOnly(spMap, normalizedRoot);
     }
 
@@ -44,9 +47,10 @@ public sealed class SpHierarchyAnalyzer
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Root: {result.RootProcedure}");
-        foreach (var dep in result.Dependencies)
+        for (var i = 0; i < result.Dependencies.Count; i++)
         {
-            RenderNode(sb, dep, indentLevel: 0);
+            var isLast = i == result.Dependencies.Count - 1;
+            RenderNode(sb, result.Dependencies[i], prefix: "", isLast: isLast);
         }
         return sb.ToString();
     }
@@ -54,25 +58,31 @@ public sealed class SpHierarchyAnalyzer
     private static void RenderNode(
         StringBuilder sb,
         SpDependencyNode node,
-        int indentLevel)
+        string prefix,
+        bool isLast)
     {
-        var indent = new string(' ', indentLevel * 2);
+        var connector = isLast ? "└── " : "├── ";
+        var label = $"[{node.Kind}] {node.Schema}.{node.Name}";
 
         if (node.Kind.Equals("TABLE", StringComparison.OrdinalIgnoreCase) && node.ColumnUsage is not null)
         {
-            sb.AppendLine(
-                $"{indent}- {node.Kind}: {node.Schema}.{node.Name} ({node.ColumnUsage.UsedColumns}/{node.ColumnUsage.TotalColumns} used)");
-            sb.AppendLine($"{indent}  used: {string.Join(", ", node.ColumnUsage.Used)}");
-            sb.AppendLine($"{indent}  unused: {string.Join(", ", node.ColumnUsage.Unused)}");
+            label += $" ({node.ColumnUsage.UsedColumns}/{node.ColumnUsage.TotalColumns} cols used)";
+            sb.AppendLine($"{prefix}{connector}{label}");
+            var childPrefix = prefix + (isLast ? "    " : "│   ");
+            if (node.ColumnUsage.Used.Count > 0)
+                sb.AppendLine($"{childPrefix}  used: {string.Join(", ", node.ColumnUsage.Used)}");
+            if (node.ColumnUsage.Unused.Count > 0)
+                sb.AppendLine($"{childPrefix}  unused: {string.Join(", ", node.ColumnUsage.Unused)}");
         }
         else
         {
-            sb.AppendLine($"{indent}- {node.Kind}: {node.Schema}.{node.Name}");
+            sb.AppendLine($"{prefix}{connector}{label}");
         }
 
-        foreach (var child in node.Children)
+        var childPfx = prefix + (isLast ? "    " : "│   ");
+        for (var i = 0; i < node.Children.Count; i++)
         {
-            RenderNode(sb, child, indentLevel + 1);
+            RenderNode(sb, node.Children[i], childPfx, i == node.Children.Count - 1);
         }
     }
 
@@ -105,6 +115,14 @@ public sealed class SpHierarchyAnalyzer
                 g => g.Select(x => NormalizeFqn(x.ViewFqn)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
                 StringComparer.OrdinalIgnoreCase);
 
+        var functionsByProcedure = inventory.FunctionDependencies
+            .GroupBy(d => NormalizeFqn(d.ProcedureFqn), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => (Fqn: NormalizeFqn(x.FunctionFqn), x.FunctionType))
+                      .DistinctBy(x => x.Fqn, StringComparer.OrdinalIgnoreCase).ToList(),
+                StringComparer.OrdinalIgnoreCase);
+
         var rootNode = BuildProcedureNode(
             rootProcedureFqn,
             depth: 0,
@@ -113,7 +131,8 @@ public sealed class SpHierarchyAnalyzer
             procEdgesByParent,
             tableRowsByProcedure,
             typesByProcedure,
-            viewsByProcedure);
+            viewsByProcedure,
+            functionsByProcedure);
 
         // Root procedure is already provided separately in SpHierarchyResult.RootProcedure.
         return new SpHierarchyResult
@@ -131,7 +150,8 @@ public sealed class SpHierarchyAnalyzer
         Dictionary<string, List<string>> procEdgesByParent,
         Dictionary<string, List<SpTableColumnUsageRow>> tableRowsByProcedure,
         Dictionary<string, List<string>> typesByProcedure,
-        Dictionary<string, List<string>> viewsByProcedure)
+        Dictionary<string, List<string>> viewsByProcedure,
+        Dictionary<string, List<(string Fqn, string FunctionType)>> functionsByProcedure)
     {
         var normalized = NormalizeFqn(procedureFqn);
         if (!inPath.Add(normalized))
@@ -171,7 +191,8 @@ public sealed class SpHierarchyAnalyzer
                     procEdgesByParent,
                     tableRowsByProcedure,
                     typesByProcedure,
-                    viewsByProcedure));
+                    viewsByProcedure,
+                    functionsByProcedure));
             }
         }
 
@@ -243,6 +264,22 @@ public sealed class SpHierarchyAnalyzer
             }
         }
 
+        if (functionsByProcedure.TryGetValue(normalized, out var funcEntries))
+        {
+            foreach (var (funcFqn, _) in funcEntries.OrderBy(x => x.Fqn, StringComparer.OrdinalIgnoreCase))
+            {
+                var (schema, name) = ParseSchemaAndName(funcFqn);
+                children.Add(new SpDependencyNode
+                {
+                    Kind = "FUNCTION",
+                    Schema = schema,
+                    Name = name,
+                    Depth = depth + 1,
+                    ParentProcedure = normalized,
+                });
+            }
+        }
+
         node.Children = children;
         _ = inPath.Remove(normalized); // allow same procedure in different branches, but block cycles within a path.
         return node;
@@ -250,55 +287,86 @@ public sealed class SpHierarchyAnalyzer
 
     private SpHierarchyResult AnalyzeFromSpMapOnly(StoredProcedureMapDocument spMap, string rootProcedureFqn)
     {
-        // This fallback has no reliable sub-SP graph and no column-level usage.
-        // Still provides the "tables used" part using stored procedure reads/writes.
-        var entry = spMap.Procedures.FirstOrDefault(p =>
+        // Build a lookup: normalizedFqn → entry
+        var fqnToEntry = new Dictionary<string, StoredProcedureEntry>(StringComparer.OrdinalIgnoreCase);
+        // Build reverse caller graph: "callee FQN" → list of entries that call it
+        var calledBy = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var p in spMap.Procedures)
         {
             foreach (var candidate in EnumerateProcedureFqns(p))
             {
-                if (string.Equals(NormalizeFqn(candidate), rootProcedureFqn, StringComparison.OrdinalIgnoreCase))
-                    return true;
+                var norm = NormalizeFqn(candidate);
+                fqnToEntry.TryAdd(norm, p);
             }
-            return false;
-        });
 
-        var (schema, name) = ParseSchemaAndName(rootProcedureFqn);
-        var rootNode = new SpDependencyNode
-        {
-            Kind = "PROCEDURE",
-            Schema = schema,
-            Name = name,
-            Depth = 0
-        };
-
-        if (entry is null)
-            return new SpHierarchyResult { RootProcedure = rootProcedureFqn, Dependencies = [] };
-
-        var tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var r in entry.Reads ?? [])
-            tables.Add(NormalizeFqn(r));
-        foreach (var w in entry.Writes ?? [])
-            tables.Add(NormalizeFqn(w));
-
-        foreach (var t in tables.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
-        {
-            var (tSchema, tName) = ParseSchemaAndName(t);
-            rootNode.Children.Add(new SpDependencyNode
+            // Build calls graph: if SP-A has callers [X, Y], then X calls A and Y calls A.
+            // But callers are code callers, not SP→SP. Instead, cross-reference: if any SP in the
+            // map reads/writes the same tables, that's not a call edge. We rely on callers list
+            // being SP names when the caller is itself an SP.
+            foreach (var caller in p.Callers ?? [])
             {
-                Kind = "TABLE",
-                Schema = tSchema,
-                Name = tName,
-                Depth = 1,
-                ParentProcedure = rootProcedureFqn,
-                ColumnUsage = null
-            });
+                var callerNorm = NormalizeFqn(caller);
+                if (!calledBy.TryGetValue(callerNorm, out var list))
+                {
+                    list = [];
+                    calledBy[callerNorm] = list;
+                }
+                foreach (var candidate in EnumerateProcedureFqns(p))
+                    list.Add(NormalizeFqn(candidate));
+            }
         }
 
         return new SpHierarchyResult
         {
             RootProcedure = rootProcedureFqn,
-            Dependencies = rootNode.Children
+            Dependencies = BuildMapOnlyNode(rootProcedureFqn, 0, fqnToEntry, calledBy,
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase)).Children
         };
+    }
+
+    private static SpDependencyNode BuildMapOnlyNode(
+        string procFqn, int depth,
+        Dictionary<string, StoredProcedureEntry> fqnToEntry,
+        Dictionary<string, List<string>> calledBy,
+        HashSet<string> visited)
+    {
+        var (schema, name) = ParseSchemaAndName(procFqn);
+        var node = new SpDependencyNode { Kind = "PROCEDURE", Schema = schema, Name = name, Depth = depth };
+
+        if (!visited.Add(procFqn))
+            return node;
+
+        if (fqnToEntry.TryGetValue(procFqn, out var entry))
+        {
+            var tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var r in entry.Reads ?? []) tables.Add(NormalizeFqn(r));
+            foreach (var w in entry.Writes ?? []) tables.Add(NormalizeFqn(w));
+
+            foreach (var t in tables.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            {
+                var (tSchema, tName) = ParseSchemaAndName(t);
+                node.Children.Add(new SpDependencyNode
+                {
+                    Kind = "TABLE", Schema = tSchema, Name = tName,
+                    Depth = depth + 1, ParentProcedure = procFqn
+                });
+            }
+        }
+
+        // Check if this SP calls other SPs (via reverse-caller lookup)
+        if (calledBy.TryGetValue(procFqn, out var callees))
+        {
+            foreach (var callee in callees.Distinct(StringComparer.OrdinalIgnoreCase)
+                                          .OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            {
+                if (fqnToEntry.ContainsKey(callee) && !visited.Contains(callee))
+                    node.Children.Add(BuildMapOnlyNode(callee, depth + 1, fqnToEntry, calledBy, visited));
+            }
+        }
+
+        visited.Remove(procFqn);
+        return node;
     }
 
     private static bool IsProcedureInMap(StoredProcedureMapDocument spMap, string rootProcedureFqn)
@@ -377,6 +445,9 @@ public sealed class SpHierarchyAnalyzer
 
         [JsonPropertyName("viewDependencies")]
         public List<ViewDependencyRow> ViewDependencies { get; set; } = [];
+
+        [JsonPropertyName("functionDependencies")]
+        public List<FunctionDependencyRow> FunctionDependencies { get; set; } = [];
     }
 
     internal sealed class ProcedureEdgeRow
@@ -423,6 +494,18 @@ public sealed class SpHierarchyAnalyzer
 
         [JsonPropertyName("ViewFqn")]
         public string ViewFqn { get; set; } = "";
+    }
+
+    internal sealed class FunctionDependencyRow
+    {
+        [JsonPropertyName("ProcedureFqn")]
+        public string ProcedureFqn { get; set; } = "";
+
+        [JsonPropertyName("FunctionFqn")]
+        public string FunctionFqn { get; set; } = "";
+
+        [JsonPropertyName("FunctionType")]
+        public string FunctionType { get; set; } = "";
     }
 }
 

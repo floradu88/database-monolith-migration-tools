@@ -532,6 +532,42 @@ dotnet run --project FindingsMigration.Cli -- slice-sql --objects "dbo.Customer,
 dotnet run --project FindingsMigration.Cli -- --code-to-db map.json --domain Insight --emit-reconciliation-tests
 ```
 
+### SP dependency hierarchy (table/column usage per stored procedure)
+
+Analyze which tables, columns, views, types, and functions a stored procedure (and its sub-SPs) depend on:
+
+```powershell
+cd src-templates\FindingsMigration
+
+# Extract inventory from a live SQL Server database
+.\scripts\Export-SpDependencyInventory.ps1 `
+  -SpName "dbo.usp_GetCustomerSummary" `
+  -OutputFile ".\out\inventory.json" `
+  -SqlConnectionString "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True"
+
+# One-step: auto-extract + analyze (tree output)
+.\scripts\Get-SpHierarchy.ps1 `
+  -StoredProcedureMap "...\stored-procedure-map.json" `
+  -SpName "dbo.usp_GetCustomerSummary" `
+  -SqlConnectionString "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True" `
+  -Format tree
+
+# Without database (SP-map-only fallback — no column-level detail)
+.\scripts\Get-SpHierarchy.ps1 `
+  -StoredProcedureMap "...\stored-procedure-map.json" `
+  -SpName "dbo.usp_GetCustomerSummary" `
+  -Format tree
+
+# CLI directly
+dotnet run --project FindingsMigration.Cli -- sp-hierarchy `
+  --sp-map "...\stored-procedure-map.json" `
+  --sp-name "dbo.usp_GetCustomerSummary" `
+  --inventory ".\out\inventory.json" `
+  --format tree --out ".\out\hierarchy.txt"
+```
+
+SQL script (`sql/common/50-sp-dependency-hierarchy.sql`) is read-only catalog access — review before executing. See [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md) for the inventory JSON contract and example tree output.
+
 Owner blue/green demo: [`src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md).
 
 ```powershell

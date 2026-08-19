@@ -177,24 +177,27 @@ $connection.Dispose()
 $procedureEdges   = if ($resultSets.Count -ge 1) { $resultSets[0] } else { @() }
 $tableColumnUsage = if ($resultSets.Count -ge 2) { $resultSets[1] } else { @() }
 $typeDependencies = if ($resultSets.Count -ge 3) { $resultSets[2] } else { @() }
-$viewDependencies = if ($resultSets.Count -ge 4) { $resultSets[3] } else { @() }
+$viewDependencies     = if ($resultSets.Count -ge 4) { $resultSets[3] } else { @() }
+$functionDependencies = if ($resultSets.Count -ge 5) { $resultSets[4] } else { @() }
 
 Write-Host ""
 Write-Host "Results:" -ForegroundColor Green
-Write-Host "  Procedure edges:    $($procedureEdges.Count)"
-Write-Host "  Table column rows:  $($tableColumnUsage.Count)"
-Write-Host "  Type dependencies:  $($typeDependencies.Count)"
-Write-Host "  View dependencies:  $($viewDependencies.Count)"
+Write-Host "  Procedure edges:       $($procedureEdges.Count)"
+Write-Host "  Table column rows:     $($tableColumnUsage.Count)"
+Write-Host "  Type dependencies:     $($typeDependencies.Count)"
+Write-Host "  View dependencies:     $($viewDependencies.Count)"
+Write-Host "  Function dependencies: $($functionDependencies.Count)"
 
 # ── Write inventory JSON ────────────────────────────────────────────
 $inventory = [pscustomobject]@{
-    generatedAt      = [DateTimeOffset]::UtcNow.ToString("o")
-    rootProcedure    = $SpName
-    database         = $connection.Database
-    procedureEdges   = $procedureEdges
-    tableColumnUsage = $tableColumnUsage
-    typeDependencies = $typeDependencies
-    viewDependencies = $viewDependencies
+    generatedAt          = [DateTimeOffset]::UtcNow.ToString("o")
+    rootProcedure        = $SpName
+    database             = $connection.Database
+    procedureEdges       = $procedureEdges
+    tableColumnUsage     = $tableColumnUsage
+    typeDependencies     = $typeDependencies
+    viewDependencies     = $viewDependencies
+    functionDependencies = $functionDependencies
 }
 
 $json = $inventory | ConvertTo-Json -Depth 12

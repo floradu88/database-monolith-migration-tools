@@ -27,6 +27,11 @@ inventory JSON snapshot by PowerShell tooling:
      - ProcedureFqn
      - ViewFqn
 
+  5) FunctionDependencies
+     - ProcedureFqn
+     - FunctionFqn
+     - FunctionType
+
 Notes:
   - SQL is read-only catalog access. Review before executing in any environment.
   - Column usage for each table is derived via sys.dm_sql_referenced_entities.
@@ -63,7 +68,7 @@ ProcClosure AS
     JOIN sys.objects child
         ON child.object_id = dep.referenced_id
     WHERE dep.referenced_id IS NOT NULL
-      AND child.type IN ('P','PC')  -- stored procedures
+      AND child.type IN ('P','PC','FN','FS','FT','IF','TF')  -- stored procedures + functions
       AND pc.Depth < 20              -- safety guard against unusual graphs
 ),
 ProcNodes AS
@@ -194,4 +199,26 @@ JOIN sys.sql_expression_dependencies dep
     ON dep.referencing_id = p.ProcObjectId
 JOIN sys.views v
     ON v.object_id = dep.referenced_id;
+
+/*
+Result set 5: FunctionDependencies (scalar/table-valued functions referenced but not in the procedure closure)
+*/
+;WITH
+ProcNodesSimple3 AS
+(
+    SELECT
+        pn.ProcObjectId,
+        QUOTENAME(OBJECT_SCHEMA_NAME(pn.ProcObjectId)) + '.' + QUOTENAME(OBJECT_NAME(pn.ProcObjectId)) AS ProcedureFqn
+    FROM ProcNodes pn
+)
+SELECT DISTINCT
+    p.ProcedureFqn,
+    QUOTENAME(OBJECT_SCHEMA_NAME(f.object_id)) + '.' + QUOTENAME(f.name) AS FunctionFqn,
+    f.type_desc AS FunctionType
+FROM ProcNodesSimple3 p
+JOIN sys.sql_expression_dependencies dep
+    ON dep.referencing_id = p.ProcObjectId
+JOIN sys.objects f
+    ON f.object_id = dep.referenced_id
+WHERE f.type IN ('FN','FS','FT','IF','TF');
 
