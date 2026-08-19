@@ -45,6 +45,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `43-core-sp-clone-template.sql`
 - `44-table-integrity-check.sql`
 - `45-dual-write-rbac.sql`
+- `50-sp-dependency-hierarchy.sql`
 
 ## Completion report
 

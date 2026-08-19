@@ -4,9 +4,11 @@
   Produce a stored-procedure dependency hierarchy (tables + used/unused columns, types, and other SPs).
 
 .DESCRIPTION
-  - Always calls FindingsMigration.Cli `sp-hierarchy`.
-  - Optionally generates an inventory JSON snapshot by executing:
-      sql/common/50-sp-dependency-hierarchy.sql
+  Calls FindingsMigration.Cli `sp-hierarchy` to analyze an SP's dependency tree.
+
+  When -SqlConnectionString is provided and -Inventory is not, the script first
+  runs Export-SpDependencyInventory.ps1 to extract the inventory from the live
+  database, then passes the resulting JSON to the CLI.
 
 .PARAMETER StoredProcedureMap
   Path to FindingsMigration stored-procedure-map.json.
@@ -15,20 +17,35 @@
   Root stored procedure FQN (e.g. dbo.usp_GetCustomerSummary).
 
 .PARAMETER Inventory
-  Optional path to an inventory JSON snapshot produced by sql/common/50-sp-dependency-hierarchy.sql.
+  Optional path to an inventory JSON snapshot produced by Export-SpDependencyInventory.ps1
+  (or sql/common/50-sp-dependency-hierarchy.sql).
 
 .PARAMETER SqlConnectionString
-  When provided AND -Inventory is missing, the script will execute sql/common/50-sp-dependency-hierarchy.sql
-  to generate the inventory JSON and pass it to the CLI.
+  When provided AND -Inventory is not set, the script calls Export-SpDependencyInventory.ps1
+  to generate the inventory JSON from the live database.
 
-.PARAMETER SqlScriptPath
-  Optional override for the SQL script path. Default: repository sql/common/50-sp-dependency-hierarchy.sql
+.PARAMETER UseShowcaseLocalDefaults
+  Infer LocalDB connection from Showcase appsettings.json (passed to Export-SpDependencyInventory.ps1).
 
 .PARAMETER Format
   tree | json (default json).
 
 .PARAMETER OutFile
   Optional output file path for CLI output.
+
+.EXAMPLE
+  .\Get-SpHierarchy.ps1 `
+    -StoredProcedureMap "D:\project\.db-index\stored-procedure-map.json" `
+    -SpName "dbo.usp_GetCustomerSummary" `
+    -SqlConnectionString "Server=.;Database=Monolith;Trusted_Connection=True;TrustServerCertificate=True" `
+    -Format tree
+
+.EXAMPLE
+  .\Get-SpHierarchy.ps1 `
+    -StoredProcedureMap "D:\project\.db-index\stored-procedure-map.json" `
+    -SpName "dbo.usp_GetCustomerSummary" `
+    -Inventory "D:\exports\customer-summary-inventory.json" `
+    -Format json
 #>
 [CmdletBinding()]
 param(
@@ -42,7 +59,7 @@ param(
 
     [string]$SqlConnectionString = "",
 
-    [string]$SqlScriptPath = "",
+    [switch]$UseShowcaseLocalDefaults,
 
     [ValidateSet("tree", "json")]
     [string]$Format = "json",
@@ -58,94 +75,38 @@ $Cli = Join-Path $FindingsRoot "FindingsMigration.Cli\FindingsMigration.Cli.cspr
 if (-not (Test-Path $StoredProcedureMap)) { throw "SP map missing: $StoredProcedureMap" }
 if (-not (Test-Path $Cli)) { throw "CLI csproj missing: $Cli" }
 
-$repoRoot = Split-Path -Parent (Split-Path -Parent $FindingsRoot)
-if ([string]::IsNullOrWhiteSpace($SqlScriptPath)) {
-    $SqlScriptPath = Join-Path $repoRoot "sql/common/50-sp-dependency-hierarchy.sql"
-}
-if (-not (Test-Path $SqlScriptPath)) { throw "SQL script missing: $SqlScriptPath" }
-
-$inventoryWasGenerated = $false
-
+# ── Auto-extract inventory from DB when no inventory file is provided ──
 if ([string]::IsNullOrWhiteSpace($Inventory)) {
-    if (-not [string]::IsNullOrWhiteSpace($SqlConnectionString)) {
-        $inventoryWasGenerated = $true
+    $needsExtract = (-not [string]::IsNullOrWhiteSpace($SqlConnectionString)) -or $UseShowcaseLocalDefaults
+    if ($needsExtract) {
         $tempDir = Join-Path $env:TEMP ("sp-hierarchy-" + [guid]::NewGuid().ToString("N"))
         New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
         $Inventory = Join-Path $tempDir "inventory.json"
-    }
-}
 
-if (-not [string]::IsNullOrWhiteSpace($SqlConnectionString) -and -not (Test-Path $Inventory)) {
-    Write-Host "Generating inventory via 50-sp-dependency-hierarchy.sql ..." -ForegroundColor Cyan
-
-    # Read the whole SQL script as the command batch.
-    $sqlText = Get-Content -LiteralPath $SqlScriptPath -Raw
-
-    # Prefer Microsoft.Data.SqlClient if available; else fall back.
-    $connection = $null
-    try {
-        $connection = New-Object Microsoft.Data.SqlClient.SqlConnection $SqlConnectionString
-    }
-    catch {
-        $connection = New-Object System.Data.SqlClient.SqlConnection $SqlConnectionString
-    }
-
-    $connection.Open()
-    $cmd = $connection.CreateCommand()
-    $cmd.CommandText = $sqlText
-    $cmd.CommandTimeout = 300
-
-    $param = $cmd.Parameters.Add("@SpName", [System.Data.SqlDbType]::NVarChar, 256)
-    $param.Value = $SpName
-
-    $reader = $cmd.ExecuteReader()
-
-    function Read-ResultSet($r) {
-        $rows = @()
-        while ($r.Read()) {
-            $obj = [ordered]@{}
-            for ($i = 0; $i -lt $r.FieldCount; $i++) {
-                $col = $r.GetName($i)
-                $obj[$col] = $r.GetValue($i)
-            }
-            $rows += [pscustomobject]$obj
+        $exportScript = Join-Path $PSScriptRoot "Export-SpDependencyInventory.ps1"
+        if (-not (Test-Path -LiteralPath $exportScript)) {
+            throw "Export script missing: $exportScript"
         }
-        return ,$rows
+
+        $exportArgs = @{
+            SpName     = $SpName
+            OutputFile = $Inventory
+        }
+        if (-not [string]::IsNullOrWhiteSpace($SqlConnectionString)) {
+            $exportArgs["SqlConnectionString"] = $SqlConnectionString
+        }
+        if ($UseShowcaseLocalDefaults) {
+            $exportArgs["UseShowcaseLocalDefaults"] = $true
+        }
+
+        & $exportScript @exportArgs
+        if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+            throw "Export-SpDependencyInventory.ps1 failed with exit $LASTEXITCODE"
+        }
     }
-
-    $resultSets = @()
-    do {
-        $resultSets += ,(Read-ResultSet $reader)
-    } while ($reader.NextResult())
-
-    $reader.Close()
-    $connection.Close()
-
-    # SQL script returns result sets in fixed order:
-    # 1) ProcedureEdges
-    # 2) TableColumnUsage
-    # 3) TypeDependencies
-    # 4) ViewDependencies
-    $procedureEdges = if ($resultSets.Count -ge 1) { $resultSets[0] } else { @() }
-    $tableColumnUsage = if ($resultSets.Count -ge 2) { $resultSets[1] } else { @() }
-    $typeDependencies = if ($resultSets.Count -ge 3) { $resultSets[2] } else { @() }
-    $viewDependencies = if ($resultSets.Count -ge 4) { $resultSets[3] } else { @() }
-
-    $invObj = [pscustomobject]@{
-        generatedAt = (Get-Date).ToString("o")
-        rootProcedure = $SpName
-        procedureEdges = $procedureEdges
-        tableColumnUsage = $tableColumnUsage
-        typeDependencies = $typeDependencies
-        viewDependencies = $viewDependencies
-    }
-
-    $invJson = $invObj | ConvertTo-Json -Depth 12
-    Set-Content -LiteralPath $Inventory -Value $invJson -Encoding UTF8
-
-    Write-Host "Inventory written to: $Inventory" -ForegroundColor Green
 }
 
+# ── Call FindingsMigration.Cli sp-hierarchy ─────────────────────────
 $argList = @(
     "run", "--project", $Cli, "-c", "Release", "--",
     "sp-hierarchy",
@@ -163,6 +124,4 @@ if (-not [string]::IsNullOrWhiteSpace($OutFile)) {
 }
 
 & dotnet @argList
-$LASTEXITCODE = $LASTEXITCODE
 exit $LASTEXITCODE
-

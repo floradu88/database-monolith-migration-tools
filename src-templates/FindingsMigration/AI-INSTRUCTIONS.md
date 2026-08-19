@@ -17,13 +17,15 @@ Turn DbIntelligence JSON maps into draft domain manifests and scaffold DataServi
 ## Current contents
 
 - `FindingsMigration.Contracts/`
-- `FindingsMigration.Core/` — DomainPackageBuilder, SpWrapperGenerator, DualWriteArtifactGenerator, CodeToDbDiffService, SqlProjectSliceGenerator, DataAccessRecommendation, ReconciliationTestStubGenerator, DomainSuggestionService, ConfidenceGateService
-- `FindingsMigration.Cli/` — package, `generate-sp` (`--parallel-dbo-core`), `suggest-domains`, `confidence-gate`, `diff-maps`, `slice-sql`
+- `FindingsMigration.Core/` — DomainPackageBuilder, SpWrapperGenerator, DualWriteArtifactGenerator, CodeToDbDiffService, SqlProjectSliceGenerator, DataAccessRecommendation, ReconciliationTestStubGenerator, DomainSuggestionService, ConfidenceGateService, SpHierarchyAnalyzer
+- `FindingsMigration.Cli/` — package, `generate-sp` (`--parallel-dbo-core`), `suggest-domains`, `confidence-gate`, `diff-maps`, `slice-sql`, `sp-hierarchy`
 - `FindingsMigration.Tests/`
 - `scripts/Invoke-FindingsMigration.ps1`
 - `scripts/New-DomainFromFindings.ps1`
 - `scripts/New-SpWrappersFromMap.ps1`
 - `scripts/New-DboCoreDualWriteFromMap.ps1`
+- `scripts/Export-SpDependencyInventory.ps1`
+- `scripts/Get-SpHierarchy.ps1`
 - `README.md`
 
 ## Phase 3 packaging notes
