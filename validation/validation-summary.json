@@ -1,8 +1,8 @@
 ﻿{
     "version":  "V5-reviewed",
-    "notes":  "Checksums regenerated after DbIntelligence batch parent-folder indexing and FindingsMigration template.",
-    "folder_count":  82,
-    "file_count":  298,
+    "notes":  "Updated counts after adding Claude Code skills instructions (.claude/skills).",
+    "folder_count":  86,
+    "file_count":  300,
     "status":  "pass",
     "issues":  [
 

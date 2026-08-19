@@ -320,6 +320,7 @@ This kit is wired for AI-assisted work in **Cursor** and **Claude Code**:
 |------|-------------|
 | **Cursor** | Project rules in `.cursor/rules/` (always-on kit core + scoped rules for `docs/`, `sql/`, `manifests/`, `src-templates/`, `checklists/`, `validation/`) |
 | **Claude Code** | Root `CLAUDE.md` |
+| **Claude Code skills** | `.claude/skills/` (kit-root + kit-project) |
 | **Any agent** | `AGENTS.md`, plus the nearest folder `AI-INSTRUCTIONS.md` |
 
 Every folder contains an `AI-INSTRUCTIONS.md` describing purpose, safety rules, how to modify that folder, and current contents. See `AI-INSTRUCTION-INDEX.md` for the full list.
