@@ -1,0 +1,12 @@
+# Local Python env (created by run-topology.ps1)
+.venv/
+venv/
+
+# Generated sample outputs
+out/
+topology.md
+*.topology.md
+
+# Python bytecode
+__pycache__/
+*.py[cod]

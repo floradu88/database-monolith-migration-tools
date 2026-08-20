@@ -9,6 +9,7 @@
 - `../src-templates/DbIntelligence/scripts/Invoke-DbIntelligenceReady.ps1` — path-only one-shot (prereqs → build → health → API → index)
 - `../src-templates/DbIntelligence/scripts/Initialize-DbIntelligenceNode.ps1` — fnm Node/npm; Codegraph via `fnm exec --using=lts-latest`
 - `../src-templates/FindingsMigration/README.md` — promote JSON maps to domain packages
+- `../tools/yaml-topology/README.md` — recursive YAML → Mermaid topology Markdown
 - `../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md` — OnPrem / Azure / Aws pros/cons + config
 - `dbintelligence-runbook.md` — short PowerShell runbook + plan snapshot
 - `FUTURE-FEATURES.md` — findings → domain project roadmap

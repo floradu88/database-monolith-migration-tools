@@ -12,7 +12,7 @@ This repository is the V5-reviewed SQL Server monolith-decomposition kit.
 1. Read `README.md`, `HOW-TO-USE.md`, `REVIEW-REPORT.md`, and the nearest `AI-INSTRUCTIONS.md`.
 2. Prefer canonical docs listed under “Start here” in the root README.
 3. Use `AI-INSTRUCTION-INDEX.md` to find folder-specific agent instructions.
-4. For DbIntelligence local setup, prefer `src-templates/DbIntelligence/scripts/` (including user-scoped Node via fnm). Prefer Codegraph install via `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` when fnm is present.
+4. For DbIntelligence local setup, prefer `src-templates/DbIntelligence/scripts/` (including user-scoped Node via fnm). Prefer Codegraph install via `fnm exec --using=lts-latest -- npm i -g @colbymchenry/codegraph` when fnm is present. For YAML topology maps, prefer `tools/yaml-topology/run-topology.ps1`.
 
 ## Safety
 

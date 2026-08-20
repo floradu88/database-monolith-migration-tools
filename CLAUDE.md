@@ -28,9 +28,10 @@ Use this repository as a production-grade kit for decomposing a SQL Server monol
 | `src-templates/` | .NET solution/project scaffolds (source split, data services, control plane) |
 | `src-templates/DbIntelligence/scripts/` | PowerShell setup/run; prefer `Invoke-DbIntelligenceReady.ps1` (path only); fnm Node + Codegraph via `fnm exec --using=lts-latest` |
 | `src-templates/CodegraphChat/scripts/` | Topic chat Ready: `Invoke-CodegraphChatReady.ps1` (path only) → http://localhost:5091/ |
+| `tools/yaml-topology/` | Recursive YAML → Mermaid topology Markdown (`run-topology.ps1`) |
 | `checklists/` | Cutover and source-split checklists |
 | `validation/` | Checksums and validation summary |
-| `HOW-TO-USE.md` | Canonical PowerShell command reference (DbIntelligence + CodegraphChat Ready) |
+| `HOW-TO-USE.md` | Canonical PowerShell command reference (DbIntelligence + CodegraphChat + YAML Topology) |
 
 ## Completion report
 

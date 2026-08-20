@@ -91,3 +91,5 @@
 - `src-templates/Tests/Migration.Tests/AI-INSTRUCTIONS.md`
 - `src-templates/Tests/Performance.Tests/AI-INSTRUCTIONS.md`
 - `src-templates/Tests/Reconciliation.Tests/AI-INSTRUCTIONS.md`
+- `tools/AI-INSTRUCTIONS.md`
+- `tools/yaml-topology/AI-INSTRUCTIONS.md`

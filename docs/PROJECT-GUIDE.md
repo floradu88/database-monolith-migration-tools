@@ -188,6 +188,28 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 
 ---
 
+## 7c. YAML Topology (`tools/yaml-topology/`)
+
+**Purpose:** Recursively scan `*.yaml` / `*.yml` and emit one Markdown file with an embedded Mermaid flowchart (discovery map for infra / pipeline / compose trees).
+
+| File | Role |
+|------|------|
+| `yaml-topology.py` | Scanner + heuristic relationship mapper + Mermaid/Markdown writer |
+| `run-topology.ps1` | Non-admin wrapper (local `.venv` + PyYAML only) |
+| `TOOLING.md` | Operator guide |
+
+**Why use it:** Fast visual inventory of YAML-heavy folders without Graphviz, Docker, or admin rights. Complements DbIntelligence (code→DB) rather than replacing ownership manifests.
+
+**One command:** `.\tools\yaml-topology\run-topology.ps1 -Repo "<path>" -Output "<path>\topology.md"`
+
+| Pros | Cons |
+|------|------|
+| No admin; local `.venv` only | Relationships are heuristic (common keys) |
+| Markdown + Mermaid renders on GitHub / Mermaid previews | Not authoritative deployment/runtime state |
+| Safe read-only scan (`yaml.safe_load_all`) | May surface internal names — review before sharing |
+
+---
+
 ## 8. Kit support folders (repo root)
 
 | Path | Why use it |
@@ -195,6 +217,7 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 | `docs/` | Canonical architecture and strategy (start with numbered plan) |
 | `sql/` | DBA-review discovery, audit, RBAC scripts — **never auto-run on prod** |
 | `manifests/` | Domain / wave / object ownership examples |
+| `tools/` | Operator utilities (e.g. YAML topology) |
 | `checklists/` | Production cutover and source-split gates |
 | `validation/` | Checksums / kit integrity |
 
@@ -215,6 +238,7 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 
 1. Run DbIntelligence on a real app path (`HOW-TO-USE.md`).
 1b. Optional: explore the indexed repo via CodegraphChat — `.\scripts\Invoke-CodegraphChatReady.ps1 "<path>"` → http://localhost:5091/
+1c. Optional: map YAML trees via `.\tools\yaml-topology\run-topology.ps1 -Repo "<path>" -Output topology.md`
 2. Review maps; leave AMBIGUOUS on the queue.
 3. FindingsMigration → domain package + Showcase-based scaffold.
 4. Point `SourceFacade` at OnPrem monolith; land `Owned` on OnPrem lab, then Azure or Aws when ready ([`DATABASE-HOSTING.md`](../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md)).

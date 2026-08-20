@@ -20,6 +20,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `manifests/`
 - `sql/`
 - `src-templates/`
+- `tools/`
 - `validation/`
 
 ## Current files
@@ -27,7 +28,7 @@ This folder is part of the reviewed SQL Server monolith-decomposition and DB-as-
 - `AGENTS.md`
 - `AI-INSTRUCTION-INDEX.md`
 - `CLAUDE.md`
-- `HOW-TO-USE.md` — PowerShell setup/run guide (DbIntelligence, fnm Node, Codegraph via `fnm exec --using=lts-latest`, batch index, findings)
+- `HOW-TO-USE.md` — PowerShell setup/run guide (DbIntelligence, CodegraphChat, YAML Topology, fnm Node, Codegraph via `fnm exec --using=lts-latest`, batch index, findings)
 - `LICENSE`
 - `README.md`
 - `REVIEW-REPORT.md`

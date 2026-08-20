@@ -4,6 +4,7 @@ This kit helps you decompose a SQL Server monolith. The **runnable** local stack
 
 - **DbIntelligence** — Codegraph + Graphify + code→SQL maps + Angular UI
 - **CodegraphChat** — ChatGPT-style topic chat over a Codegraph index (single-host on `:5091`)
+- **YAML Topology** — recursive `*.yaml` / `*.yml` scan → one Markdown file with a Mermaid diagram (`tools/yaml-topology`)
 
 SQL scripts under `sql/` are for **DBA review**, not blind production execution.
 
@@ -36,6 +37,27 @@ cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphCha
 ```
 
 Open http://localhost:5091/ (fnm Node + Codegraph + SPA in API wwwroot).
+
+### YAML Topology (recursive YAML → Mermaid Markdown)
+
+Maps a folder of `.yaml` / `.yml` files into one Markdown document with an embedded Mermaid flowchart. Uses a local Python `.venv` (PyYAML only); no admin rights.
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
+
+.\run-topology.ps1 `
+  -Repo "D:\path\to\yaml-repo" `
+  -Output "D:\path\to\yaml-repo\topology.md"
+
+# Example: kit manifests
+.\run-topology.ps1 `
+  -Repo "..\..\manifests" `
+  -Output ".\out\manifests-topology.md" `
+  -Title "Kit Manifests Topology" `
+  -Direction TB
+```
+
+Full options: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`tools/yaml-topology/TOOLING.md`](tools/yaml-topology/TOOLING.md).
 
 ### Manual / stepwise (DbIntelligence)
 
@@ -74,7 +96,7 @@ Then open http://localhost:4200 — search the graph, filter code↔DB edges, or
 | .NET 8 SDK | API, CLI, scanners, tests | `dotnet --list-sdks` |
 | Node.js 18+ / npm | Angular UI + Codegraph npm package | `node -v` / `npm -v` |
 | fnm (recommended) | User-scoped Node/npm **and** preferred Codegraph install (`fnm exec --using=lts-latest -- npm …`) | `fnm --version` |
-| Python 3.10+ | Graphify | `python --version` |
+| Python 3.10+ | Graphify + YAML Topology (local `.venv`) | `python --version` |
 | `graphify` on PATH | Corpus graph | `graphify --help` |
 | `codegraph` on PATH | Symbol index | `codegraph -V` |
 | PowerShell 5.1+ | Setup scripts | `$PSVersionTable.PSVersion` |
@@ -687,6 +709,7 @@ Live API graph remains **in memory** (last completed project). Durable results a
 - DbIntelligence project README: [`src-templates/DbIntelligence/README.md`](src-templates/DbIntelligence/README.md)
 - Codegraph topic chat: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md)
 - Findings → domain template: [`src-templates/FindingsMigration/README.md`](src-templates/FindingsMigration/README.md)
+- YAML topology (Mermaid Markdown): [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md)
 - Future features: [`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)
 - Discovery model: [`docs/03-discovery-and-ai-indexing.md`](docs/03-discovery-and-ai-indexing.md)
 - Review status: [`REVIEW-REPORT.md`](REVIEW-REPORT.md)

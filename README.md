@@ -31,6 +31,8 @@ It includes:
 │   ├── DbIntelligence/       # Index + evidence graph UI
 │   ├── CodegraphChat/        # Topic chat over an existing Codegraph index
 │   └── …                     # DataServices, FindingsMigration, …
+├── tools/                    # Operator utilities (non-.NET)
+│   └── yaml-topology/        # Recursive YAML → Mermaid topology Markdown
 ├── checklists/               # Cutover and split checklists
 └── validation/               # Checksums + validation summary
 ```
@@ -102,6 +104,16 @@ cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphCha
 ```
 
 Open http://localhost:5091/ — details: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
+
+### 1c. YAML topology (recursive YAML → Mermaid Markdown)
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
+
+.\run-topology.ps1 -Repo "D:\path\to\yaml-repo" -Output "D:\path\to\yaml-repo\topology.md"
+```
+
+Details: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
 
 ### 2. Setup kit only (no index)
 
