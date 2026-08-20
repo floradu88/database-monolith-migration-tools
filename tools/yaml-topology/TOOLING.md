@@ -210,6 +210,28 @@ obj
 
 Multi-document YAML separated by `---` is supported.
 
+## File explanations (one per YAML)
+
+Markdown output includes a **File explanations** section: adapter, documents, resources, outgoing/incoming dependency links for each scanned YAML path.
+
+Ready also writes a sibling folder (default `topology-explains/`) with:
+
+```text
+topology-explains/
+  README.md                  # index of all explains
+  compose_docker_compose_yml.explain.md
+  k8s_payments_yaml.explain.md
+  ...
+```
+
+```powershell
+.\Invoke-YamlTopologyReady.ps1 ".\fixtures" -Output ".\out\fixtures-topology.md"
+# or a single file:
+.\Invoke-YamlTopologyReady.ps1 ".\fixtures\k8s\payments.yaml"
+```
+
+Omit explains from the main Markdown with `-NoExplanations`, or skip the per-file directory with `-SkipExplainFiles`.
+
 ## Relationship discovery
 
 The mapper uses **schema-aware adapters** first, then a **generic heuristic** pass.

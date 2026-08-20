@@ -194,7 +194,7 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 
 | File | Role |
 |------|------|
-| `Invoke-YamlTopologyReady.ps1` | **One command** — path only → local `.venv` + scan + `topology.md` |
+| `Invoke-YamlTopologyReady.ps1` | **One command** — path only → local `.venv` + scan + `topology.md` + per-file explains |
 | `yaml-topology.py` | Scanner + schema adapters + Mermaid/Markdown writer |
 | `run-topology.ps1` | Non-admin wrapper used by Ready |
 | `fixtures/` | Sample YAML that exercises dependency edges |

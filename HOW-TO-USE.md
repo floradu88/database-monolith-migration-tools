@@ -47,10 +47,12 @@ cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 
 .\Invoke-YamlTopologyReady.ps1 "D:\path\to\yaml-repo"
 # writes D:\path\to\yaml-repo\topology.md
+# and D:\path\to\yaml-repo\topology-explains\*.explain.md (one per YAML file)
 
 # Examples
 .\Invoke-YamlTopologyReady.ps1 "..\..\manifests" -Output ".\out\manifests-topology.md"
 .\Invoke-YamlTopologyReady.ps1 ".\fixtures" -Output ".\out\fixtures-topology.md" -Open
+.\Invoke-YamlTopologyReady.ps1 ".\fixtures\compose\docker-compose.yml"
 .\Invoke-YamlTopologyReady.ps1 ".\fixtures" -Adapters "compose,kubernetes,generic" -NoStubs
 ```
 

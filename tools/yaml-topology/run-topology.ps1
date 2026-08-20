@@ -5,7 +5,9 @@ param(
   [string]$Direction = "LR",
   [string]$Title = "YAML Repository Topology",
   [string]$Adapters = "",
-  [switch]$NoStubs
+  [string]$ExplainDir = "",
+  [switch]$NoStubs,
+  [switch]$NoExplanations
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,8 +38,17 @@ if ($Adapters) {
 if ($NoStubs) {
   $cliArgs += "--no-stubs"
 }
+if ($NoExplanations) {
+  $cliArgs += "--no-explanations"
+}
+if ($ExplainDir) {
+  $cliArgs += @("--explain-dir", $ExplainDir)
+}
 
 & $Python @cliArgs
 
 Write-Host "Done. Generated Markdown with an embedded MermaidJS diagram: $Output"
+if ($ExplainDir) {
+  Write-Host "Per-file explanations written under: $ExplainDir"
+}
 Write-Host "GitHub and Mermaid-capable Markdown previews can render the fenced mermaid block directly."

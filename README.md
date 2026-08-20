@@ -113,7 +113,7 @@ cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 .\Invoke-YamlTopologyReady.ps1 "D:\path\to\yaml-repo"
 ```
 
-Writes `{repo}\topology.md`. Details: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
+Writes `{repo}\topology.md` plus `topology-explains\*.explain.md` (one explanation per YAML). Details: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
 
 ### 2. Setup kit only (no index)
 

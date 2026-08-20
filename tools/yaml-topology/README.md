@@ -34,18 +34,21 @@ cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 .\Invoke-YamlTopologyReady.ps1 "D:\path\to\yaml-repo"
 ```
 
-Creates the local `.venv`, installs PyYAML, scans recursively, and writes `{repo}\topology.md` (Mermaid + Dependencies table).
+Creates the local `.venv`, installs PyYAML, scans recursively, writes `{repo}\topology.md` (Mermaid + Dependencies + **one explanation per YAML file**), and writes `topology-explains\*.explain.md` (one file each).
 
-Optional flags: `-Direction LR` · `-Open` · `-NoStubs` · `-Adapters "compose,kubernetes,generic"` · `-Output "D:\out\topology.md"`
+Optional flags: `-Direction LR` · `-Open` · `-NoStubs` · `-Adapters "compose,kubernetes,generic"` · `-Output "D:\out\topology.md"` · `-ExplainDir "D:\out\explains"` · `-SkipExplainFiles`
 
 ### Examples
 
 ```powershell
-# Kit manifests (domain ↔ wave links)
+# Kit manifests (domain ↔ wave links + per-file explains)
 .\Invoke-YamlTopologyReady.ps1 "..\..\manifests" -Output ".\out\manifests-topology.md"
 
 # Sample fixtures
 .\Invoke-YamlTopologyReady.ps1 ".\fixtures" -Output ".\out\fixtures-topology.md" -Open
+
+# Explain a single YAML file (still emits one explain doc for that file)
+.\Invoke-YamlTopologyReady.ps1 ".\fixtures\compose\docker-compose.yml" -Open
 ```
 
 Lower-level wrapper (explicit params): `.\run-topology.ps1 -Repo ... -Output ...` — see [`TOOLING.md`](TOOLING.md).

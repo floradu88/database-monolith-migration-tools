@@ -114,6 +114,10 @@ def load_documents(path: Path) -> list[Any]:
 
 
 def discover_files(root: Path) -> list[Path]:
+    if root.is_file():
+        if root.suffix.lower() not in (".yaml", ".yml"):
+            raise SystemExit(f"Not a YAML file: {root}")
+        return [root]
     return sorted(
         p
         for p in root.rglob("*")
@@ -123,14 +127,71 @@ def discover_files(root: Path) -> list[Path]:
     )
 
 
+ADAPTER_BLURBS = {
+    "compose": (
+        "Docker Compose definition. Services, networks, and volumes are nodes; "
+        "`depends_on` / `links` / network / volume attachments become dependency edges."
+    ),
+    "kubernetes": (
+        "Kubernetes manifest. Resources are keyed by kind/name; ConfigMap/Secret refs, "
+        "ownerReferences, and volume mounts become dependency edges."
+    ),
+    "github-actions": (
+        "GitHub Actions workflow. Jobs are nodes; `needs` and `uses` create dependency edges."
+    ),
+    "azure-devops": (
+        "Azure DevOps pipeline. Stages and jobs are nodes; `dependsOn` creates dependency edges."
+    ),
+    "cloudformation": (
+        "AWS CloudFormation template. Resources are nodes; `DependsOn` and `Ref`/`Fn::GetAtt` "
+        "create dependency edges."
+    ),
+    "kit-manifest": (
+        "Kit domain or migration-wave manifest. Domain/wave ownership fields link to services, "
+        "databases, SQL projects, and related wave/domain nodes."
+    ),
+    "generic": (
+        "Generic YAML. Identity and common reference keys are matched heuristically across the scan."
+    ),
+}
+
+
 class TopologyGraph:
     def __init__(self, *, create_stubs: bool = True) -> None:
         self.nodes: dict[str, dict[str, Any]] = {}
         self.edges: set[tuple[str, str, str]] = set()
         self.aliases: dict[str, set[str]] = defaultdict(set)
         self.unresolved: list[tuple[str, str, str]] = []
+        self.file_info: dict[str, dict[str, Any]] = {}
         self._used_ids: set[str] = set()
         self.create_stubs = create_stubs
+
+    def note_document(self, relative: str, adapter: str, document: Any) -> None:
+        info = self.file_info.setdefault(
+            relative,
+            {"adapters": set(), "documents": 0, "kinds": set(), "names": set()},
+        )
+        info["adapters"].add(adapter)
+        info["documents"] += 1
+        if isinstance(document, dict):
+            if document.get("kind"):
+                info["kinds"].add(str(document.get("kind")))
+            meta = document.get("metadata")
+            if isinstance(meta, dict) and meta.get("name"):
+                info["names"].add(str(meta.get("name")))
+            for key in ("name", "domain", "wave", "service"):
+                if document.get(key) is not None and scalar(document.get(key)):
+                    info["names"].add(str(document.get(key)))
+            services = document.get("services")
+            if isinstance(services, dict):
+                info["names"].update(str(k) for k in services.keys())
+            jobs = document.get("jobs")
+            if isinstance(jobs, dict):
+                info["names"].update(str(k) for k in jobs.keys())
+            resources = document.get("Resources") or document.get("resources")
+            if isinstance(resources, dict):
+                info["names"].update(str(k) for k in resources.keys())
+
 
     def add_node(
         self,
@@ -717,10 +778,11 @@ def build_topology(
 ) -> tuple[list[Path], TopologyGraph]:
     enabled = set(enabled_adapters or ADAPTERS)
     files = discover_files(root)
+    scan_root = root.parent if root.is_file() else root
     graph = TopologyGraph(create_stubs=create_stubs)
 
     for file_path in files:
-        relative = str(file_path.relative_to(root)).replace("\\", "/")
+        relative = str(file_path.relative_to(scan_root)).replace("\\", "/")
         for doc_index, document in enumerate(load_documents(file_path)):
             if document is None:
                 continue
@@ -729,9 +791,167 @@ def build_topology(
                 adapter = "generic" if "generic" in enabled else None
             if adapter is None:
                 continue
+            graph.note_document(relative, adapter, document)
             ADAPTER_FUNCS[adapter](graph, document, relative, doc_index)
 
     return files, graph
+
+
+def _nodes_for_file(graph: TopologyGraph, relative: str) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        (node_id, node)
+        for node_id, node in graph.nodes.items()
+        if not node.get("stub") and node.get("file") == relative
+    ]
+
+
+def explain_file(graph: TopologyGraph, relative: str, *, root: Path) -> str:
+    """Return Markdown explanation for a single YAML path (relative to scan root)."""
+    info = graph.file_info.get(relative, {"adapters": set(), "documents": 0, "kinds": set(), "names": set()})
+    adapters = sorted(info.get("adapters") or [])
+    nodes = _nodes_for_file(graph, relative)
+    node_ids = {node_id for node_id, _ in nodes}
+
+    outgoing = sorted(
+        (src, dst, rel)
+        for src, dst, rel in graph.edges
+        if src in node_ids
+    )
+    # Incoming = depended on by resources outside this file (cross-file), or
+    # by other resources in-file when the source is also listed under outgoing.
+    incoming_external = sorted(
+        (src, dst, rel)
+        for src, dst, rel in graph.edges
+        if dst in node_ids and src not in node_ids
+    )
+    incoming_internal = sorted(
+        (src, dst, rel)
+        for src, dst, rel in graph.edges
+        if dst in node_ids and src in node_ids
+    )
+
+    lines = [
+        f"### `{relative}`",
+        "",
+    ]
+    if adapters:
+        lines.append(f"- **Adapter(s):** {', '.join(f'`{a}`' for a in adapters)}")
+    else:
+        lines.append("- **Adapter(s):** _(none — empty or skipped)_")
+    lines.append(f"- **Documents in file:** {info.get('documents', 0)}")
+    lines.append(f"- **Resources discovered:** {len(nodes)}")
+    if info.get("kinds"):
+        lines.append(f"- **Kinds:** {', '.join(sorted(info['kinds']))}")
+    if info.get("names"):
+        preview = ", ".join(sorted(info["names"])[:12])
+        more = "" if len(info["names"]) <= 12 else f" (+{len(info['names']) - 12} more)"
+        lines.append(f"- **Named resources:** {preview}{more}")
+    lines.append("")
+
+    for adapter in adapters:
+        blurb = ADAPTER_BLURBS.get(adapter)
+        if blurb:
+            lines.append(blurb)
+            lines.append("")
+
+    if nodes:
+        lines.append("**Resources in this file**")
+        lines.append("")
+        for _, node in sorted(nodes, key=lambda item: item[1]["label"]):
+            lines.append(f"- {escape_label(node['label'])}")
+        lines.append("")
+
+    if outgoing:
+        lines.append("**Depends on (outgoing)**")
+        lines.append("")
+        for src, dst, rel in outgoing:
+            lines.append(
+                f"- {escape_label(graph.nodes[src]['label'])} "
+                f"-`{rel}`-> {escape_label(graph.nodes[dst]['label'])}"
+            )
+        lines.append("")
+    else:
+        lines.extend(["**Depends on (outgoing):** none discovered.", ""])
+
+    if incoming_external:
+        lines.append("**Depended on by (from other files)**")
+        lines.append("")
+        for src, dst, rel in incoming_external:
+            lines.append(
+                f"- {escape_label(graph.nodes[src]['label'])} "
+                f"-`{rel}`-> {escape_label(graph.nodes[dst]['label'])}"
+            )
+        lines.append("")
+    elif incoming_internal and not outgoing:
+        lines.append("**Depended on by (within this file)**")
+        lines.append("")
+        for src, dst, rel in incoming_internal:
+            lines.append(
+                f"- {escape_label(graph.nodes[src]['label'])} "
+                f"-`{rel}`-> {escape_label(graph.nodes[dst]['label'])}"
+            )
+        lines.append("")
+    else:
+        lines.extend(
+            [
+                "**Depended on by (from other files):** none discovered.",
+                "",
+            ]
+        )
+
+    lines.append(f"_Scan root: `{root}`._")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_file_explanations(graph: TopologyGraph, files: list[Path], root: Path) -> list[str]:
+    scan_root = root.parent if root.is_file() else root
+    lines = ["## File explanations", ""]
+    lines.append(
+        "One explanation per scanned YAML file: adapter role, resources, and dependency links."
+    )
+    lines.append("")
+    if not files:
+        lines.extend(["_No YAML files found._", ""])
+        return lines
+    for file_path in files:
+        relative = str(file_path.relative_to(scan_root)).replace("\\", "/")
+        lines.append(explain_file(graph, relative, root=scan_root))
+    return lines
+
+
+def write_explain_files(
+    graph: TopologyGraph, files: list[Path], root: Path, explain_dir: Path
+) -> list[Path]:
+    """Write one Markdown explain file per YAML path."""
+    scan_root = root.parent if root.is_file() else root
+    explain_dir.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    for file_path in files:
+        relative = str(file_path.relative_to(scan_root)).replace("\\", "/")
+        safe = clean_id(relative.replace("/", "_"))
+        out = explain_dir / f"{safe}.explain.md"
+        body = [
+            f"# Explain: `{relative}`",
+            "",
+            explain_file(graph, relative, root=scan_root),
+        ]
+        out.write_text("\n".join(body), encoding="utf-8")
+        written.append(out)
+    index_lines = [
+        "# YAML file explanations",
+        "",
+        f"Generated from `{scan_root}`.",
+        "",
+        f"Files explained: **{len(written)}**",
+        "",
+    ]
+    for file_path, out in zip(files, written):
+        relative = str(file_path.relative_to(scan_root)).replace("\\", "/")
+        index_lines.append(f"- [`{relative}`]({out.name})")
+    index_lines.append("")
+    (explain_dir / "README.md").write_text("\n".join(index_lines), encoding="utf-8")
+    return written
 
 
 def render_mermaid(graph: TopologyGraph, direction: str = "LR") -> str:
@@ -773,13 +993,20 @@ def render_dependency_table(graph: TopologyGraph) -> list[str]:
 
 
 def render_markdown(
-    root: Path, files: list[Path], graph: TopologyGraph, mermaid: str, title: str
+    root: Path,
+    files: list[Path],
+    graph: TopologyGraph,
+    mermaid: str,
+    title: str,
+    *,
+    include_explanations: bool = True,
 ) -> str:
     stubs = sum(1 for node in graph.nodes.values() if node.get("stub"))
+    scan_root = root.parent if root.is_file() else root
     lines = [
         f"# {title}",
         "",
-        f"Generated from `{root}`.",
+        f"Generated from `{scan_root}`.",
         "",
         "## Summary",
         "",
@@ -798,6 +1025,8 @@ def render_markdown(
         "",
     ]
     lines.extend(render_dependency_table(graph))
+    if include_explanations:
+        lines.extend(render_file_explanations(graph, files, root))
     lines.extend(
         [
             "## Notes",
@@ -805,6 +1034,7 @@ def render_markdown(
             "Schema-aware adapters emit deterministic dependency edges for Docker Compose, "
             "Kubernetes, GitHub Actions, Azure DevOps, CloudFormation, and kit domain/wave manifests. "
             "Remaining references use heuristic key matching. Unresolved targets are shown as dashed stub nodes. "
+            "Each scanned YAML file has its own explanation (adapter, resources, incoming/outgoing links). "
             "Treat this as a repository discovery map rather than authoritative runtime state.",
             "",
         ]
@@ -815,10 +1045,16 @@ def render_markdown(
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Recursively map YAML repositories and generate Markdown with Mermaid dependency topology."
+            "Recursively map YAML repositories and generate Markdown with Mermaid dependency topology "
+            "plus one explanation per YAML file."
         )
     )
-    parser.add_argument("root", nargs="?", default=".", help="Repository/folder to scan recursively")
+    parser.add_argument(
+        "root",
+        nargs="?",
+        default=".",
+        help="Repository/folder to scan recursively, or a single .yaml/.yml file",
+    )
     parser.add_argument("-o", "--output", default="topology.md", help="Output .md or .mmd file")
     parser.add_argument(
         "--direction",
@@ -843,11 +1079,23 @@ def main() -> None:
         action="store_true",
         help="Do not create stub nodes for unresolved dependency targets",
     )
+    parser.add_argument(
+        "--explain-dir",
+        default="",
+        help="Write one *.explain.md per YAML file into this directory (plus README index)",
+    )
+    parser.add_argument(
+        "--no-explanations",
+        action="store_true",
+        help="Omit the per-file explanations section from the main Markdown output",
+    )
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
-    if not root.exists() or not root.is_dir():
-        raise SystemExit(f"Repository folder not found: {root}")
+    if not root.exists():
+        raise SystemExit(f"Path not found: {root}")
+    if not root.is_dir() and not root.is_file():
+        raise SystemExit(f"Not a file or directory: {root}")
 
     enabled = {item.strip() for item in args.adapters.split(",") if item.strip()}
     unknown = enabled - set(ADAPTERS)
@@ -867,15 +1115,30 @@ def main() -> None:
     if output_format == "mermaid":
         content = mermaid
     else:
-        content = render_markdown(root, files, graph, mermaid, args.title)
+        content = render_markdown(
+            root,
+            files,
+            graph,
+            mermaid,
+            args.title,
+            include_explanations=not args.no_explanations,
+        )
 
     output.write_text(content, encoding="utf-8")
+
+    explain_count = 0
+    if args.explain_dir:
+        written = write_explain_files(graph, files, root, Path(args.explain_dir))
+        explain_count = len(written)
 
     print(
         f"YAML files: {len(files)} | nodes: {len(graph.nodes)} | "
         f"edges: {len(graph.edges)} | unresolved: {len(graph.unresolved)}"
+        + (f" | explain files: {explain_count}" if explain_count else "")
     )
     print(f"Wrote {output_format}: {output.resolve()}")
+    if args.explain_dir:
+        print(f"Wrote explanations: {Path(args.explain_dir).resolve()}")
 
 
 if __name__ == "__main__":

@@ -6,6 +6,8 @@ venv/
 out/
 topology.md
 *.topology.md
+topology-explains/
+**/topology-explains/
 
 # Python bytecode
 __pycache__/
