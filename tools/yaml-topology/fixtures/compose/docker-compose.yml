@@ -1,0 +1,23 @@
+﻿# fixtures/compose/docker-compose.yml
+version: "3.9"
+services:
+  api:
+    image: ghcr.io/example/api:1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks: [appnet]
+  worker:
+    image: ghcr.io/example/worker:1
+    depends_on: [api, db]
+    networks: [appnet]
+  db:
+    image: postgres:16
+    networks: [appnet]
+  redis:
+    image: redis:7
+    networks: [appnet]
+networks:
+  appnet:

@@ -1,0 +1,17 @@
+﻿AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  AppBucket:
+    Type: AWS::S3::Bucket
+  AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument: {}
+  AppFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: AppRole
+    Properties:
+      Role:
+        Ref: AppRole
+      Code:
+        S3Bucket:
+          Ref: AppBucket

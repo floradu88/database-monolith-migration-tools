@@ -1,8 +1,24 @@
 # YAML Topology
 
-Recursive YAML repository mapper that writes **one Markdown file with an embedded MermaidJS topology diagram**.
+Recursive YAML repository mapper that writes **one Markdown file with an embedded MermaidJS topology diagram**, including **dependency links** between resources.
 
-Part of the SQL DB modernization kit as a discovery aid for infrastructure / pipeline / compose YAML trees. Relationships are **heuristic**, not authoritative runtime state.
+Part of the SQL DB modernization kit as a discovery aid for infrastructure / pipeline / compose / manifest YAML trees.
+
+## What it maps
+
+Schema-aware adapters emit deterministic dependency edges for:
+
+| Adapter | Dependency sources |
+|---------|-------------------|
+| Docker Compose | `depends_on`, `links`, networks, volumes |
+| Kubernetes | `ownerReferences`, ConfigMap/Secret refs, volume mounts |
+| GitHub Actions | `jobs.*.needs`, `uses` |
+| Azure DevOps | stage/job `dependsOn` |
+| CloudFormation | `DependsOn`, `Ref` / `Fn::GetAtt` |
+| Kit manifests | domain ↔ wave, databases, services, SQL projects |
+| Generic | common identity/reference keys + structured `depends_on` lists |
+
+Missing targets become **dashed stub nodes** so links still appear (`-NoStubs` to disable).
 
 ## Requirements
 
@@ -20,7 +36,7 @@ cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
   -Output "D:\path\to\yaml-repo\topology.md"
 ```
 
-Scan this kit’s manifests (example):
+Scan this kit’s manifests (domain ↔ wave links):
 
 ```powershell
 .\run-topology.ps1 `
@@ -29,14 +45,21 @@ Scan this kit’s manifests (example):
   -Title "Kit Manifests Topology"
 ```
 
-Full CLI options, Mermaid directions, and safety notes: [`TOOLING.md`](TOOLING.md).
+Sample fixtures (Compose / K8s / GHA / CFN):
+
+```powershell
+.\run-topology.ps1 -Repo ".\fixtures" -Output ".\out\fixtures-topology.md" -Direction TB
+```
+
+Full CLI options: [`TOOLING.md`](TOOLING.md).
 
 ## Files
 
 | File | Role |
 |------|------|
-| `yaml-topology.py` | Scanner, relationship mapper, Mermaid + Markdown generator |
+| `yaml-topology.py` | Scanner, schema adapters, Mermaid + Markdown generator |
 | `run-topology.ps1` | Non-admin wrapper (local `.venv` + PyYAML + CLI) |
+| `fixtures/` | Small samples that exercise dependency edges |
 | `TOOLING.md` | Detailed operator guide |
 | `AI-INSTRUCTIONS.md` | Agent editing rules for this folder |
 

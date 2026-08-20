@@ -3,7 +3,9 @@ param(
   [string]$Output = "topology.md",
   [ValidateSet("LR", "RL", "TB", "BT")]
   [string]$Direction = "LR",
-  [string]$Title = "YAML Repository Topology"
+  [string]$Title = "YAML Repository Topology",
+  [string]$Adapters = "",
+  [switch]$NoStubs
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,12 +22,22 @@ Write-Host "Installing/updating the only Python dependency inside the local virt
 & $Python -m pip install --disable-pip-version-check -q pyyaml
 
 Write-Host "Recursively mapping YAML under: $Repo"
-& $Python (Join-Path $Here "yaml-topology.py") `
-  $Repo `
-  --output $Output `
-  --direction $Direction `
-  --title $Title `
-  --format markdown
+$cliArgs = @(
+  (Join-Path $Here "yaml-topology.py"),
+  $Repo,
+  "--output", $Output,
+  "--direction", $Direction,
+  "--title", $Title,
+  "--format", "markdown"
+)
+if ($Adapters) {
+  $cliArgs += @("--adapters", $Adapters)
+}
+if ($NoStubs) {
+  $cliArgs += "--no-stubs"
+}
+
+& $Python @cliArgs
 
 Write-Host "Done. Generated Markdown with an embedded MermaidJS diagram: $Output"
 Write-Host "GitHub and Mermaid-capable Markdown previews can render the fenced mermaid block directly."

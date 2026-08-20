@@ -49,12 +49,16 @@ cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
   -Repo "D:\path\to\yaml-repo" `
   -Output "D:\path\to\yaml-repo\topology.md"
 
-# Example: kit manifests
+# Example: kit manifests (domain ↔ wave + service/DB links)
 .\run-topology.ps1 `
   -Repo "..\..\manifests" `
   -Output ".\out\manifests-topology.md" `
   -Title "Kit Manifests Topology" `
   -Direction TB
+
+# Optional: limit adapters or omit unresolved stub nodes
+.\run-topology.ps1 -Repo ".\fixtures" -Output ".\out\fixtures-topology.md" -Adapters "compose,kubernetes,generic"
+.\run-topology.ps1 -Repo ".\fixtures" -Output ".\out\fixtures-nostubs.md" -NoStubs
 ```
 
 Full options: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`tools/yaml-topology/TOOLING.md`](tools/yaml-topology/TOOLING.md).

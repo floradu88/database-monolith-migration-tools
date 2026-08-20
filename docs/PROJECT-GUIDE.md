@@ -190,12 +190,13 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 
 ## 7c. YAML Topology (`tools/yaml-topology/`)
 
-**Purpose:** Recursively scan `*.yaml` / `*.yml` and emit one Markdown file with an embedded Mermaid flowchart (discovery map for infra / pipeline / compose trees).
+**Purpose:** Recursively scan `*.yaml` / `*.yml` and emit one Markdown file with an embedded Mermaid flowchart **plus dependency links** (Compose `depends_on`, K8s refs, Actions `needs`, CFN `DependsOn`/`Ref`, kit domain↔wave, etc.).
 
 | File | Role |
 |------|------|
-| `yaml-topology.py` | Scanner + heuristic relationship mapper + Mermaid/Markdown writer |
+| `yaml-topology.py` | Scanner + schema adapters + Mermaid/Markdown writer |
 | `run-topology.ps1` | Non-admin wrapper (local `.venv` + PyYAML only) |
+| `fixtures/` | Sample YAML that exercises dependency edges |
 | `TOOLING.md` | Operator guide |
 
 **Why use it:** Fast visual inventory of YAML-heavy folders without Graphviz, Docker, or admin rights. Complements DbIntelligence (code→DB) rather than replacing ownership manifests.
@@ -204,8 +205,8 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 
 | Pros | Cons |
 |------|------|
-| No admin; local `.venv` only | Relationships are heuristic (common keys) |
-| Markdown + Mermaid renders on GitHub / Mermaid previews | Not authoritative deployment/runtime state |
+| Schema adapters + stub nodes for missing targets | Not every vendor schema (Helm/Argo/Flux still future) |
+| Markdown Dependencies table + Mermaid graph | Still discovery-grade, not runtime truth |
 | Safe read-only scan (`yaml.safe_load_all`) | May surface internal names — review before sharing |
 
 ---

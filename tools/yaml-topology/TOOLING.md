@@ -199,7 +199,33 @@ Multi-document YAML separated by `---` is supported.
 
 ## Relationship discovery
 
-Arbitrary YAML has no universal topology schema, so the mapper uses common identity and relationship fields.
+The mapper uses **schema-aware adapters** first, then a **generic heuristic** pass.
+
+### Adapters (deterministic)
+
+| Adapter | Detected when | Links extracted |
+|---------|---------------|-----------------|
+| `compose` | `services:` + image/build/depends_on | `depends_on`, `links`, networks, volumes |
+| `kubernetes` | `kind` + `apiVersion` / `metadata` | ownerReferences, ConfigMap/Secret refs, volume mounts |
+| `github-actions` | `jobs` + `on` / `.github/workflows/` | `needs`, workflow/job `uses` |
+| `azure-devops` | stages/jobs + trigger/pool / `azure-pipelines.yml` | stage/job `dependsOn` |
+| `cloudformation` | `Resources` + `Type` / template version | `DependsOn`, `Ref`, `Fn::GetAtt` |
+| `kit-manifest` | domain/wave ownership YAML | domain↔wave, DBs, services, SQL projects, EF tables |
+| `generic` | everything else | identity + reference keys, structured depends lists |
+
+Enable a subset:
+
+```powershell
+.\run-topology.ps1 -Repo . -Output topology.md -Adapters "compose,kubernetes,generic"
+```
+
+Omit unresolved stub nodes:
+
+```powershell
+.\run-topology.ps1 -Repo . -Output topology.md -NoStubs
+```
+
+### Generic identity / reference keys
 
 Identity candidates include:
 
@@ -210,30 +236,23 @@ service
 app
 application
 component
+domain
+wave
 ```
 
 Reference candidates include:
 
 ```text
-dependsOn
-depends_on
-ref
-reference
-target
-service
-database
-queue
-topic
-cluster
-host
-endpoint
-backend
-upstream
+dependsOn / depends_on / dependencies / needs
+ref / reference / target
+service / database / queue / topic / cluster / host / endpoint
+backend / upstream / uses / image
+source_database / target_database / target_service / owner_team / domain
 ```
 
-A reference value is matched against resources found in other YAML documents/files. Exact resource-name matches are preferred; broader label matching is used as a fallback.
+Exact name matches are preferred. Unresolved targets become dashed stub nodes so the dependency link remains visible.
 
-Because these relationships are inferred, the generated topology should be treated as a **repository discovery map**, not authoritative runtime/deployment state.
+Treat the generated topology as a **repository discovery map**, not authoritative runtime/deployment state.
 
 ## Generated Markdown
 
@@ -241,11 +260,10 @@ The Markdown contains:
 
 1. document title
 2. scanned repository path
-3. number of YAML files
-4. number of discovered nodes
-5. number of inferred relationships
-6. a MermaidJS `flowchart`
-7. a note explaining heuristic relationship discovery
+3. counts of YAML files, nodes (including stubs), dependency links, and unresolved refs
+4. a MermaidJS `flowchart` (stubs use a dashed style)
+5. a **Dependencies** table (`From | Relation | To`)
+6. notes on adapters vs heuristics
 
 Example:
 
@@ -257,19 +275,24 @@ Generated from `C:\git\platform-infra`.
 ## Summary
 
 - YAML files scanned: **124**
-- Topology nodes: **89**
-- Inferred relationships: **73**
+- Topology nodes: **89** (stubs: **6**)
+- Dependency links: **73**
+- Unresolved references before stubbing: **6**
 
 ## Topology
 
 ```mermaid
 flowchart LR
-  payment_api["Service: payment-api"]
-  postgres["Database: postgres"]
-  payment_events["Queue: payment-events"]
-  payment_api -->|database| postgres
-  payment_api -->|queue| payment_events
+  payment_api["ComposeService: payment-api"]
+  postgres["ComposeService: postgres"]
+  payment_api -->|depends_on| postgres
 ```
+
+## Dependencies
+
+| From | Relation | To |
+|------|----------|----|
+| ComposeService: payment-api | `depends_on` | ComposeService: postgres |
 ````
 
 ## Viewing the result
@@ -340,20 +363,18 @@ The mapper:
 
 For sensitive repositories, inspect the generated Markdown before sharing it. Infrastructure identifiers such as service names, hostnames, endpoints, databases, queues, clusters, and internal component names may be present in the diagram.
 
-## Recommended future adapters
+## Adapter coverage
 
-For higher accuracy, keep the recursive scanner and Mermaid/Markdown renderer generic and add schema-aware adapters for known repository types, for example:
+Implemented schema-aware adapters:
 
 ```text
-Kubernetes / Helm
+Kubernetes (core refs)
 Docker Compose
 Azure DevOps pipelines
 GitHub Actions
 AWS CloudFormation
-Azure deployment YAML
-Argo CD
-Flux
-internal deployment schemas
+kit domain / migration-wave manifests
+generic heuristic fallback
 ```
 
-A schema-specific adapter can turn heuristic relationships into deterministic ones without changing the CLI or Markdown generation pipeline.
+Still useful future extensions: Helm chart values wiring, Argo CD / Flux source→app edges, Azure deployment YAML beyond DevOps pipelines.

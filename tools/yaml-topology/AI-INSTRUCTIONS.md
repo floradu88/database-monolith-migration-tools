@@ -10,7 +10,7 @@ Recursive YAML → Mermaid topology Markdown generator for repository discovery.
 2. Prefer the PowerShell wrapper `run-topology.ps1` for operators (local `.venv`, no admin).
 3. Keep dependencies limited to **PyYAML** in the local virtual environment — do not add Graphviz, Docker, or system-wide packages.
 4. Do not invent cloud credentials, cluster endpoints, or production hostnames in samples/docs.
-5. Treat generated topology as heuristic discovery; never promote it to authoritative ownership or cutover evidence without human review.
+5. Prefer schema adapters for deterministic dependency edges; keep generic heuristics as fallback. Generated topology remains discovery-only — never promote to authoritative ownership/cutover evidence without human review.
 6. Prefer additive changes; update `README.md` / `TOOLING.md` / root `HOW-TO-USE.md` together when CLI flags or paths change.
 
 ## Current files
@@ -19,6 +19,7 @@ Recursive YAML → Mermaid topology Markdown generator for repository discovery.
 - `run-topology.ps1`
 - `TOOLING.md`
 - `README.md`
+- `fixtures/` (Compose / K8s / GHA / CFN samples)
 - `.gitignore` (local `.venv` / generated `out/`)
 
 ## Completion report
