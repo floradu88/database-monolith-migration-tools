@@ -18,8 +18,9 @@ The only Python dependency is **PyYAML**, installed into a local `.venv` next to
 
 ## Files
 
+- `Invoke-YamlTopologyReady.ps1` — **one command** (path only): local `.venv` + scan + `{repo}\topology.md`.
 - `yaml-topology.py` — recursive YAML scanner, relationship mapper, Mermaid renderer, and Markdown generator.
-- `run-topology.ps1` — non-admin PowerShell wrapper that creates a local virtual environment and runs the CLI.
+- `run-topology.ps1` — non-admin PowerShell wrapper that creates a local virtual environment and runs the CLI (used by Ready).
 - `TOOLING.md` — these instructions.
 
 ## What the command does
@@ -72,6 +73,18 @@ GitHub and Mermaid-capable Markdown viewers can render that diagram directly.
 
 Use a normal, non-elevated PowerShell window.
 
+### One command (preferred)
+
+```powershell
+cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
+
+.\Invoke-YamlTopologyReady.ps1 "D:\path\to\my-infrastructure-repo"
+```
+
+Writes `D:\path\to\my-infrastructure-repo\topology.md` after creating the local `.venv` and installing PyYAML.
+
+### Explicit wrapper
+
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 
@@ -84,15 +97,15 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 `Set-ExecutionPolicy -Scope Process Bypass` applies only to the current PowerShell process. It does not change machine-wide policy and normally does not require administrator rights.
 
-### Simplest usage from this kit root
+### From this kit root
 
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools
 
-.\tools\yaml-topology\run-topology.ps1 -Repo .\manifests -Output .\tools\yaml-topology\out\manifests-topology.md
+.\tools\yaml-topology\Invoke-YamlTopologyReady.ps1 .\manifests -Output .\tools\yaml-topology\out\manifests-topology.md
 ```
 
-The command recursively scans the folder supplied with `-Repo` and writes one Markdown topology document.
+The command recursively scans the folder supplied and writes one Markdown topology document.
 
 ## CLI usage without the PowerShell wrapper
 

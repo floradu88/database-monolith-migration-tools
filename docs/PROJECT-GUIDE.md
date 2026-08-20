@@ -194,14 +194,15 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 
 | File | Role |
 |------|------|
+| `Invoke-YamlTopologyReady.ps1` | **One command** — path only → local `.venv` + scan + `topology.md` |
 | `yaml-topology.py` | Scanner + schema adapters + Mermaid/Markdown writer |
-| `run-topology.ps1` | Non-admin wrapper (local `.venv` + PyYAML only) |
+| `run-topology.ps1` | Non-admin wrapper used by Ready |
 | `fixtures/` | Sample YAML that exercises dependency edges |
 | `TOOLING.md` | Operator guide |
 
 **Why use it:** Fast visual inventory of YAML-heavy folders without Graphviz, Docker, or admin rights. Complements DbIntelligence (code→DB) rather than replacing ownership manifests.
 
-**One command:** `.\tools\yaml-topology\run-topology.ps1 -Repo "<path>" -Output "<path>\topology.md"`
+**One command:** `.\tools\yaml-topology\Invoke-YamlTopologyReady.ps1 "<path>"`
 
 | Pros | Cons |
 |------|------|
@@ -239,7 +240,7 @@ Deep dive: [`../src-templates/DataServices/ShowcaseDataService/README.md`](../sr
 
 1. Run DbIntelligence on a real app path (`HOW-TO-USE.md`).
 1b. Optional: explore the indexed repo via CodegraphChat — `.\scripts\Invoke-CodegraphChatReady.ps1 "<path>"` → http://localhost:5091/
-1c. Optional: map YAML trees via `.\tools\yaml-topology\run-topology.ps1 -Repo "<path>" -Output topology.md`
+1c. Optional: map YAML trees via `.\tools\yaml-topology\Invoke-YamlTopologyReady.ps1 "<path>"`
 2. Review maps; leave AMBIGUOUS on the queue.
 3. FindingsMigration → domain package + Showcase-based scaffold.
 4. Point `SourceFacade` at OnPrem monolith; land `Owned` on OnPrem lab, then Azure or Aws when ready ([`DATABASE-HOSTING.md`](../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md)).

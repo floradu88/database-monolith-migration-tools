@@ -105,15 +105,15 @@ cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphCha
 
 Open http://localhost:5091/ — details: [`src-templates/CodegraphChat/README.md`](src-templates/CodegraphChat/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
 
-### 1c. YAML topology (recursive YAML → Mermaid Markdown)
+### 1c. YAML topology (one command — path only)
 
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 
-.\run-topology.ps1 -Repo "D:\path\to\yaml-repo" -Output "D:\path\to\yaml-repo\topology.md"
+.\Invoke-YamlTopologyReady.ps1 "D:\path\to\yaml-repo"
 ```
 
-Details: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
+Writes `{repo}\topology.md`. Details: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
 
 ### 2. Setup kit only (no index)
 

@@ -38,27 +38,20 @@ cd D:\code\projects\database-monolith-migration-tools\src-templates\CodegraphCha
 
 Open http://localhost:5091/ (fnm Node + Codegraph + SPA in API wwwroot).
 
-### YAML Topology (recursive YAML → Mermaid Markdown)
+### YAML Topology (one command — path only)
 
-Maps a folder of `.yaml` / `.yml` files into one Markdown document with an embedded Mermaid flowchart. Uses a local Python `.venv` (PyYAML only); no admin rights.
+Maps a folder of `.yaml` / `.yml` files into one Markdown document with dependency links and an embedded Mermaid flowchart. Uses a local Python `.venv` (PyYAML only); no admin rights.
 
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 
-.\run-topology.ps1 `
-  -Repo "D:\path\to\yaml-repo" `
-  -Output "D:\path\to\yaml-repo\topology.md"
+.\Invoke-YamlTopologyReady.ps1 "D:\path\to\yaml-repo"
+# writes D:\path\to\yaml-repo\topology.md
 
-# Example: kit manifests (domain ↔ wave + service/DB links)
-.\run-topology.ps1 `
-  -Repo "..\..\manifests" `
-  -Output ".\out\manifests-topology.md" `
-  -Title "Kit Manifests Topology" `
-  -Direction TB
-
-# Optional: limit adapters or omit unresolved stub nodes
-.\run-topology.ps1 -Repo ".\fixtures" -Output ".\out\fixtures-topology.md" -Adapters "compose,kubernetes,generic"
-.\run-topology.ps1 -Repo ".\fixtures" -Output ".\out\fixtures-nostubs.md" -NoStubs
+# Examples
+.\Invoke-YamlTopologyReady.ps1 "..\..\manifests" -Output ".\out\manifests-topology.md"
+.\Invoke-YamlTopologyReady.ps1 ".\fixtures" -Output ".\out\fixtures-topology.md" -Open
+.\Invoke-YamlTopologyReady.ps1 ".\fixtures" -Adapters "compose,kubernetes,generic" -NoStubs
 ```
 
 Full options: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`tools/yaml-topology/TOOLING.md`](tools/yaml-topology/TOOLING.md).

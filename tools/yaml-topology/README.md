@@ -26,39 +26,37 @@ Missing targets become **dashed stub nodes** so links still appear (`-NoStubs` t
 - PowerShell 5.1+ (wrapper only)
 - No admin rights; PyYAML installs into a local `.venv` next to these scripts
 
-## Quick start
+## Quick start (one command — path only)
 
 ```powershell
 cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 
-.\run-topology.ps1 `
-  -Repo "D:\path\to\yaml-repo" `
-  -Output "D:\path\to\yaml-repo\topology.md"
+.\Invoke-YamlTopologyReady.ps1 "D:\path\to\yaml-repo"
 ```
 
-Scan this kit’s manifests (domain ↔ wave links):
+Creates the local `.venv`, installs PyYAML, scans recursively, and writes `{repo}\topology.md` (Mermaid + Dependencies table).
+
+Optional flags: `-Direction LR` · `-Open` · `-NoStubs` · `-Adapters "compose,kubernetes,generic"` · `-Output "D:\out\topology.md"`
+
+### Examples
 
 ```powershell
-.\run-topology.ps1 `
-  -Repo "..\..\manifests" `
-  -Output ".\out\manifests-topology.md" `
-  -Title "Kit Manifests Topology"
+# Kit manifests (domain ↔ wave links)
+.\Invoke-YamlTopologyReady.ps1 "..\..\manifests" -Output ".\out\manifests-topology.md"
+
+# Sample fixtures
+.\Invoke-YamlTopologyReady.ps1 ".\fixtures" -Output ".\out\fixtures-topology.md" -Open
 ```
 
-Sample fixtures (Compose / K8s / GHA / CFN):
-
-```powershell
-.\run-topology.ps1 -Repo ".\fixtures" -Output ".\out\fixtures-topology.md" -Direction TB
-```
-
-Full CLI options: [`TOOLING.md`](TOOLING.md).
+Lower-level wrapper (explicit params): `.\run-topology.ps1 -Repo ... -Output ...` — see [`TOOLING.md`](TOOLING.md).
 
 ## Files
 
 | File | Role |
 |------|------|
+| `Invoke-YamlTopologyReady.ps1` | **One command** — path only → venv + scan + `topology.md` |
 | `yaml-topology.py` | Scanner, schema adapters, Mermaid + Markdown generator |
-| `run-topology.ps1` | Non-admin wrapper (local `.venv` + PyYAML + CLI) |
+| `run-topology.ps1` | Non-admin wrapper used by Ready (local `.venv` + PyYAML + CLI) |
 | `fixtures/` | Small samples that exercise dependency edges |
 | `TOOLING.md` | Detailed operator guide |
 | `AI-INSTRUCTIONS.md` | Agent editing rules for this folder |
