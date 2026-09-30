@@ -433,3 +433,6 @@ FodyWeavers.xsd
 graphify-out/
 .db-index/
 .db-index-combined/
+
+# SQL project dacpac build outputs (bin/ already covers most paths)
+*.dacpac

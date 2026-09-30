@@ -2,9 +2,7 @@
 
 ## SQL projects
 
-Use SDK-style SQL projects with `Microsoft.Build.Sql` where the selected development and CI tooling supports them. Pin the SDK centrally in `global.json` or an approved dependency-management mechanism rather than scattering preview versions through project files.
-
-The project templates intentionally omit an explicit SDK package version. The implementation repository must pin and validate one approved version before first build.
+Use SDK-style SQL projects with `Microsoft.Build.Sql` where the selected development and CI tooling supports them. Pin the SDK centrally in `global.json` (`msbuild-sdks.Microsoft.Build.Sql`, currently `2.3.0`) rather than scattering preview versions through project files. Build dacpacs with `tools/dacpac/Invoke-DacpacReady.ps1` or `MigrationTool.Host --build-dacpac`.
 
 ## EF Core migrations
 

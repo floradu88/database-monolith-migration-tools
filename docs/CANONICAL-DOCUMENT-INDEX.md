@@ -10,7 +10,8 @@
 - `../src-templates/DbIntelligence/scripts/Initialize-DbIntelligenceNode.ps1` — fnm Node/npm; Codegraph via `fnm exec --using=lts-latest`
 - `../src-templates/FindingsMigration/README.md` — promote JSON maps to domain packages
 - `../tools/yaml-topology/README.md` — recursive YAML → Mermaid topology Markdown
-- `../src/MigrationTool.Host/README.md` — Hangfire + DbUp SQL script poller (`dotnet run`, one-shot `--poll-once`)
+- `../tools/dacpac/README.md` — build/extract `.dacpac` from `.sqlproj` / SqlPackage
+- `../src/MigrationTool.Host/README.md` — Hangfire + DbUp SQL script poller (`dotnet run`, one-shot `--poll-once`, `--build-dacpac`)
 - `../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md` — OnPrem / Azure / Aws pros/cons + config
 - `dbintelligence-runbook.md` — short PowerShell runbook + plan snapshot
 - `FUTURE-FEATURES.md` — findings → domain project roadmap

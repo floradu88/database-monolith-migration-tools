@@ -32,15 +32,16 @@ It includes:
 │   ├── CodegraphChat/        # Topic chat over an existing Codegraph index
 │   └── …                     # DataServices, FindingsMigration, …
 ├── tools/                    # Operator utilities (non-.NET)
-│   └── yaml-topology/        # Recursive YAML → Mermaid topology Markdown
-├── src/MigrationTool.Host/   # Hangfire + DbUp SQL script poller
+│   ├── yaml-topology/        # Recursive YAML → Mermaid topology Markdown
+│   └── dacpac/               # Build/extract .dacpac from .sqlproj / SqlPackage
+├── src/MigrationTool.Host/   # Hangfire + DbUp SQL script poller (+ dacpac CLI)
 ├── checklists/               # Cutover and split checklists
 └── validation/               # Checksums + validation summary
 ```
 
 ## Start here
 
-1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + CodegraphChat + YAML Topology + SQL script poller)
+1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + CodegraphChat + YAML Topology + SQL script poller + DACPAC builder)
 2. **[`docs/PROJECT-GUIDE.md`](docs/PROJECT-GUIDE.md)** — all kit projects, why use them, pros/cons
 3. **[`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)** — findings → domain project roadmap + template
 4. **[`src-templates/DataServices/ShowcaseDataService/`](src-templates/DataServices/ShowcaseDataService/)** — golden DB-as-a-Service template + [`SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md) + [`DATABASE-HOSTING.md`](src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md) (OnPrem / Azure / Aws)
@@ -115,6 +116,16 @@ cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 ```
 
 Writes `{repo}\topology.md` plus `topology-explains\*.explain.md` (one explanation per YAML). Details: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
+
+### 1d. DACPAC from SQL project (path only)
+
+```powershell
+cd C:\code\projects\database-monolith-migration-tools\tools\dacpac
+
+.\Invoke-DacpacReady.ps1 ".\fixtures\DacpacFixture" -Output "D:\dacpac-out"
+```
+
+Details: [`tools/dacpac/README.md`](tools/dacpac/README.md) · [`HOW-TO-USE.md`](HOW-TO-USE.md).
 
 ### 2. Setup kit only (no index)
 

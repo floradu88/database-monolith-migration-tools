@@ -29,10 +29,11 @@ Use this repository as a production-grade kit for decomposing a SQL Server monol
 | `src-templates/DbIntelligence/scripts/` | PowerShell setup/run; prefer `Invoke-DbIntelligenceReady.ps1` (path only); fnm Node + Codegraph via `fnm exec --using=lts-latest` |
 | `src-templates/CodegraphChat/scripts/` | Topic chat Ready: `Invoke-CodegraphChatReady.ps1` (path only) → http://localhost:5091/ |
 | `tools/yaml-topology/` | Recursive YAML → Mermaid topology Markdown (`Invoke-YamlTopologyReady.ps1` path only) |
+| `tools/dacpac/` | Build/extract `.dacpac` from `.sqlproj` / SqlPackage (`Invoke-DacpacReady.ps1` path only) |
 | `checklists/` | Cutover and source-split checklists |
 | `validation/` | Checksums and validation summary |
-| `HOW-TO-USE.md` | Canonical PowerShell command reference (DbIntelligence + CodegraphChat + YAML Topology) |
-| `src/MigrationTool.Host` | Hangfire worker that applies inbox SQL scripts with DbUp |
+| `HOW-TO-USE.md` | Canonical PowerShell command reference (DbIntelligence + CodegraphChat + YAML Topology + DACPAC) |
+| `src/MigrationTool.Host` | Hangfire worker that applies inbox SQL scripts with DbUp (+ `--build-dacpac`) |
 
 ## Completion report
 
@@ -69,3 +70,15 @@ Set `MIGRATION_CONNECTION_STRING` or `Migration:ConnectionString`. See `appsetti
 `CommandTimeoutSeconds` applies to change batches, queries, diagnostics, and ALTER pre-steps. Default is 600.
 
 A missing column runs a diagnostic query, adds the column, and retries once in that attempt.
+
+## DACPAC from SQL projects
+
+```powershell
+dotnet run --project src/MigrationTool.Host -- --dacpac-prereqs
+dotnet run --project src/MigrationTool.Host -- --build-dacpac path\to\project.sqlproj --output D:\dacpac-out
+# or
+.\tools\dacpac\Invoke-DacpacReady.ps1 -CheckPrereqs
+.\tools\dacpac\Invoke-DacpacReady.ps1 "path\to\project.sqlproj"
+```
+
+SDK-style projects use `Microsoft.Build.Sql` (pinned in `global.json`). Classic SSDT uses Visual Studio MSBuild. Extract uses SqlPackage (`--extract-dacpac`). Build/extract only — do not auto-publish.

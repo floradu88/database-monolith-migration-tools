@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddSingleton<IChangeScriptRunner, DbUpChangeScriptRunner>();
         services.AddSingleton<IQueryScriptRunner, AdoQueryScriptRunner>();
         services.AddSingleton<IScriptPoller, ScriptPoller>();
+        services.AddSingleton<IDacpacBuilder, DacpacBuilder>();
         return services;
     }
 

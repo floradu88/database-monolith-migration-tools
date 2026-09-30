@@ -93,3 +93,4 @@
 - `src-templates/Tests/Reconciliation.Tests/AI-INSTRUCTIONS.md`
 - `tools/AI-INSTRUCTIONS.md`
 - `tools/yaml-topology/AI-INSTRUCTIONS.md`
+- `tools/dacpac/AI-INSTRUCTIONS.md`

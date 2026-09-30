@@ -6,6 +6,7 @@ This kit helps you decompose a SQL Server monolith. The **runnable** local stack
 - **CodegraphChat** — ChatGPT-style topic chat over a Codegraph index (single-host on `:5091`)
 - **YAML Topology** — recursive `*.yaml` / `*.yml` scan → one Markdown file with a Mermaid diagram (`tools/yaml-topology`)
 - **SQL script poller** — Hangfire + DbUp worker that applies inbox `.sql` files to SQL Server or PostgreSQL (`src/MigrationTool.Host`)
+- **DACPAC builder** — build `.dacpac` from `.sqlproj` (VS MSBuild / `dotnet` + Microsoft.Build.Sql) or extract with SqlPackage (`tools/dacpac`)
 
 SQL scripts under `sql/` are for **DBA review**, not blind production execution.
 
@@ -78,6 +79,42 @@ Drop scripts in `src/MigrationTool.Host/scripts/inbox/ddl`, `dml`, `data`, or `q
 DbIntelligence’s API also uses port **5088**. Change `Urls` in `appsettings.json` if both are running.
 
 Details: [`src/MigrationTool.Host/README.md`](src/MigrationTool.Host/README.md).
+
+### DACPAC from SQL projects
+
+Builds a `.dacpac` from a `.sqlproj` using the same tooling Visual Studio uses (`dotnet build` for `Microsoft.Build.Sql`, VS `MSBuild` for classic SSDT). Can also extract a dacpac from a database with SqlPackage. Does **not** publish/deploy.
+
+Install tools **without** the Visual Studio IDE:
+
+```powershell
+cd C:\code\projects\database-monolith-migration-tools\tools\dacpac
+.\Install-DacpacTools.ps1 -CheckOnly
+.\Install-DacpacTools.ps1 -Yes                                      # SqlPackage (+ existing .NET SDK)
+.\Install-DacpacTools.ps1 -IncludeClassicSsdt -BuildToolsChannel 2022 -Yes   # VS 2022 Build Tools + SSDT build
+.\Install-DacpacTools.ps1 -IncludeClassicSsdt -BuildToolsChannel Latest -Yes # VS 2026 Build Tools + SSDT build
+```
+
+`global.json` pins `Microsoft.Build.Sql` `2.3.0` under `msbuild-sdks` for SDK-style projects.
+
+```powershell
+cd C:\code\projects\database-monolith-migration-tools\tools\dacpac
+
+.\Invoke-DacpacReady.ps1 -CheckPrereqs
+.\Invoke-DacpacReady.ps1 ".\fixtures\DacpacFixture" -Output "D:\dacpac-out" -Intermediate "D:\dacpac-obj"
+
+# or any kit / product .sqlproj
+.\Invoke-DacpacReady.ps1 "..\..\src-templates\DataServices\CustomerDataService\CustomerDataService.Database\CustomerDataService.Database.sqlproj"
+```
+
+Host CLI (same implementation):
+
+```powershell
+dotnet run --project src/MigrationTool.Host -- --dacpac-prereqs
+dotnet run --project src/MigrationTool.Host -- --build-dacpac path\to\project.sqlproj --output D:\dacpac-out
+dotnet run --project src/MigrationTool.Host -- --extract-dacpac D:\out\live.dacpac
+```
+
+Details: [`tools/dacpac/README.md`](tools/dacpac/README.md).
 
 ### Manual / stepwise (DbIntelligence)
 
