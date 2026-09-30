@@ -1,0 +1,14 @@
+---
+description: .NET 9 standards for the migration worker
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# .NET standards
+
+- Target `net9.0`. Keep nullable reference types enabled.
+- Use dependency injection and `IOptions<MigrationOptions>` for configuration.
+- Async for database and file work. Do not call `.Result` or `.Wait()`.
+- Log with Serilog through `ILogger<T>`. Log poll start, finish, and failure.
+- Read secrets from configuration or environment variables. Do not hardcode them.
+- Keep domain types free of DbUp, SqlClient, and Npgsql.

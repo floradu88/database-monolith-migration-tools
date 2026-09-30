@@ -1,0 +1,17 @@
+---
+description: Hangfire poll job and SQL script rules
+globs: "**/*.{cs,sql,json}"
+alwaysApply: false
+---
+
+# Hangfire and scripts
+
+- The poll job is `ScriptPollJob`. Hangfire automatic retry stays off. Folder numbering owns the 4 attempts.
+- `[DisableConcurrentExecution]` stays on the job so two polls cannot apply the same script.
+- Register the recurring job on startup. In-memory storage is expected to be empty after a restart.
+- DDL, DML, and data go through DbUp in one transaction per script, with `CommandTimeoutSeconds`.
+- Query scripts are not journaled.
+- Journal schema and table stay on the target database. Do not point Hangfire storage at that database.
+- Script kind is the inbox subfolder (`ddl`, `dml`, `data`, `query`) or a first line `-- kind: ...`.
+- Run order is ddl, then dml, then data, then query, then file name.
+- Missing-column repair may add a nullable column only. Record the diagnostic text next to the attempt.

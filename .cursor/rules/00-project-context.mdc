@@ -1,0 +1,18 @@
+---
+description: Folder poller contract for SQL Server and PostgreSQL change scripts
+alwaysApply: true
+---
+
+# Migration tool context
+
+This repo is a .NET 9 worker that polls an inbox of SQL scripts and applies them with DbUp.
+
+- Inbox, success, and failed folders come from `Migration` options. There is no processing folder.
+- DDL, DML, and data scripts run once, are journaled on the target database, and move to success.
+- Query scripts stay in the inbox and run on every poll. Each run writes `success/{name}_{utc}.result.txt`.
+- Failures are copied to the failed folder as `001_{file}.sql` plus `001_{file}.error.txt`, up to 4 attempts. The fourth failure removes the inbox file.
+- A missing column (SQL Server 207, PostgreSQL `42703`) runs a diagnostic query, applies one `ALTER TABLE ... ADD`, then retries the original script. The tool does not drop or rewrite columns.
+- `GO` lines are removed from the file and saved. Batches still run separately.
+- Providers are SQL Server and PostgreSQL, including cloud, via the connection string. Override it with `MIGRATION_CONNECTION_STRING`.
+- Hangfire storage is in-memory. The dashboard listens on localhost only.
+- Do not commit connection strings, passwords, or tokens.

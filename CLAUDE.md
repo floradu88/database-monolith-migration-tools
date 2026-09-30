@@ -32,6 +32,7 @@ Use this repository as a production-grade kit for decomposing a SQL Server monol
 | `checklists/` | Cutover and source-split checklists |
 | `validation/` | Checksums and validation summary |
 | `HOW-TO-USE.md` | Canonical PowerShell command reference (DbIntelligence + CodegraphChat + YAML Topology) |
+| `src/MigrationTool.Host` | Hangfire worker that applies inbox SQL scripts with DbUp |
 
 ## Completion report
 
@@ -42,3 +43,27 @@ When finishing work, report:
 - validation performed;
 - unresolved risks;
 - required human approvals.
+
+## SQL script poller
+
+.NET 9 worker. Hangfire polls `Migration:InboxPath` and applies SQL with DbUp to SQL Server or PostgreSQL.
+
+- Inbox: scripts waiting to run. Subfolders `ddl`, `dml`, `data`, and `query` set the script kind.
+- Success: applied DDL, DML, and data scripts, query result files, and ALTER pre-steps.
+- Failed: `001_script.sql` and `001_script.error.txt` through attempt `004`.
+
+Query scripts stay in the inbox and run every poll. Other scripts run once and are journaled on the target database.
+
+One poll cycle:
+
+```powershell
+dotnet run --project src/MigrationTool.Host -- --poll-once
+```
+
+The Hangfire dashboard is `http://127.0.0.1:5088/hangfire` when the host is running. Hangfire storage is in-memory. The DbUp journal is the table named by `JournalSchema` and `JournalTable` on the target database.
+
+Set `MIGRATION_CONNECTION_STRING` or `Migration:ConnectionString`. See `appsettings.example.json` for Azure SQL and managed PostgreSQL connection strings. Do not commit secrets.
+
+`CommandTimeoutSeconds` applies to change batches, queries, diagnostics, and ALTER pre-steps. Default is 600.
+
+A missing column runs a diagnostic query, adds the column, and retries once in that attempt.
