@@ -48,7 +48,7 @@ When finishing work, report:
 
 How to run: [`src/MigrationTool.Host/README.md`](src/MigrationTool.Host/README.md) and [`HOW-TO-USE.md`](HOW-TO-USE.md).
 
-.NET 9 worker. Hangfire polls `Migration:InboxPath` and applies SQL with DbUp to SQL Server or PostgreSQL.
+.NET 10 worker (`net10.0`). `global.json` accepts the local 10.0 SDK (`10.0.203`) and newer 10.0 SDKs, including `10.0.401`. Hangfire polls `Migration:InboxPath` and applies SQL with DbUp to SQL Server or PostgreSQL.
 
 - Inbox: scripts waiting to run. Subfolders `ddl`, `dml`, `data`, and `query` set the script kind.
 - Success: applied DDL, DML, and data scripts, query result files, and ALTER pre-steps.

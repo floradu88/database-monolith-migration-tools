@@ -61,7 +61,7 @@ Full options: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) Â
 
 ### SQL script poller
 
-Requires the .NET 9 SDK. From the repository root, set `MIGRATION_CONNECTION_STRING` or `Migration:ConnectionString` in [`src/MigrationTool.Host/appsettings.json`](src/MigrationTool.Host/appsettings.json). Cloud connection-string examples are in [`appsettings.example.json`](appsettings.example.json). Do not commit passwords.
+Requires a .NET 10.0 SDK. `global.json` accepts `10.0.203` (local) and rolls forward through the 10.0 line, including `10.0.401`. From the repository root, set `MIGRATION_CONNECTION_STRING` or `Migration:ConnectionString` in [`src/MigrationTool.Host/appsettings.json`](src/MigrationTool.Host/appsettings.json). Cloud connection-string examples are in [`appsettings.example.json`](appsettings.example.json). Do not commit passwords.
 
 ```powershell
 cd C:\code\projects\database-monolith-migration-tools

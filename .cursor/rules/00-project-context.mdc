@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Migration tool context
 
-This repo is a .NET 9 worker that polls an inbox of SQL scripts and applies them with DbUp.
+This repo is a .NET 10 worker that polls an inbox of SQL scripts and applies them with DbUp.
 
 - Inbox, success, and failed folders come from `Migration` options. There is no processing folder.
 - DDL, DML, and data scripts run once, are journaled on the target database, and move to success.

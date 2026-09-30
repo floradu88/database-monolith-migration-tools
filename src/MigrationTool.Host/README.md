@@ -6,7 +6,7 @@ Kit how-to: [`../../HOW-TO-USE.md`](../../HOW-TO-USE.md).
 
 ## Requirements
 
-- .NET 9 SDK (`dotnet --version` should report a 9.x SDK; `global.json` pins `9.0.314`)
+- .NET 10 SDK, `10.0.203` or newer on the 10.0 line, including `10.0.401` (`global.json` uses `rollForward: latestFeature`; projects target `net10.0`)
 
 ## How to run
 
