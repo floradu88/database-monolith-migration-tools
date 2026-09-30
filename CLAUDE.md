@@ -46,6 +46,8 @@ When finishing work, report:
 
 ## SQL script poller
 
+How to run: [`src/MigrationTool.Host/README.md`](src/MigrationTool.Host/README.md) and [`HOW-TO-USE.md`](HOW-TO-USE.md).
+
 .NET 9 worker. Hangfire polls `Migration:InboxPath` and applies SQL with DbUp to SQL Server or PostgreSQL.
 
 - Inbox: scripts waiting to run. Subfolders `ddl`, `dml`, `data`, and `query` set the script kind.

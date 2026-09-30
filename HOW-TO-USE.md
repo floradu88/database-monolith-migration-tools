@@ -5,6 +5,7 @@ This kit helps you decompose a SQL Server monolith. The **runnable** local stack
 - **DbIntelligence** — Codegraph + Graphify + code→SQL maps + Angular UI
 - **CodegraphChat** — ChatGPT-style topic chat over a Codegraph index (single-host on `:5091`)
 - **YAML Topology** — recursive `*.yaml` / `*.yml` scan → one Markdown file with a Mermaid diagram (`tools/yaml-topology`)
+- **SQL script poller** — Hangfire + DbUp worker that applies inbox `.sql` files to SQL Server or PostgreSQL (`src/MigrationTool.Host`)
 
 SQL scripts under `sql/` are for **DBA review**, not blind production execution.
 
@@ -57,6 +58,26 @@ cd D:\code\projects\database-monolith-migration-tools\tools\yaml-topology
 ```
 
 Full options: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) · [`tools/yaml-topology/TOOLING.md`](tools/yaml-topology/TOOLING.md).
+
+### SQL script poller
+
+Requires the .NET 9 SDK. From the repository root, set `MIGRATION_CONNECTION_STRING` or `Migration:ConnectionString` in [`src/MigrationTool.Host/appsettings.json`](src/MigrationTool.Host/appsettings.json). Cloud connection-string examples are in [`appsettings.example.json`](appsettings.example.json). Do not commit passwords.
+
+```powershell
+cd C:\code\projects\database-monolith-migration-tools
+
+# one poll, then exit
+dotnet run --project src/MigrationTool.Host -- --poll-once
+
+# keep polling; dashboard at http://127.0.0.1:5088/hangfire
+dotnet run --project src/MigrationTool.Host
+```
+
+Drop scripts in `src/MigrationTool.Host/scripts/inbox/ddl`, `dml`, `data`, or `query`. DDL, DML, and data move to `scripts/success` after one successful run. Query scripts stay in the inbox. Failures are copied to `scripts/failed` as `001_` through `004_`.
+
+DbIntelligence’s API also uses port **5088**. Change `Urls` in `appsettings.json` if both are running.
+
+Details: [`src/MigrationTool.Host/README.md`](src/MigrationTool.Host/README.md).
 
 ### Manual / stepwise (DbIntelligence)
 

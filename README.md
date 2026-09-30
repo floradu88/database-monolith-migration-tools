@@ -33,13 +33,14 @@ It includes:
 │   └── …                     # DataServices, FindingsMigration, …
 ├── tools/                    # Operator utilities (non-.NET)
 │   └── yaml-topology/        # Recursive YAML → Mermaid topology Markdown
+├── src/MigrationTool.Host/   # Hangfire + DbUp SQL script poller
 ├── checklists/               # Cutover and split checklists
 └── validation/               # Checksums + validation summary
 ```
 
 ## Start here
 
-1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + CodegraphChat + kit overview)
+1. **[`HOW-TO-USE.md`](HOW-TO-USE.md)** — PowerShell setup, run, and index commands (DbIntelligence + CodegraphChat + YAML Topology + SQL script poller)
 2. **[`docs/PROJECT-GUIDE.md`](docs/PROJECT-GUIDE.md)** — all kit projects, why use them, pros/cons
 3. **[`docs/FUTURE-FEATURES.md`](docs/FUTURE-FEATURES.md)** — findings → domain project roadmap + template
 4. **[`src-templates/DataServices/ShowcaseDataService/`](src-templates/DataServices/ShowcaseDataService/)** — golden DB-as-a-Service template + [`SHOWCASE-CUTOVER.md`](src-templates/DataServices/ShowcaseDataService/SHOWCASE-CUTOVER.md) + [`DATABASE-HOSTING.md`](src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md) (OnPrem / Azure / Aws)
