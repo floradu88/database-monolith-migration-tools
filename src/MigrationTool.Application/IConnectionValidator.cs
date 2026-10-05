@@ -6,7 +6,8 @@ public sealed record ConnectionValidationResult(
     bool Succeeded,
     ConnectionStringShapeResult Shape,
     string? ServerVersion,
-    string? Error);
+    string? Error,
+    DatabaseConnectionError? ConnectionError = null);
 
 public interface IConnectionValidator
 {

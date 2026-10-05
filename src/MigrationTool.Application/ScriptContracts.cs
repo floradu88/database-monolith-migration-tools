@@ -31,7 +31,13 @@ public interface IQueryScriptRunner
     Task<ScriptRunResult> ExecuteAsync(QueryScriptRequest script, CancellationToken cancellationToken);
 }
 
-public sealed record PollSummary(int Processed, int Succeeded, int Failed, int Repaired, bool ConnectionSkipped);
+public sealed record PollSummary(
+    int Processed,
+    int Succeeded,
+    int Failed,
+    int Repaired,
+    bool ConnectionSkipped,
+    string? ConnectionError = null);
 
 public interface IScriptPoller
 {

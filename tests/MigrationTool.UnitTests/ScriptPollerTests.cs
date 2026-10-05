@@ -159,8 +159,27 @@ public class ScriptPollerTests
         var summary = await fixture.Poller.PollAsync(CancellationToken.None);
 
         Assert.True(summary.ConnectionSkipped);
+        Assert.Contains("empty", summary.ConnectionError, StringComparison.OrdinalIgnoreCase);
         Assert.True(File.Exists(Path.Combine(fixture.Inbox, "ddl", "create_city.sql")));
         Assert.Empty(fixture.Changes.Calls);
+    }
+
+    [Fact]
+    public async Task Poll_SkipsWhenDatabaseConnectionFails()
+    {
+        using var fixture = new PollFixture();
+        fixture.Connections.Succeed = false;
+        fixture.Connections.Error = DatabaseConnectionErrorClassifier.FromSqlServer(
+            18456,
+            "Login failed for user 'admin'.");
+        fixture.Add("ddl/create_city.sql", "SELECT 1;");
+
+        var summary = await fixture.Poller.PollAsync(CancellationToken.None);
+
+        Assert.True(summary.ConnectionSkipped);
+        Assert.Contains("Login failed", summary.ConnectionError, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(fixture.Changes.Calls);
+        Assert.True(File.Exists(Path.Combine(fixture.Inbox, "ddl", "create_city.sql")));
     }
 
     private static ScriptRunResult MissingColumn(DatabaseProviderKind provider) =>
@@ -188,7 +207,14 @@ public class ScriptPollerTests
                 RepairMissingColumns = true
             };
             Store = new FileScriptStore(Microsoft.Extensions.Options.Options.Create(Options), new TestEnvironment(Root));
-            Poller = new ScriptPoller(Microsoft.Extensions.Options.Options.Create(Options), Store, Changes, Queries, NullLogger<ScriptPoller>.Instance);
+            Connections = new FakeConnectionValidator();
+            Poller = new ScriptPoller(
+                Microsoft.Extensions.Options.Options.Create(Options),
+                Store,
+                Changes,
+                Queries,
+                Connections,
+                NullLogger<ScriptPoller>.Instance);
         }
 
         public string Root { get; }
@@ -206,6 +232,8 @@ public class ScriptPollerTests
         public FakeChangeRunner Changes { get; } = new();
 
         public FakeQueryRunner Queries { get; } = new();
+
+        public FakeConnectionValidator Connections { get; }
 
         public ScriptPoller Poller { get; }
 
@@ -240,6 +268,29 @@ public class ScriptPollerTests
         {
             Calls.Add(script);
             return Task.FromResult(Handler?.Invoke(script) ?? ScriptRunResult.Ok());
+        }
+    }
+
+    private sealed class FakeConnectionValidator : IConnectionValidator
+    {
+        public bool Succeed { get; set; } = true;
+
+        public DatabaseConnectionError? Error { get; set; }
+
+        public Task<ConnectionValidationResult> ValidateAsync(
+            string? connectionString,
+            DatabaseProviderKind provider,
+            int commandTimeoutSeconds,
+            CancellationToken cancellationToken)
+        {
+            var shape = ConnectionStringShape.Validate(connectionString, provider);
+            if (!Succeed)
+            {
+                var error = Error ?? DatabaseConnectionErrorClassifier.FromSqlServer(null, "connection failed");
+                return Task.FromResult(new ConnectionValidationResult(false, shape, null, error.Format(), error));
+            }
+
+            return Task.FromResult(new ConnectionValidationResult(true, shape, "test", null));
         }
     }
 

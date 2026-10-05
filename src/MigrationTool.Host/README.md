@@ -65,6 +65,8 @@ dotnet run --project src/MigrationTool.Host -- --validate-connection --connectio
 
 This checks required keys (`Data Source`/`Server`, `Initial Catalog`/`Database`, credentials) and opens the database (`SELECT @@VERSION` / `version()`). Passwords are redacted in logs.
 
+Connection failures are classified with guidance (login failed, database missing, network/timeout, firewall, TLS/Encrypt). The poller probes the connection before running inbox scripts and skips the poll with a clear error if the database is unreachable.
+
 | Setting | Meaning |
 |---------|---------|
 | `Provider` | `SqlServer` or `PostgreSql` |

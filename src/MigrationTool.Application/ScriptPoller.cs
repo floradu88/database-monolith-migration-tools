@@ -11,6 +11,7 @@ public sealed class ScriptPoller : IScriptPoller
     private readonly IScriptStore _store;
     private readonly IChangeScriptRunner _changes;
     private readonly IQueryScriptRunner _queries;
+    private readonly IConnectionValidator _connections;
     private readonly ILogger<ScriptPoller> _logger;
 
     public ScriptPoller(
@@ -18,12 +19,14 @@ public sealed class ScriptPoller : IScriptPoller
         IScriptStore store,
         IChangeScriptRunner changes,
         IQueryScriptRunner queries,
+        IConnectionValidator connections,
         ILogger<ScriptPoller> logger)
     {
         _options = options.Value;
         _store = store;
         _changes = changes;
         _queries = queries;
+        _connections = connections;
         _logger = logger;
     }
 
@@ -31,13 +34,26 @@ public sealed class ScriptPoller : IScriptPoller
     {
         if (string.IsNullOrWhiteSpace(_options.ConnectionString))
         {
-            _logger.LogWarning("Migration connection string is empty. Poll skipped.");
-            return new PollSummary(0, 0, 0, 0, true);
+            var empty = DatabaseConnectionErrorClassifier.Empty();
+            _logger.LogWarning("{Message} {Guidance}", empty.Summary, empty.Guidance);
+            return new PollSummary(0, 0, 0, 0, true, empty.Format());
         }
 
         if (_options.MaxRetries < 1)
         {
             throw new InvalidOperationException("Migration:MaxRetries must be at least 1.");
+        }
+
+        var connectionCheck = await _connections.ValidateAsync(
+            _options.ConnectionString,
+            _options.Provider,
+            _options.CommandTimeoutSeconds,
+            cancellationToken);
+        if (!connectionCheck.Succeeded)
+        {
+            var detail = connectionCheck.ConnectionError?.Format() ?? connectionCheck.Error ?? "Connection failed.";
+            _logger.LogError("Poll skipped because the database is unreachable. {Detail}", detail);
+            return new PollSummary(0, 0, 0, 0, true, detail);
         }
 
         var scripts = _store.ListInbox()

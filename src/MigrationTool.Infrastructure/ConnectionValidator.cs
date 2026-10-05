@@ -24,12 +24,13 @@ public sealed class ConnectionValidator : IConnectionValidator
         var shape = ConnectionStringShape.Validate(connectionString, provider);
         if (!shape.IsValid)
         {
+            var shapeError = DatabaseConnectionErrorClassifier.InvalidShape(string.Join(" ", shape.Errors));
             foreach (var error in shape.Errors)
             {
                 _logger.LogError("Connection string validation: {Error}", error);
             }
 
-            return new ConnectionValidationResult(false, shape, null, string.Join("; ", shape.Errors));
+            return new ConnectionValidationResult(false, shape, null, shapeError.Format(), shapeError);
         }
 
         foreach (var warning in shape.Warnings)
@@ -70,8 +71,14 @@ public sealed class ConnectionValidator : IConnectionValidator
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Database connection failed for redacted string {Redacted}", shape.RedactedConnectionString);
-            return new ConnectionValidationResult(false, shape, null, ex.Message);
+            var mapped = DatabaseConnectionExceptionMapper.Map(ex, provider);
+            _logger.LogError(
+                ex,
+                "Database connection failed ({Kind}) for redacted string {Redacted}. {Guidance}",
+                mapped.Kind,
+                shape.RedactedConnectionString,
+                mapped.Guidance);
+            return new ConnectionValidationResult(false, shape, null, mapped.Format(), mapped);
         }
     }
 }

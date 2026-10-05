@@ -43,7 +43,23 @@ if (args.Contains("--validate-connection"))
     }
     else
     {
-        Log.Error("Connection validation failed: {Error}", result.Error);
+        if (result.ConnectionError is not null)
+        {
+            Log.Error(
+                "Connection validation failed ({Kind}): {Summary}. {Guidance}",
+                result.ConnectionError.Kind,
+                result.ConnectionError.Summary,
+                result.ConnectionError.Guidance);
+            if (!string.IsNullOrWhiteSpace(result.ConnectionError.ProviderMessage))
+            {
+                Log.Error("Provider message: {Message}", result.ConnectionError.ProviderMessage);
+            }
+        }
+        else
+        {
+            Log.Error("Connection validation failed: {Error}", result.Error);
+        }
+
         Environment.ExitCode = 1;
     }
 
@@ -126,6 +142,12 @@ if (args.Contains("--poll-once"))
         summary.Failed,
         summary.Repaired,
         summary.ConnectionSkipped);
+    if (summary.ConnectionSkipped && !string.IsNullOrWhiteSpace(summary.ConnectionError))
+    {
+        Log.Error("Connection issue: {ConnectionError}", summary.ConnectionError);
+        Environment.ExitCode = 1;
+    }
+
     return;
 }
 
