@@ -7,7 +7,8 @@ alwaysApply: true
 
 This repo is a .NET 10 worker that polls an inbox of SQL scripts and applies them with DbUp.
 
-- Primary operator path: clone → set `MIGRATION_CONNECTION_STRING` → drop `.sql` into `scripts/inbox/{ddl|dml|data|query}` → `dotnet run --project src/MigrationTool.Host -- --poll-once`.
+- Primary operator path: clone → set `MIGRATION_CONNECTION_STRING` → `--validate-connection` → drop `.sql` into `scripts/inbox/{ddl|dml|data|query}` → `dotnet run --project src/MigrationTool.Host -- --poll-once`.
+- For AWS RDS SQL Server use `Data Source=host,1433;Initial Catalog=...;` (or `Server=host,1433;Database=...;`) with `Encrypt=True`. Validate with `--validate-connection` (shape + live open; passwords redacted in logs).
 - Inbox scripts may use `CREATE OR ALTER PROCEDURE` (and other `CREATE OR ALTER …`). That is the recommended shape when re-running scripts from a SQL Server project. Do not confuse this with dacpac SSDT Build objects (those stay declarative `CREATE …`).
 - Inbox, success, and failed folders come from `Migration` options. There is no processing folder.
 - DDL, DML, and data scripts run once, are journaled on the target database, and move to success.

@@ -27,11 +27,15 @@ git clone https://github.com/floradu88/database-monolith-migration-tools.git
 cd database-monolith-migration-tools
 
 # Option A — environment (preferred; do not commit secrets)
-$env:MIGRATION_CONNECTION_STRING = "Server=.;Database=YourDb;Trusted_Connection=True;TrustServerCertificate=True;"
-# Provider defaults to SqlServer in appsettings.json
+# AWS RDS SQL Server (port 1433 after a comma on Data Source / Server):
+$env:MIGRATION_CONNECTION_STRING = "Data Source=mydb.abc123.us-east-1.rds.amazonaws.com,1433;Initial Catalog=YourDb;User ID=admin;Password=***;Encrypt=True;TrustServerCertificate=False;"
+# Or: Server=mydb.abc123.us-east-1.rds.amazonaws.com,1433;Database=YourDb;User Id=admin;Password=***;Encrypt=True;
 
 # Option B — edit src/MigrationTool.Host/appsettings.json → Migration:ConnectionString
-# Cloud examples: ../../appsettings.example.json
+# More examples: ../../appsettings.example.json
+
+# Validate shape + open a live connection (prints redacted string only)
+dotnet run --project src/MigrationTool.Host -- --validate-connection
 
 # Copy scripts exported from your SQL Server / SSDT project into the inbox.
 # Prefer CREATE OR ALTER for procedures/views/functions so re-runs are safe.
@@ -50,7 +54,16 @@ DbIntelligence’s API also defaults to port **5088**. If both are running, set 
 
 ## Configuration
 
-Set the target database in [`appsettings.json`](appsettings.json) or with `MIGRATION_CONNECTION_STRING`. Placeholder cloud strings are in [`../../appsettings.example.json`](../../appsettings.example.json). Do not commit passwords.
+Set the target database in [`appsettings.json`](appsettings.json) or with `MIGRATION_CONNECTION_STRING`. Placeholder cloud strings (including **AWS RDS SQL Server on port 1433** with `Data Source=` / `Server=`) are in [`../../appsettings.example.json`](../../appsettings.example.json). Do not commit passwords.
+
+Validate before polling:
+
+```powershell
+dotnet run --project src/MigrationTool.Host -- --validate-connection
+dotnet run --project src/MigrationTool.Host -- --validate-connection --connection "Data Source=host,1433;Initial Catalog=db;User ID=u;Password=p;Encrypt=True;"
+```
+
+This checks required keys (`Data Source`/`Server`, `Initial Catalog`/`Database`, credentials) and opens the database (`SELECT @@VERSION` / `version()`). Passwords are redacted in logs.
 
 | Setting | Meaning |
 |---------|---------|
@@ -65,7 +78,7 @@ Set the target database in [`appsettings.json`](appsettings.json) or with `MIGRA
 
 Put files in `scripts/inbox/ddl`, `dml`, `data`, or `query`. A first line `-- kind: ddl|dml|data|query` works when the file is not in one of those folders.
 
-Typical SQL-project procedure script for the poller:
+Typical SQL-project procedure script for the poller (also see [`scripts/inbox/ddl/002_example_create_or_alter_procedure.sql`](scripts/inbox/ddl/002_example_create_or_alter_procedure.sql)):
 
 ```sql
 -- kind: ddl

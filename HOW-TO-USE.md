@@ -70,9 +70,13 @@ Requires a .NET 10.0 SDK. `global.json` accepts `10.0.203` (local) and rolls for
 git clone https://github.com/floradu88/database-monolith-migration-tools.git
 cd database-monolith-migration-tools
 
-$env:MIGRATION_CONNECTION_STRING = "Server=.;Database=YourDb;Trusted_Connection=True;TrustServerCertificate=True;"
+$env:MIGRATION_CONNECTION_STRING = "Data Source=mydb.abc123.us-east-1.rds.amazonaws.com,1433;Initial Catalog=YourDb;User ID=admin;Password=***;Encrypt=True;TrustServerCertificate=False;"
+# or Server=mydb....rds.amazonaws.com,1433;Database=YourDb;User Id=admin;Password=***;Encrypt=True;
 # or set Migration:ConnectionString in src/MigrationTool.Host/appsettings.json
-# Cloud examples: appsettings.example.json — do not commit passwords
+# More examples: appsettings.example.json — do not commit passwords
+
+# Validate connection string shape + live open (recommended before first poll)
+dotnet run --project src/MigrationTool.Host -- --validate-connection
 
 # Drop scripts from your SQL project into the inbox (ddl for procedures/schema)
 # Example: CREATE OR ALTER PROCEDURE ...  →  src/MigrationTool.Host/scripts/inbox/ddl/

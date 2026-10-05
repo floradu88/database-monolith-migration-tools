@@ -26,6 +26,30 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 
 app.MapGet("/", () => Results.Text("Migration tool is running. Hangfire dashboard: /hangfire"));
 
+if (args.Contains("--validate-connection"))
+{
+    var options = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MigrationOptions>>().Value;
+    var connection = GetFlagValue(args, "--connection")
+        ?? Environment.GetEnvironmentVariable("MIGRATION_CONNECTION_STRING")
+        ?? options.ConnectionString;
+    var result = await app.Services.GetRequiredService<IConnectionValidator>()
+        .ValidateAsync(connection, options.Provider, options.CommandTimeoutSeconds, CancellationToken.None);
+    if (result.Succeeded)
+    {
+        Log.Information(
+            "Connection validation succeeded. Server={Server}, Database={Database}",
+            result.Shape.Server,
+            result.Shape.Database);
+    }
+    else
+    {
+        Log.Error("Connection validation failed: {Error}", result.Error);
+        Environment.ExitCode = 1;
+    }
+
+    return;
+}
+
 if (args.Contains("--dacpac-prereqs"))
 {
     var report = app.Services.GetRequiredService<IDacpacBuilder>().GetPrerequisites();
