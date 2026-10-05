@@ -1,6 +1,8 @@
 # DACPAC builder
 
-Build a `.dacpac` from a SQL Server `.sqlproj`, or extract one from a live database with Visual Studio / .NET DAC tools.
+Build, extract, or publish a `.dacpac` from a SQL Server `.sqlproj` using Visual Studio / .NET DAC tools.
+
+**Not the inbox script poller.** To clone the tool, set a connection string, drop exported `.sql` (including `CREATE OR ALTER PROCEDURE`), and run them on a database, use [`src/MigrationTool.Host/README.md`](../../src/MigrationTool.Host/README.md) and `--poll-once` instead. SSDT **Build** objects in a `.sqlproj` must stay declarative `CREATE …` (no `CREATE OR ALTER` / `GO`); that constraint does **not** apply to poller inbox scripts.
 
 ## Install tools (no Visual Studio IDE)
 

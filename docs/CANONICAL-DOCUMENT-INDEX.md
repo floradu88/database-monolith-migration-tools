@@ -11,7 +11,7 @@
 - `../src-templates/FindingsMigration/README.md` — promote JSON maps to domain packages
 - `../tools/yaml-topology/README.md` — recursive YAML → Mermaid topology Markdown
 - `../tools/dacpac/README.md` — build/extract `.dacpac` from `.sqlproj` / SqlPackage
-- `../src/MigrationTool.Host/README.md` — Hangfire + DbUp SQL script poller (`dotnet run`, one-shot `--poll-once`, `--build-dacpac`)
+- `../src/MigrationTool.Host/README.md` — Hangfire + DbUp SQL script poller (clone → connection string → inbox `.sql` with `CREATE OR ALTER` OK → `--poll-once`; also `--build-dacpac` / `--publish-dacpac`)
 - `../src-templates/DataServices/ShowcaseDataService/DATABASE-HOSTING.md` — OnPrem / Azure / Aws pros/cons + config
 - `dbintelligence-runbook.md` — short PowerShell runbook + plan snapshot
 - `FUTURE-FEATURES.md` — findings → domain project roadmap

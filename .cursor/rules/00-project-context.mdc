@@ -7,6 +7,8 @@ alwaysApply: true
 
 This repo is a .NET 10 worker that polls an inbox of SQL scripts and applies them with DbUp.
 
+- Primary operator path: clone → set `MIGRATION_CONNECTION_STRING` → drop `.sql` into `scripts/inbox/{ddl|dml|data|query}` → `dotnet run --project src/MigrationTool.Host -- --poll-once`.
+- Inbox scripts may use `CREATE OR ALTER PROCEDURE` (and other `CREATE OR ALTER …`). That is the recommended shape when re-running scripts from a SQL Server project. Do not confuse this with dacpac SSDT Build objects (those stay declarative `CREATE …`).
 - Inbox, success, and failed folders come from `Migration` options. There is no processing folder.
 - DDL, DML, and data scripts run once, are journaled on the target database, and move to success.
 - Query scripts stay in the inbox and run on every poll. Each run writes `success/{name}_{utc}.result.txt`.
@@ -16,4 +18,4 @@ This repo is a .NET 10 worker that polls an inbox of SQL scripts and applies the
 - Providers are SQL Server and PostgreSQL, including cloud, via the connection string. Override it with `MIGRATION_CONNECTION_STRING`.
 - Hangfire storage is in-memory. The dashboard listens on localhost only.
 - Do not commit connection strings, passwords, or tokens.
-- DACPAC: `--build-dacpac` builds from `.sqlproj` via `dotnet` (Microsoft.Build.Sql) or VS MSBuild (classic SSDT). `--extract-dacpac` / `--publish-dacpac` use SqlPackage (prefer `--script-only` before publish; default blocks possible data loss). Prefer `tools/dacpac/Invoke-DacpacReady.ps1` and `Install-DacpacTools.ps1`.
+- DACPAC (separate path): `--build-dacpac` / `--extract-dacpac` / `--publish-dacpac` via SqlPackage; prefer `--script-only` before publish. Prefer `tools/dacpac/Invoke-DacpacReady.ps1` and `Install-DacpacTools.ps1`.

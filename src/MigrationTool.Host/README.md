@@ -4,21 +4,47 @@ Hangfire worker that polls an inbox of `.sql` files and applies them with DbUp t
 
 Kit how-to: [`../../HOW-TO-USE.md`](../../HOW-TO-USE.md).
 
+## Choose the right path
+
+| Goal | Use this |
+|------|----------|
+| Clone the tool, set a connection string, drop `.sql` from a SQL Server project, run them on a database | **This poller** (`--poll-once`) |
+| Prefer idempotent procedure scripts | Use `CREATE OR ALTER PROCEDURE` (and other `CREATE OR ALTER …`) in inbox scripts — **supported here** |
+| Build / extract / publish a `.dacpac` from a `.sqlproj` | [DACPAC tools](#dacpac-from-sql-projects) — SSDT Build objects must stay declarative `CREATE …` (no `CREATE OR ALTER` / `GO` in Build files) |
+
+Most “run my SP scripts on the DB” work should use the poller, not dacpac publish.
+
 ## Requirements
 
 - .NET 10 SDK, `10.0.203` or newer on the 10.0 line, including `10.0.401` (`global.json` uses `rollForward: latestFeature`; projects target `net10.0`)
 
-## How to run
+## Quick start: clone → connect → drop scripts → run
 
-From the repository root:
+From a machine with the .NET 10 SDK:
 
 ```powershell
-cd C:\code\projects\database-monolith-migration-tools
+git clone https://github.com/floradu88/database-monolith-migration-tools.git
+cd database-monolith-migration-tools
+
+# Option A — environment (preferred; do not commit secrets)
+$env:MIGRATION_CONNECTION_STRING = "Server=.;Database=YourDb;Trusted_Connection=True;TrustServerCertificate=True;"
+# Provider defaults to SqlServer in appsettings.json
+
+# Option B — edit src/MigrationTool.Host/appsettings.json → Migration:ConnectionString
+# Cloud examples: ../../appsettings.example.json
+
+# Copy scripts exported from your SQL Server / SSDT project into the inbox.
+# Prefer CREATE OR ALTER for procedures/views/functions so re-runs are safe.
+# Example:
+#   copy MyProc.sql src\MigrationTool.Host\scripts\inbox\ddl\
+# Or add a first line: -- kind: ddl
 
 dotnet run --project src/MigrationTool.Host -- --poll-once
 ```
 
-That runs one poll and exits. Leave off `--poll-once` to keep the process up. The Hangfire dashboard is [http://127.0.0.1:5088/hangfire](http://127.0.0.1:5088/hangfire) and only accepts localhost. Job storage is in memory; the schedule is registered again on startup.
+- Succeeded DDL/DML/data scripts move to `src/MigrationTool.Host/scripts/success`.
+- Failures appear under `scripts/failed` as `001_name.sql` + `001_name.error.txt` (up to `004_`).
+- Leave the process running (omit `--poll-once`) to keep polling; dashboard: [http://127.0.0.1:5088/hangfire](http://127.0.0.1:5088/hangfire) (localhost only).
 
 DbIntelligence’s API also defaults to port **5088**. If both are running, set `Urls` in [`appsettings.json`](appsettings.json) to another localhost port.
 
@@ -39,6 +65,21 @@ Set the target database in [`appsettings.json`](appsettings.json) or with `MIGRA
 
 Put files in `scripts/inbox/ddl`, `dml`, `data`, or `query`. A first line `-- kind: ddl|dml|data|query` works when the file is not in one of those folders.
 
+Typical SQL-project procedure script for the poller:
+
+```sql
+-- kind: ddl
+CREATE OR ALTER PROCEDURE [dbo].[usp_Example]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT @Id AS Id;
+END
+```
+
+You can leave SSDT-style `CREATE PROCEDURE` if you only run once; `CREATE OR ALTER` is recommended when you may drop the same script again.
+
 - DDL, DML, and data run once, are journaled, and move to `scripts/success`.
 - Query scripts stay in the inbox and run every poll. Each run writes `scripts/success/{name}_{utc}.result.txt`.
 - A failure copies `001_{file}.sql` and `001_{file}.error.txt` into `scripts/failed`.
@@ -47,7 +88,7 @@ Put files in `scripts/inbox/ddl`, `dml`, `data`, or `query`. A first line `-- ki
 
 ## DACPAC from SQL projects
 
-Build a `.dacpac` from a `.sqlproj`, or extract one with SqlPackage (does not publish):
+Separate path for packaging desired-state `.sqlproj` models (not required to run inbox scripts). Build, extract, or publish a `.dacpac`:
 
 ```powershell
 dotnet run --project src/MigrationTool.Host -- --dacpac-prereqs
@@ -62,3 +103,5 @@ dotnet run --project src/MigrationTool.Host -- --publish-dacpac D:\out\live.dacp
 ```
 
 `--build-dacpac` accepts a `.sqlproj` or a folder with exactly one `.sqlproj`. Path-only Ready script: [`../../tools/dacpac/Invoke-DacpacReady.ps1`](../../tools/dacpac/Invoke-DacpacReady.ps1) (`-CheckPrereqs`, `-Publish`, `-ScriptOnly`). SDK-style projects use `Microsoft.Build.Sql` (pinned in root `global.json`). Classic SSDT projects use Visual Studio MSBuild. Extract/publish use `SqlPackage.exe`.
+
+SSDT **Build** scripts inside a `.sqlproj` must remain declarative (`CREATE PROCEDURE` / `CREATE TABLE`, one object per file, no `CREATE OR ALTER` / `GO`). That constraint applies only to dacpac builds — not to poller inbox scripts.

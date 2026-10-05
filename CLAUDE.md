@@ -49,17 +49,21 @@ When finishing work, report:
 
 How to run: [`src/MigrationTool.Host/README.md`](src/MigrationTool.Host/README.md) and [`HOW-TO-USE.md`](HOW-TO-USE.md).
 
+**Primary path for “clone → set connection string → drop SQL scripts → run on DB.”** Prefer `CREATE OR ALTER PROCEDURE` (and other `CREATE OR ALTER …`) in inbox scripts; that is supported. Do not confuse this with dacpac SSDT Build scripts (those stay declarative `CREATE …`).
+
 .NET 10 worker (`net10.0`). `global.json` accepts the local 10.0 SDK (`10.0.203`) and newer 10.0 SDKs, including `10.0.401`. Hangfire polls `Migration:InboxPath` and applies SQL with DbUp to SQL Server or PostgreSQL.
 
-- Inbox: scripts waiting to run. Subfolders `ddl`, `dml`, `data`, and `query` set the script kind.
+- Inbox: scripts waiting to run. Subfolders `ddl`, `dml`, `data`, and `query` set the script kind (or first line `-- kind: …`).
 - Success: applied DDL, DML, and data scripts, query result files, and ALTER pre-steps.
 - Failed: `001_script.sql` and `001_script.error.txt` through attempt `004`.
 
 Query scripts stay in the inbox and run every poll. Other scripts run once and are journaled on the target database.
 
-One poll cycle:
-
 ```powershell
+git clone https://github.com/floradu88/database-monolith-migration-tools.git
+cd database-monolith-migration-tools
+$env:MIGRATION_CONNECTION_STRING = "Server=.;Database=YourDb;Trusted_Connection=True;TrustServerCertificate=True;"
+# copy *.sql into src/MigrationTool.Host/scripts/inbox/ddl/
 dotnet run --project src/MigrationTool.Host -- --poll-once
 ```
 
@@ -73,12 +77,15 @@ A missing column runs a diagnostic query, adds the column, and retries once in t
 
 ## DACPAC from SQL projects
 
+Separate from the inbox poller. Use when you need a `.dacpac` model (build/extract/publish), not when you only want to run exported `.sql` scripts.
+
 ```powershell
 dotnet run --project src/MigrationTool.Host -- --dacpac-prereqs
 dotnet run --project src/MigrationTool.Host -- --build-dacpac path\to\project.sqlproj --output D:\dacpac-out
+dotnet run --project src/MigrationTool.Host -- --publish-dacpac D:\out\app.dacpac --script-only
 # or
 .\tools\dacpac\Invoke-DacpacReady.ps1 -CheckPrereqs
 .\tools\dacpac\Invoke-DacpacReady.ps1 "path\to\project.sqlproj"
 ```
 
-SDK-style projects use `Microsoft.Build.Sql` (pinned in `global.json`). Classic SSDT uses Visual Studio MSBuild. Extract uses SqlPackage (`--extract-dacpac`). Build/extract only — do not auto-publish.
+SDK-style projects use `Microsoft.Build.Sql` (pinned in `global.json`). Classic SSDT uses Visual Studio MSBuild. Extract/publish use SqlPackage. Prefer `--script-only` before publish; default blocks possible data loss. SSDT Build objects must remain `CREATE …` (no `CREATE OR ALTER` / `GO` in Build files).

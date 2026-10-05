@@ -5,8 +5,8 @@ This kit helps you decompose a SQL Server monolith. The **runnable** local stack
 - **DbIntelligence** — Codegraph + Graphify + code→SQL maps + Angular UI
 - **CodegraphChat** — ChatGPT-style topic chat over a Codegraph index (single-host on `:5091`)
 - **YAML Topology** — recursive `*.yaml` / `*.yml` scan → one Markdown file with a Mermaid diagram (`tools/yaml-topology`)
-- **SQL script poller** — Hangfire + DbUp worker that applies inbox `.sql` files to SQL Server or PostgreSQL (`src/MigrationTool.Host`)
-- **DACPAC builder** — build `.dacpac` from `.sqlproj` (VS MSBuild / `dotnet` + Microsoft.Build.Sql) or extract with SqlPackage (`tools/dacpac`)
+- **SQL script poller** — Hangfire + DbUp: clone → connection string → drop inbox `.sql` (prefer `CREATE OR ALTER`) → `--poll-once` (`src/MigrationTool.Host`)
+- **DACPAC builder** — build/extract/publish `.dacpac` from `.sqlproj` (separate from inbox scripts; `tools/dacpac`)
 
 SQL scripts under `sql/` are for **DBA review**, not blind production execution.
 
@@ -62,10 +62,21 @@ Full options: [`tools/yaml-topology/README.md`](tools/yaml-topology/README.md) �
 
 ### SQL script poller
 
-Requires a .NET 10.0 SDK. `global.json` accepts `10.0.203` (local) and rolls forward through the 10.0 line, including `10.0.401`. From the repository root, set `MIGRATION_CONNECTION_STRING` or `Migration:ConnectionString` in [`src/MigrationTool.Host/appsettings.json`](src/MigrationTool.Host/appsettings.json). Cloud connection-string examples are in [`appsettings.example.json`](appsettings.example.json). Do not commit passwords.
+**Use this** when you want to clone the repo, set a connection string, drop `.sql` files (including exports from a SQL Server / SSDT project), and run them on a database. Prefer `CREATE OR ALTER PROCEDURE` (and other `CREATE OR ALTER …`) in those scripts so re-runs are safe. That is supported by the poller. DACPAC/SSDT Build objects are a separate path (see below).
+
+Requires a .NET 10.0 SDK. `global.json` accepts `10.0.203` (local) and rolls forward through the 10.0 line, including `10.0.401`.
 
 ```powershell
-cd C:\code\projects\database-monolith-migration-tools
+git clone https://github.com/floradu88/database-monolith-migration-tools.git
+cd database-monolith-migration-tools
+
+$env:MIGRATION_CONNECTION_STRING = "Server=.;Database=YourDb;Trusted_Connection=True;TrustServerCertificate=True;"
+# or set Migration:ConnectionString in src/MigrationTool.Host/appsettings.json
+# Cloud examples: appsettings.example.json — do not commit passwords
+
+# Drop scripts from your SQL project into the inbox (ddl for procedures/schema)
+# Example: CREATE OR ALTER PROCEDURE ...  →  src/MigrationTool.Host/scripts/inbox/ddl/
+Copy-Item "D:\path\to\exported\*.sql" ".\src\MigrationTool.Host\scripts\inbox\ddl\" -Force
 
 # one poll, then exit
 dotnet run --project src/MigrationTool.Host -- --poll-once
@@ -74,7 +85,7 @@ dotnet run --project src/MigrationTool.Host -- --poll-once
 dotnet run --project src/MigrationTool.Host
 ```
 
-Drop scripts in `src/MigrationTool.Host/scripts/inbox/ddl`, `dml`, `data`, or `query`. DDL, DML, and data move to `scripts/success` after one successful run. Query scripts stay in the inbox. Failures are copied to `scripts/failed` as `001_` through `004_`.
+Inbox folders: `src/MigrationTool.Host/scripts/inbox/ddl`, `dml`, `data`, or `query` (or first line `-- kind: ddl|dml|data|query`). DDL, DML, and data move to `scripts/success` after one successful run. Query scripts stay in the inbox. Failures are copied to `scripts/failed` as `001_` through `004_`. `GO` batches are preserved; `CREATE OR ALTER` is allowed.
 
 DbIntelligence’s API also uses port **5088**. Change `Urls` in `appsettings.json` if both are running.
 
@@ -82,7 +93,7 @@ Details: [`src/MigrationTool.Host/README.md`](src/MigrationTool.Host/README.md).
 
 ### DACPAC from SQL projects
 
-Builds a `.dacpac` from a `.sqlproj` using the same tooling Visual Studio uses (`dotnet build` for `Microsoft.Build.Sql`, VS `MSBuild` for classic SSDT). Can also extract a dacpac from a database with SqlPackage. Does **not** publish/deploy.
+Builds, extracts, or publishes a `.dacpac` from a `.sqlproj` (desired-state model). **Not required** to run inbox scripts with the poller. SSDT Build scripts must stay declarative `CREATE …` (no `CREATE OR ALTER` / `GO` in Build files). For “drop scripts and run them,” use the SQL script poller above.
 
 Install tools **without** the Visual Studio IDE:
 
