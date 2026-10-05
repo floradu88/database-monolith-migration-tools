@@ -37,6 +37,10 @@ $env:MIGRATION_CONNECTION_STRING = "Data Source=mydb.abc123.us-east-1.rds.amazon
 # Validate shape + open a live connection (prints redacted string only)
 dotnet run --project src/MigrationTool.Host -- --validate-connection
 
+# DNS resolve + ICMP ping (optional) + TCP port probe (no SQL login)
+dotnet run --project src/MigrationTool.Host -- --check-network
+# alias: --ping
+
 # Copy scripts exported from your SQL Server / SSDT project into the inbox.
 # Prefer CREATE OR ALTER for procedures/views/functions so re-runs are safe.
 # Example:
@@ -59,13 +63,18 @@ Set the target database in [`appsettings.json`](appsettings.json) or with `MIGRA
 Validate before polling:
 
 ```powershell
+# DNS + ICMP (optional) + TCP port — no credentials used for login
+dotnet run --project src/MigrationTool.Host -- --check-network
+dotnet run --project src/MigrationTool.Host -- --ping
+
+# Shape + network + live SQL open (SELECT @@VERSION / version())
 dotnet run --project src/MigrationTool.Host -- --validate-connection
 dotnet run --project src/MigrationTool.Host -- --validate-connection --connection "Data Source=host,1433;Initial Catalog=db;User ID=u;Password=p;Encrypt=True;"
 ```
 
-This checks required keys (`Data Source`/`Server`, `Initial Catalog`/`Database`, credentials) and opens the database (`SELECT @@VERSION` / `version()`). Passwords are redacted in logs.
+`--check-network` / `--ping` resolve the host, attempt ICMP ping (often blocked on AWS), then open a TCP socket to the DB port (1433 / 5432). TCP success is required; ICMP is informational. `--validate-connection` runs the same network steps, then opens the database. Passwords are redacted in logs.
 
-Connection failures are classified with guidance (login failed, database missing, network/timeout, firewall, TLS/Encrypt). The poller probes the connection before running inbox scripts and skips the poll with a clear error if the database is unreachable.
+Connection failures are classified with guidance (login failed, database missing, network/timeout, firewall, TLS/Encrypt). The poller probes the connection (including network) before running inbox scripts and skips the poll with a clear error if the database is unreachable.
 
 | Setting | Meaning |
 |---------|---------|

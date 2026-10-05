@@ -7,7 +7,16 @@ public sealed record ConnectionValidationResult(
     ConnectionStringShapeResult Shape,
     string? ServerVersion,
     string? Error,
-    DatabaseConnectionError? ConnectionError = null);
+    DatabaseConnectionError? ConnectionError = null,
+    NetworkReachabilityReport? Network = null);
+
+public interface INetworkProbe
+{
+    Task<NetworkReachabilityReport> ProbeAsync(
+        DatabaseEndpoint endpoint,
+        int timeoutSeconds,
+        CancellationToken cancellationToken);
+}
 
 public interface IConnectionValidator
 {
@@ -15,5 +24,12 @@ public interface IConnectionValidator
         string? connectionString,
         DatabaseProviderKind provider,
         int commandTimeoutSeconds,
+        CancellationToken cancellationToken,
+        bool openDatabase = true);
+
+    Task<ConnectionValidationResult> CheckNetworkAsync(
+        string? connectionString,
+        DatabaseProviderKind provider,
+        int timeoutSeconds,
         CancellationToken cancellationToken);
 }

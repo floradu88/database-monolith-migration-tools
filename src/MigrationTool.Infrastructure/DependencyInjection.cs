@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<IQueryScriptRunner, AdoQueryScriptRunner>();
         services.AddSingleton<IScriptPoller, ScriptPoller>();
         services.AddSingleton<IDacpacBuilder, DacpacBuilder>();
+        services.AddSingleton<INetworkProbe, NetworkProbe>();
         services.AddSingleton<IConnectionValidator, ConnectionValidator>();
         return services;
     }

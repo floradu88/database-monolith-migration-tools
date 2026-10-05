@@ -75,7 +75,10 @@ $env:MIGRATION_CONNECTION_STRING = "Data Source=mydb.abc123.us-east-1.rds.amazon
 # or set Migration:ConnectionString in src/MigrationTool.Host/appsettings.json
 # More examples: appsettings.example.json — do not commit passwords
 
-# Validate connection string shape + live open (recommended before first poll)
+# Network reachability first (DNS + ICMP optional + TCP port; no SQL login)
+dotnet run --project src/MigrationTool.Host -- --check-network
+
+# Validate connection string shape + network + live open (recommended before first poll)
 dotnet run --project src/MigrationTool.Host -- --validate-connection
 
 # Drop scripts from your SQL project into the inbox (ddl for procedures/schema)

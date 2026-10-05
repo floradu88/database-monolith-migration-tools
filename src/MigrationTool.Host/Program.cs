@@ -26,6 +26,35 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 
 app.MapGet("/", () => Results.Text("Migration tool is running. Hangfire dashboard: /hangfire"));
 
+if (args.Contains("--check-network") || args.Contains("--ping"))
+{
+    var options = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MigrationOptions>>().Value;
+    var connection = GetFlagValue(args, "--connection")
+        ?? Environment.GetEnvironmentVariable("MIGRATION_CONNECTION_STRING")
+        ?? options.ConnectionString;
+    var result = await app.Services.GetRequiredService<IConnectionValidator>()
+        .CheckNetworkAsync(connection, options.Provider, options.CommandTimeoutSeconds, CancellationToken.None);
+    if (result.Network is not null)
+    {
+        Console.WriteLine(result.Network.Format());
+    }
+
+    if (result.Succeeded)
+    {
+        Log.Information(
+            "Network check succeeded for Server={Server} Database={Database} (DNS + TCP). ICMP ping is optional.",
+            result.Shape.Server,
+            result.Shape.Database);
+    }
+    else
+    {
+        Log.Error("Network check failed: {Error}", result.Error);
+        Environment.ExitCode = 1;
+    }
+
+    return;
+}
+
 if (args.Contains("--validate-connection"))
 {
     var options = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MigrationOptions>>().Value;
@@ -34,6 +63,11 @@ if (args.Contains("--validate-connection"))
         ?? options.ConnectionString;
     var result = await app.Services.GetRequiredService<IConnectionValidator>()
         .ValidateAsync(connection, options.Provider, options.CommandTimeoutSeconds, CancellationToken.None);
+    if (result.Network is not null)
+    {
+        Console.WriteLine(result.Network.Format());
+    }
+
     if (result.Succeeded)
     {
         Log.Information(

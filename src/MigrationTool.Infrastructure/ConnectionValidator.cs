@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using MigrationTool.Application;
@@ -8,18 +9,28 @@ namespace MigrationTool.Infrastructure;
 
 public sealed class ConnectionValidator : IConnectionValidator
 {
+    private readonly INetworkProbe _network;
     private readonly ILogger<ConnectionValidator> _logger;
 
-    public ConnectionValidator(ILogger<ConnectionValidator> logger)
+    public ConnectionValidator(INetworkProbe network, ILogger<ConnectionValidator> logger)
     {
+        _network = network;
         _logger = logger;
     }
+
+    public Task<ConnectionValidationResult> CheckNetworkAsync(
+        string? connectionString,
+        DatabaseProviderKind provider,
+        int timeoutSeconds,
+        CancellationToken cancellationToken) =>
+        ValidateAsync(connectionString, provider, timeoutSeconds, cancellationToken, openDatabase: false);
 
     public async Task<ConnectionValidationResult> ValidateAsync(
         string? connectionString,
         DatabaseProviderKind provider,
         int commandTimeoutSeconds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool openDatabase = true)
     {
         var shape = ConnectionStringShape.Validate(connectionString, provider);
         if (!shape.IsValid)
@@ -38,8 +49,51 @@ public sealed class ConnectionValidator : IConnectionValidator
             _logger.LogWarning("Connection string validation: {Warning}", warning);
         }
 
+        var endpoint = ResolveEndpoint(connectionString, provider, shape.Server);
+        NetworkReachabilityReport? network = null;
+        if (endpoint is null)
+        {
+            _logger.LogWarning("Could not parse host/port from connection string for network checks.");
+        }
+        else
+        {
+            network = await _network.ProbeAsync(endpoint, commandTimeoutSeconds, cancellationToken);
+            if (!network.IsReachableEnough)
+            {
+                DatabaseConnectionError netError;
+                if (!network.DnsSucceeded)
+                {
+                    netError = new DatabaseConnectionError(
+                        DatabaseConnectionErrorKind.HostNotFound,
+                        $"DNS lookup failed for {endpoint.Host}.",
+                        "Check the hostname spelling and that public DNS can resolve the AWS RDS endpoint.",
+                        ProviderMessage: network.Format());
+                }
+                else
+                {
+                    netError = new DatabaseConnectionError(
+                        DatabaseConnectionErrorKind.NetworkUnreachable,
+                        $"TCP {endpoint.Host}:{endpoint.Port} is not reachable.",
+                        $"Allow inbound TCP {endpoint.Port} from this client (AWS security group / NACL / VPN). ICMP ping is optional and often blocked.",
+                        ProviderMessage: network.Format());
+                }
+
+                _logger.LogError("{Detail}", netError.Format());
+                return new ConnectionValidationResult(false, shape, null, netError.Format(), netError, network);
+            }
+        }
+
+        if (!openDatabase)
+        {
+            _logger.LogInformation(
+                "Network check succeeded for {Host}:{Port}. Skipping database login (openDatabase=false).",
+                endpoint?.Host,
+                endpoint?.Port);
+            return new ConnectionValidationResult(true, shape, null, null, null, network);
+        }
+
         _logger.LogInformation(
-            "Validating {Provider} connection to Server={Server}, Database={Database}. Redacted: {Redacted}",
+            "Validating {Provider} login to Server={Server}, Database={Database}. Redacted: {Redacted}",
             provider,
             shape.Server,
             shape.Database,
@@ -57,7 +111,7 @@ public sealed class ConnectionValidator : IConnectionValidator
                 command.CommandTimeout = timeout;
                 var version = Convert.ToString(await command.ExecuteScalarAsync(cancellationToken));
                 _logger.LogInformation("SQL Server connection OK. Version: {Version}", version);
-                return new ConnectionValidationResult(true, shape, version, null);
+                return new ConnectionValidationResult(true, shape, version, null, null, network);
             }
 
             await using var npgsql = new NpgsqlConnection(connectionString);
@@ -67,7 +121,7 @@ public sealed class ConnectionValidator : IConnectionValidator
             pgCommand.CommandTimeout = timeout;
             var pgVersion = Convert.ToString(await pgCommand.ExecuteScalarAsync(cancellationToken));
             _logger.LogInformation("PostgreSQL connection OK. Version: {Version}", pgVersion);
-            return new ConnectionValidationResult(true, shape, pgVersion, null);
+            return new ConnectionValidationResult(true, shape, pgVersion, null, null, network);
         }
         catch (Exception ex)
         {
@@ -78,7 +132,37 @@ public sealed class ConnectionValidator : IConnectionValidator
                 mapped.Kind,
                 shape.RedactedConnectionString,
                 mapped.Guidance);
-            return new ConnectionValidationResult(false, shape, null, mapped.Format(), mapped);
+            return new ConnectionValidationResult(false, shape, null, mapped.Format(), mapped, network);
         }
+    }
+
+    private static DatabaseEndpoint? ResolveEndpoint(
+        string? connectionString,
+        DatabaseProviderKind provider,
+        string? server)
+    {
+        int? explicitPort = null;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(connectionString))
+            {
+                var builder = new DbConnectionStringBuilder { ConnectionString = connectionString };
+                foreach (string key in builder.Keys)
+                {
+                    if (string.Equals(key, "Port", StringComparison.OrdinalIgnoreCase)
+                        && int.TryParse(Convert.ToString(builder[key]), out var port))
+                    {
+                        explicitPort = port;
+                        break;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Fall back to server parsing only.
+        }
+
+        return DatabaseEndpointParser.TryParse(server, provider, explicitPort);
     }
 }

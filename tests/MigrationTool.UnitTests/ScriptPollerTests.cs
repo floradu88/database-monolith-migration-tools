@@ -281,7 +281,8 @@ public class ScriptPollerTests
             string? connectionString,
             DatabaseProviderKind provider,
             int commandTimeoutSeconds,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            bool openDatabase = true)
         {
             var shape = ConnectionStringShape.Validate(connectionString, provider);
             if (!Succeed)
@@ -290,8 +291,15 @@ public class ScriptPollerTests
                 return Task.FromResult(new ConnectionValidationResult(false, shape, null, error.Format(), error));
             }
 
-            return Task.FromResult(new ConnectionValidationResult(true, shape, "test", null));
+            return Task.FromResult(new ConnectionValidationResult(true, shape, openDatabase ? "test" : null, null));
         }
+
+        public Task<ConnectionValidationResult> CheckNetworkAsync(
+            string? connectionString,
+            DatabaseProviderKind provider,
+            int timeoutSeconds,
+            CancellationToken cancellationToken) =>
+            ValidateAsync(connectionString, provider, timeoutSeconds, cancellationToken, openDatabase: false);
     }
 
     private sealed class FakeQueryRunner : IQueryScriptRunner

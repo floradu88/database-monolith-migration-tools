@@ -64,6 +64,7 @@ git clone https://github.com/floradu88/database-monolith-migration-tools.git
 cd database-monolith-migration-tools
 $env:MIGRATION_CONNECTION_STRING = "Data Source=mydb.abc123.us-east-1.rds.amazonaws.com,1433;Initial Catalog=YourDb;User ID=admin;Password=***;Encrypt=True;TrustServerCertificate=False;"
 # copy *.sql into src/MigrationTool.Host/scripts/inbox/ddl/
+dotnet run --project src/MigrationTool.Host -- --check-network
 dotnet run --project src/MigrationTool.Host -- --validate-connection
 dotnet run --project src/MigrationTool.Host -- --poll-once
 ```
