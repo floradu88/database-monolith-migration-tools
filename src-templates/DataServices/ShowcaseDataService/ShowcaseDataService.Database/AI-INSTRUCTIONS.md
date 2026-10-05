@@ -8,6 +8,7 @@ Golden hybrid SQL database project: owns schemas, stored procedures, security st
 
 1. Prefer additive, reversible changes; never dual-own with `ShowcaseDataService.Migrations`.
 2. Keep migrated SP definitions under `Programmability/` as desired-state Build scripts.
+   Use SSDT declarative shape: `CREATE PROCEDURE` / `CREATE TABLE` / `CREATE VIEW`, **one object per file**, no `CREATE OR ALTER`, no `GO` in Build scripts (PreDeploy/PostDeploy/Cutover may still use `GO`).
 3. Put FacadeThenMove up/down waves under `Cutover/` as `None` (not Build).
 4. Document EF-owned shapes under `Reference/EfOwned/` only — do not `CREATE TABLE` them here.
 5. Do not invent credentials, principals, or production connection strings.

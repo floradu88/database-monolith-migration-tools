@@ -3,6 +3,7 @@
   Golden hybrid SQL project: owns schemas, SPs, security, and DatabaseContract.
   Does NOT build EF-owned tables (see Reference/EfOwned) or Cutover up/down scripts (None).
   Version desired-state objects via git + dacpac; use Cutover/ for ordered reversible waves.
+  Build scripts are SSDT declarative (CREATE …, one object per file; no CREATE OR ALTER / GO).
 -->
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
@@ -42,9 +43,12 @@
     <Folder Include="Reference\EfOwned\" />
   </ItemGroup>
   <ItemGroup>
-    <!-- SQL-project-owned (desired state → dacpac). -->
-    <Build Include="Security\Schemas.sql" />
+    <!-- SQL-project-owned (desired state → dacpac). One object per Build file. -->
+    <Build Include="Security\showcase.sql" />
+    <Build Include="Security\deployment.sql" />
+    <Build Include="Security\core.sql" />
     <Build Include="Contract\DatabaseContract.sql" />
+    <Build Include="Contract\v_DatabaseContractHealth.sql" />
     <Build Include="Programmability\GetShowcaseSummary.sql" />
     <Build Include="Programmability\usp_Showcase_Sales_Summary.sql" />
     <Build Include="Programmability\usp_Showcase_Sales_Detail.sql" />
@@ -52,12 +56,17 @@
     <Build Include="Programmability\usp_Showcase_Inventory_Detail.sql" />
     <Build Include="Tables\dbo.ShowcaseWorkItem.sql" />
     <Build Include="Tables\core.ShowcaseWorkItem.sql" />
-    <Build Include="Tables\core.DualWriteControl.sql" />
+    <Build Include="Tables\core.DualWritePair.sql" />
+    <Build Include="Tables\core.DualWriteCallLog.sql" />
+    <Build Include="Tables\core.IX_DualWriteCallLog_Pair_Called.sql" />
+    <Build Include="Tables\core.DualWriteEvidence.sql" />
     <Build Include="Programmability\dbo.usp_ShowcaseWorkItem_Upsert.sql" />
     <Build Include="Programmability\dbo.usp_ShowcaseWorkItem_Delete.sql" />
     <Build Include="Programmability\core.usp_ShowcaseWorkItem_Upsert.sql" />
     <Build Include="Programmability\core.usp_ShowcaseWorkItem_Delete.sql" />
-    <Build Include="Programmability\core.usp_DualWriteSupport.sql" />
+    <Build Include="Programmability\core.usp_RegisterDualWritePair.sql" />
+    <Build Include="Programmability\core.usp_LogDualWriteCall.sql" />
+    <Build Include="Programmability\core.usp_TableIntegrity_Check.sql" />
     <!-- FindingsMigration writes stubs under Programmability\Generated\ — add each Build Include when promoting. -->
     <PreDeploy Include="Scripts\PreDeploy.sql" />
     <PostDeploy Include="Scripts\PostDeploy.sql" />

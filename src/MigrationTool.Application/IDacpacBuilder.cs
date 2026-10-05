@@ -9,4 +9,6 @@ public interface IDacpacBuilder
     Task<DacpacOperationResult> BuildFromSqlProjectAsync(DacpacBuildRequest request, CancellationToken cancellationToken);
 
     Task<DacpacOperationResult> ExtractFromDatabaseAsync(DacpacExtractRequest request, CancellationToken cancellationToken);
+
+    Task<DacpacOperationResult> PublishAsync(DacpacPublishRequest request, CancellationToken cancellationToken);
 }

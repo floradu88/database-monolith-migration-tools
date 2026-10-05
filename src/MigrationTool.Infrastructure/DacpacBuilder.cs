@@ -215,6 +215,78 @@ public sealed class DacpacBuilder : IDacpacBuilder
         return new DacpacOperationResult(true, outputPath, sqlpackage, SqlProjectKind.Unknown, combined, null);
     }
 
+    public async Task<DacpacOperationResult> PublishAsync(
+        DacpacPublishRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.ConnectionString))
+        {
+            return Fail(SqlProjectKind.Unknown, "", "Connection string is required for SqlPackage Publish.");
+        }
+
+        var dacpacPath = Path.GetFullPath(request.DacpacPath);
+        if (!File.Exists(dacpacPath) || !dacpacPath.EndsWith(".dacpac", StringComparison.OrdinalIgnoreCase))
+        {
+            return Fail(SqlProjectKind.Unknown, "", $"DACPAC file not found: {dacpacPath}");
+        }
+
+        var sqlpackage = ExternalToolLocator.FindSqlPackage();
+        if (sqlpackage is null)
+        {
+            return Fail(
+                SqlProjectKind.Unknown,
+                "",
+                "SqlPackage.exe was not found. Install Visual Studio SSDT / SQL Server Data Tools, or `dotnet tool install -g microsoft.sqlpackage`.");
+        }
+
+        var log = new StringBuilder();
+        var action = request.ScriptOnly ? "Script" : "Publish";
+        var start = new ProcessStartInfo
+        {
+            FileName = sqlpackage,
+            ArgumentList =
+            {
+                $"/Action:{action}",
+                $"/SourceFile:{dacpacPath}",
+                $"/TargetConnectionString:{request.ConnectionString}",
+                $"/p:BlockOnPossibleDataLoss={(request.BlockOnPossibleDataLoss ? "True" : "False")}"
+            },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        if (request.ScriptOnly)
+        {
+            var scriptPath = string.IsNullOrWhiteSpace(request.DeployScriptPath)
+                ? Path.Combine(
+                    Path.GetDirectoryName(dacpacPath) ?? ".",
+                    Path.GetFileNameWithoutExtension(dacpacPath) + ".publish.sql")
+                : Path.GetFullPath(request.DeployScriptPath);
+            var scriptDir = Path.GetDirectoryName(scriptPath);
+            if (!string.IsNullOrEmpty(scriptDir))
+            {
+                Directory.CreateDirectory(scriptDir);
+            }
+
+            start.ArgumentList.Add($"/OutputPath:{scriptPath}");
+        }
+
+        var (exitCode, combined) = await RunProcessAsync(start, log, cancellationToken);
+        if (exitCode != 0)
+        {
+            return Fail(SqlProjectKind.Unknown, combined, $"SqlPackage {action} failed with exit code {exitCode}.");
+        }
+
+        _logger.LogInformation(
+            "SqlPackage {Action} completed for {Dacpac} (BlockOnPossibleDataLoss={Block})",
+            action,
+            dacpacPath,
+            request.BlockOnPossibleDataLoss);
+        return new DacpacOperationResult(true, dacpacPath, sqlpackage, SqlProjectKind.Unknown, combined, null);
+    }
+
     private static void ApplyTempDirectory(ProcessStartInfo start, string preferredRoot)
     {
         try

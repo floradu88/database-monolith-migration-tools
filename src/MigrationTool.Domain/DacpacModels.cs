@@ -11,6 +11,13 @@ public sealed record DacpacExtractRequest(
     string OutputDacpacPath,
     string? DatabaseName = null);
 
+public sealed record DacpacPublishRequest(
+    string DacpacPath,
+    string ConnectionString,
+    bool BlockOnPossibleDataLoss = true,
+    bool ScriptOnly = false,
+    string? DeployScriptPath = null);
+
 public sealed record DacpacOperationResult(
     bool Succeeded,
     string? DacpacPath,

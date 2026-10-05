@@ -1,5 +1,5 @@
--- Ownership: SqlProject
-CREATE OR ALTER PROCEDURE [dbo].[usp_ShowcaseWorkItem_Upsert]
+﻿-- Ownership: SqlProject
+CREATE PROCEDURE [dbo].[usp_ShowcaseWorkItem_Upsert]
     @ExternalId uniqueidentifier,
     @Name nvarchar(200),
     @Status nvarchar(50)
@@ -17,4 +17,3 @@ BEGIN
         INSERT ([ExternalId], [Name], [Status], [UpdatedAt])
         VALUES (s.[ExternalId], s.[Name], s.[Status], SYSUTCDATETIME());
 END;
-GO

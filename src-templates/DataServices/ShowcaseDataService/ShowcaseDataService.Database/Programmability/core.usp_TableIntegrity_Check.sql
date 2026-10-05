@@ -1,68 +1,6 @@
--- Ownership: SqlProject — register / log / integrity for the Showcase WorkItem pair (delta-only).
+-- Ownership: SqlProject — integrity check for Showcase WorkItem pair (delta-only).
 
-CREATE OR ALTER PROCEDURE [core].[usp_RegisterDualWritePair]
-    @PairName nvarchar(128),
-    @SourceSchema sysname = N'dbo',
-    @SourceTable sysname,
-    @TargetSchema sysname = N'core',
-    @TargetTable sysname,
-    @SourceProcedure sysname = NULL,
-    @TargetProcedure sysname = NULL,
-    @BusinessKeyColumns nvarchar(500),
-    @CompareColumns nvarchar(1000),
-    @WatermarkColumn sysname = NULL
-AS
-BEGIN
-    SET NOCOUNT ON;
-    MERGE [core].[DualWritePair] AS t
-    USING (SELECT @SourceSchema AS SourceSchema, @SourceTable AS SourceTable, @TargetSchema AS TargetSchema, @TargetTable AS TargetTable) AS s
-    ON t.[SourceSchema] = s.SourceSchema AND t.[SourceTable] = s.SourceTable
-       AND t.[TargetSchema] = s.TargetSchema AND t.[TargetTable] = s.TargetTable
-    WHEN MATCHED THEN
-        UPDATE SET
-            [PairName] = @PairName,
-            [SourceProcedure] = @SourceProcedure,
-            [TargetProcedure] = @TargetProcedure,
-            [BusinessKeyColumns] = @BusinessKeyColumns,
-            [CompareColumns] = @CompareColumns,
-            [WatermarkColumn] = @WatermarkColumn,
-            [Enabled] = 1
-    WHEN NOT MATCHED THEN
-        INSERT ([PairName], [SourceSchema], [SourceTable], [TargetSchema], [TargetTable],
-                [SourceProcedure], [TargetProcedure], [BusinessKeyColumns], [CompareColumns],
-                [WatermarkColumn], [StartedAtUtc], [Enabled], [Notes])
-        VALUES (@PairName, @SourceSchema, @SourceTable, @TargetSchema, @TargetTable,
-                @SourceProcedure, @TargetProcedure, @BusinessKeyColumns, @CompareColumns,
-                @WatermarkColumn, SYSUTCDATETIME(), 1, N'SP-write only. No historical backfill. dbo extras expected.');
-END;
-GO
-
-CREATE OR ALTER PROCEDURE [core].[usp_LogDualWriteCall]
-    @PairId int = NULL,
-    @Operation nvarchar(128),
-    @BusinessKey nvarchar(200),
-    @CorrelationId uniqueidentifier = NULL,
-    @DboSucceeded bit,
-    @CoreSucceeded bit,
-    @CoreTimedOut bit = 0,
-    @DboDurationMs int = NULL,
-    @CoreDurationMs int = NULL,
-    @CoreError nvarchar(400) = NULL
-AS
-BEGIN
-    SET NOCOUNT ON;
-    INSERT [core].[DualWriteCallLog] (
-        [PairId], [Operation], [BusinessKey], [CorrelationId],
-        [DboSucceeded], [CoreSucceeded], [CoreTimedOut],
-        [DboDurationMs], [CoreDurationMs], [CoreError])
-    VALUES (
-        @PairId, @Operation, @BusinessKey, COALESCE(@CorrelationId, NEWSEQUENTIALID()),
-        @DboSucceeded, @CoreSucceeded, @CoreTimedOut,
-        @DboDurationMs, @CoreDurationMs, @CoreError);
-END;
-GO
-
-CREATE OR ALTER PROCEDURE [core].[usp_TableIntegrity_Check]
+CREATE PROCEDURE [core].[usp_TableIntegrity_Check]
     @PairName nvarchar(128) = N'showcase-workitem'
 AS
 BEGIN
@@ -128,4 +66,3 @@ BEGIN
            @missingCore AS MissingInCoreCount, @missingDbo AS MissingInDboCount, @ms AS DurationMs,
            @sample AS SampleDiff, SYSUTCDATETIME() AS CheckedAtUtc;
 END;
-GO

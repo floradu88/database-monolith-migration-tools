@@ -1,4 +1,4 @@
--- Ownership: SqlProject. Legacy write table for dbo → core parallel-write demo (same database).
+﻿-- Ownership: SqlProject. Legacy write table for dbo â†’ core parallel-write demo (same database).
 -- Not EF-owned. core receives SP writes only; this table may also receive EF/jobs/ad-hoc SQL.
 
 CREATE TABLE [dbo].[ShowcaseWorkItem]
@@ -8,4 +8,3 @@ CREATE TABLE [dbo].[ShowcaseWorkItem]
     [Status] nvarchar(50) NOT NULL,
     [UpdatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_dbo_ShowcaseWorkItem_UpdatedAt] DEFAULT SYSUTCDATETIME()
 );
-GO

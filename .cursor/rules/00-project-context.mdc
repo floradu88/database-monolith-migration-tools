@@ -16,4 +16,4 @@ This repo is a .NET 10 worker that polls an inbox of SQL scripts and applies the
 - Providers are SQL Server and PostgreSQL, including cloud, via the connection string. Override it with `MIGRATION_CONNECTION_STRING`.
 - Hangfire storage is in-memory. The dashboard listens on localhost only.
 - Do not commit connection strings, passwords, or tokens.
-- DACPAC: `--build-dacpac` builds from `.sqlproj` via `dotnet` (Microsoft.Build.Sql) or VS MSBuild (classic SSDT). `--extract-dacpac` uses SqlPackage. Prefer `tools/dacpac/Invoke-DacpacReady.ps1`. Do not auto-publish.
+- DACPAC: `--build-dacpac` builds from `.sqlproj` via `dotnet` (Microsoft.Build.Sql) or VS MSBuild (classic SSDT). `--extract-dacpac` / `--publish-dacpac` use SqlPackage (prefer `--script-only` before publish; default blocks possible data loss). Prefer `tools/dacpac/Invoke-DacpacReady.ps1` and `Install-DacpacTools.ps1`.

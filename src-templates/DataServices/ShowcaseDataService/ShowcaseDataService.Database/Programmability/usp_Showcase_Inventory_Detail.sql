@@ -1,10 +1,10 @@
--- Ownership: SqlProject (ShowcaseDataService.Database)
+﻿-- Ownership: SqlProject (ShowcaseDataService.Database)
 -- Object: showcase.usp_Showcase_Inventory_Detail
 -- Kind: StoredProcedure
 -- Template: usp_Showcase_{ShowcaseReportArea}_{ShowcaseReportAction}
 -- Tokens: ShowcaseReportArea=Inventory, ShowcaseReportAction=Detail
 
-CREATE OR ALTER PROCEDURE [showcase].[usp_Showcase_Inventory_Detail]
+CREATE PROCEDURE [showcase].[usp_Showcase_Inventory_Detail]
     @Id UNIQUEIDENTIFIER
 AS
 BEGIN
@@ -17,4 +17,3 @@ BEGIN
     FROM [showcase].[Items]
     WHERE [Id] = @Id;
 END
-GO

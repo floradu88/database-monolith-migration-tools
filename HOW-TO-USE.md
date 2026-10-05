@@ -112,6 +112,8 @@ Host CLI (same implementation):
 dotnet run --project src/MigrationTool.Host -- --dacpac-prereqs
 dotnet run --project src/MigrationTool.Host -- --build-dacpac path\to\project.sqlproj --output D:\dacpac-out
 dotnet run --project src/MigrationTool.Host -- --extract-dacpac D:\out\live.dacpac
+dotnet run --project src/MigrationTool.Host -- --publish-dacpac D:\out\live.dacpac --script-only
+dotnet run --project src/MigrationTool.Host -- --publish-dacpac D:\out\live.dacpac
 ```
 
 Details: [`tools/dacpac/README.md`](tools/dacpac/README.md).

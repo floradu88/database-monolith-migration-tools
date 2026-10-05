@@ -55,6 +55,10 @@ dotnet run --project src/MigrationTool.Host -- --dacpac-prereqs
 dotnet run --project src/MigrationTool.Host -- --build-dacpac path\to\project.sqlproj --configuration Debug --output D:\dacpac-out
 
 dotnet run --project src/MigrationTool.Host -- --extract-dacpac D:\out\live.dacpac
+
+# Prefer --script-only before applying. Default blocks possible data loss; --allow-data-loss only with DBA approval.
+dotnet run --project src/MigrationTool.Host -- --publish-dacpac D:\out\live.dacpac --script-only
+dotnet run --project src/MigrationTool.Host -- --publish-dacpac D:\out\live.dacpac
 ```
 
-`--build-dacpac` accepts a `.sqlproj` or a folder with exactly one `.sqlproj`. Path-only Ready script: [`../../tools/dacpac/Invoke-DacpacReady.ps1`](../../tools/dacpac/Invoke-DacpacReady.ps1) (`-CheckPrereqs` lists tooling). SDK-style projects use `Microsoft.Build.Sql` (pinned in root `global.json`). Classic SSDT projects use Visual Studio MSBuild. Extract uses `SqlPackage.exe` from VS or a global `microsoft.sqlpackage` tool.
+`--build-dacpac` accepts a `.sqlproj` or a folder with exactly one `.sqlproj`. Path-only Ready script: [`../../tools/dacpac/Invoke-DacpacReady.ps1`](../../tools/dacpac/Invoke-DacpacReady.ps1) (`-CheckPrereqs`, `-Publish`, `-ScriptOnly`). SDK-style projects use `Microsoft.Build.Sql` (pinned in root `global.json`). Classic SSDT projects use Visual Studio MSBuild. Extract/publish use `SqlPackage.exe`.

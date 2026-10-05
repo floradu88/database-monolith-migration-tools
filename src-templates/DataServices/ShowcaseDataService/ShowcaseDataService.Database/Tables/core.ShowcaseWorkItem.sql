@@ -1,5 +1,5 @@
--- Ownership: SqlProject (ShowcaseDataService.Database)
--- Owned clone of dbo.ShowcaseWorkItem. SP writes only — no historical backfill, no EF/job DML.
+﻿-- Ownership: SqlProject (ShowcaseDataService.Database)
+-- Owned clone of dbo.ShowcaseWorkItem. SP writes only â€” no historical backfill, no EF/job DML.
 
 CREATE TABLE [core].[ShowcaseWorkItem]
 (
@@ -8,4 +8,3 @@ CREATE TABLE [core].[ShowcaseWorkItem]
     [Status] nvarchar(50) NOT NULL,
     [UpdatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_core_ShowcaseWorkItem_UpdatedAt] DEFAULT SYSUTCDATETIME()
 );
-GO

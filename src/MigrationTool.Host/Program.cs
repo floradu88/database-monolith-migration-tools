@@ -65,6 +65,30 @@ if (TryGetFlagValue(args, "--extract-dacpac", out var extractOutput))
     return;
 }
 
+if (TryGetFlagValue(args, "--publish-dacpac", out var publishDacpacPath))
+{
+    var options = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<MigrationOptions>>().Value;
+    var connection = GetFlagValue(args, "--connection")
+        ?? Environment.GetEnvironmentVariable("MIGRATION_CONNECTION_STRING")
+        ?? options.ConnectionString;
+    var scriptOnly = args.Contains("--script-only", StringComparer.OrdinalIgnoreCase);
+    var allowDataLoss = args.Contains("--allow-data-loss", StringComparer.OrdinalIgnoreCase);
+    var scriptPath = GetFlagValue(args, "--script-output");
+    using var scope = app.Services.CreateScope();
+    var result = await scope.ServiceProvider.GetRequiredService<IDacpacBuilder>()
+        .PublishAsync(
+            new DacpacPublishRequest(
+                publishDacpacPath!,
+                connection,
+                BlockOnPossibleDataLoss: !allowDataLoss,
+                ScriptOnly: scriptOnly,
+                DeployScriptPath: scriptPath),
+            CancellationToken.None);
+    LogDacpacResult(result);
+    Environment.ExitCode = result.Succeeded ? 0 : 1;
+    return;
+}
+
 if (args.Contains("--poll-once"))
 {
     using var scope = app.Services.CreateScope();

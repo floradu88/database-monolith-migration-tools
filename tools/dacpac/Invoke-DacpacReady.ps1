@@ -1,53 +1,60 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Build a .dacpac from a .sqlproj (SDK-style Microsoft.Build.Sql or classic SSDT), or extract one with SqlPackage.
+  Build, extract, or publish a .dacpac using VS / .NET DAC tools (no IDE required for installs).
 
 .DESCRIPTION
-  Path-only Ready entrypoint. Uses the same VS / .NET tools Visual Studio uses:
-
   - SDK-style (`Sdk="Microsoft.Build.Sql"`): `dotnet build`
   - Classic SSDT (SqlTasks.targets): VS `MSBuild.exe` (via vswhere)
-  - Extract from a live SQL Server database: VS / PATH `SqlPackage.exe` `/Action:Extract`
+  - Extract / Publish / Script: `SqlPackage.exe`
 
-  Does not publish to a database. Never pass production connection strings without DBA review.
+  Publish applies schema to a target database. Prefer `--script-only` / `-ScriptOnly` first.
+  Never pass production connection strings without DBA review.
 
 .PARAMETER ProjectPath
-  Path to a `.sqlproj` file, or a folder containing exactly one `.sqlproj`. Aliases: Path, SqlProject.
+  Path to a `.sqlproj` file, or a folder containing exactly one `.sqlproj`.
 
 .PARAMETER Configuration
   Build configuration. Default Debug.
 
 .PARAMETER Output
-  Output directory for build, or full `.dacpac` path for -Extract.
+  Output directory for build, or full `.dacpac` path for -Extract / -Publish.
 
 .PARAMETER Intermediate
-  Optional intermediate/obj directory (useful when C: is low on space).
+  Optional intermediate/obj directory.
 
 .PARAMETER Extract
-  Extract a dacpac from a database instead of building a .sqlproj.
-  Requires -ConnectionString (or MIGRATION_CONNECTION_STRING) and -Output ending in .dacpac.
+  Extract a dacpac from a database (requires connection + -Output .dacpac).
+
+.PARAMETER Publish
+  Publish an existing .dacpac to a database (requires connection + -Output .dacpac path).
+
+.PARAMETER ScriptOnly
+  With -Publish: generate a deployment script instead of applying (SqlPackage /Action:Script).
+
+.PARAMETER ScriptOutput
+  Optional path for -ScriptOnly deploy script.
+
+.PARAMETER AllowDataLoss
+  With -Publish: set BlockOnPossibleDataLoss=False (default blocks possible data loss).
 
 .PARAMETER ConnectionString
-  Source connection string for -Extract. Prefer env MIGRATION_CONNECTION_STRING.
+  Connection string for -Extract / -Publish. Prefer env MIGRATION_CONNECTION_STRING.
+
+.PARAMETER CheckPrereqs
+  Print DACPAC tool prerequisites and exit.
 
 .PARAMETER Open
   Open the output folder after success.
-
-.PARAMETER CheckPrereqs
-  Print DACPAC tool prerequisites (dotnet / MSBuild / SSDT / SqlPackage) and exit.
 
 .EXAMPLE
   .\Invoke-DacpacReady.ps1 -CheckPrereqs
 
 .EXAMPLE
-  .\Invoke-DacpacReady.ps1 "C:\code\projects\...\ShowcaseDataService.Database.sqlproj"
-
-.EXAMPLE
   .\Invoke-DacpacReady.ps1 ".\fixtures\DacpacFixture" -Output "D:\dacpac-out"
 
 .EXAMPLE
-  .\Invoke-DacpacReady.ps1 -Extract -Output "D:\out\live.dacpac"
+  .\Invoke-DacpacReady.ps1 -Publish -Output "D:\dacpac-out\DacpacFixture.dacpac" -ScriptOnly
 #>
 [CmdletBinding(DefaultParameterSetName = "Build")]
 param(
@@ -61,6 +68,7 @@ param(
 
     [Parameter(ParameterSetName = "Build")]
     [Parameter(Mandatory = $true, ParameterSetName = "Extract")]
+    [Parameter(Mandatory = $true, ParameterSetName = "Publish")]
     [string]$Output = "",
 
     [Parameter(ParameterSetName = "Build")]
@@ -69,7 +77,20 @@ param(
     [Parameter(Mandatory = $true, ParameterSetName = "Extract")]
     [switch]$Extract,
 
+    [Parameter(Mandatory = $true, ParameterSetName = "Publish")]
+    [switch]$Publish,
+
+    [Parameter(ParameterSetName = "Publish")]
+    [switch]$ScriptOnly,
+
+    [Parameter(ParameterSetName = "Publish")]
+    [string]$ScriptOutput = "",
+
+    [Parameter(ParameterSetName = "Publish")]
+    [switch]$AllowDataLoss,
+
     [Parameter(ParameterSetName = "Extract")]
+    [Parameter(ParameterSetName = "Publish")]
     [string]$ConnectionString = "",
 
     [Parameter(ParameterSetName = "Prereqs")]
@@ -107,6 +128,13 @@ function Resolve-SqlProject([string]$PathOrFolder) {
     return $projects[0].FullName
 }
 
+function Resolve-Connection([string]$Value) {
+    if (-not [string]::IsNullOrWhiteSpace($Value)) { return $Value }
+    $fromEnv = $env:MIGRATION_CONNECTION_STRING
+    if (-not [string]::IsNullOrWhiteSpace($fromEnv)) { return $fromEnv }
+    throw "Set -ConnectionString or MIGRATION_CONNECTION_STRING."
+}
+
 & dotnet build $HostProject -c Release -v q
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to build MigrationTool.Host"
@@ -118,16 +146,11 @@ if ($CheckPrereqs) {
 }
 
 if ($Extract) {
-    if ([string]::IsNullOrWhiteSpace($ConnectionString)) {
-        $ConnectionString = $env:MIGRATION_CONNECTION_STRING
-    }
-    if ([string]::IsNullOrWhiteSpace($ConnectionString)) {
-        throw "Set -ConnectionString or MIGRATION_CONNECTION_STRING for -Extract."
-    }
-    if ([string]::IsNullOrWhiteSpace($Output) -or -not $Output.EndsWith(".dacpac", [StringComparison]::OrdinalIgnoreCase)) {
+    $cs = Resolve-Connection $ConnectionString
+    if (-not $Output.EndsWith(".dacpac", [StringComparison]::OrdinalIgnoreCase)) {
         throw "-Output must be a .dacpac file path when using -Extract."
     }
-    $runArgs = @("run", "--project", $HostProject, "--", "--extract-dacpac", $Output, "--connection", $ConnectionString)
+    $runArgs = @("run", "--project", $HostProject, "-c", "Release", "--no-build", "--no-launch-profile", "--", "--extract-dacpac", $Output, "--connection", $cs)
     & dotnet @runArgs
     if ($LASTEXITCODE -ne 0) { throw "Extract failed." }
     if ($Open) { Invoke-Item (Split-Path -Parent (Resolve-Path $Output)) }
@@ -135,8 +158,23 @@ if ($Extract) {
     return
 }
 
+if ($Publish) {
+    $cs = Resolve-Connection $ConnectionString
+    if (-not (Test-Path -LiteralPath $Output) -or -not $Output.EndsWith(".dacpac", [StringComparison]::OrdinalIgnoreCase)) {
+        throw "-Output must be an existing .dacpac file when using -Publish."
+    }
+    $runArgs = @("run", "--project", $HostProject, "-c", "Release", "--no-build", "--no-launch-profile", "--", "--publish-dacpac", (Resolve-Path $Output).Path, "--connection", $cs)
+    if ($ScriptOnly) { $runArgs += "--script-only" }
+    if ($AllowDataLoss) { $runArgs += "--allow-data-loss" }
+    if (-not [string]::IsNullOrWhiteSpace($ScriptOutput)) { $runArgs += @("--script-output", $ScriptOutput) }
+    & dotnet @runArgs
+    if ($LASTEXITCODE -ne 0) { throw "Publish/script failed." }
+    Write-Host "DACPAC publish finished for $Output"
+    return
+}
+
 $sqlproj = Resolve-SqlProject $ProjectPath
-$runArgs = @("run", "--project", $HostProject, "--", "--build-dacpac", $sqlproj, "--configuration", $Configuration)
+$runArgs = @("run", "--project", $HostProject, "-c", "Release", "--no-build", "--no-launch-profile", "--", "--build-dacpac", $sqlproj, "--configuration", $Configuration)
 if (-not [string]::IsNullOrWhiteSpace($Output)) {
     $runArgs += @("--output", $Output)
 }

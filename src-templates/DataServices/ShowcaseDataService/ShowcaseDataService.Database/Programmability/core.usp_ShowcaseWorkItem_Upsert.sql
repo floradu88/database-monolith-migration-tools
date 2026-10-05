@@ -1,5 +1,5 @@
--- Ownership: SqlProject — behavior clone of dbo.usp_ShowcaseWorkItem_Upsert (core tables only).
-CREATE OR ALTER PROCEDURE [core].[usp_ShowcaseWorkItem_Upsert]
+﻿-- Ownership: SqlProject â€” behavior clone of dbo.usp_ShowcaseWorkItem_Upsert (core tables only).
+CREATE PROCEDURE [core].[usp_ShowcaseWorkItem_Upsert]
     @ExternalId uniqueidentifier,
     @Name nvarchar(200),
     @Status nvarchar(50)
@@ -17,4 +17,3 @@ BEGIN
         INSERT ([ExternalId], [Name], [Status], [UpdatedAt])
         VALUES (s.[ExternalId], s.[Name], s.[Status], SYSUTCDATETIME());
 END;
-GO

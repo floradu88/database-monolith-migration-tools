@@ -88,19 +88,34 @@ dotnet run --project src/MigrationTool.Host -- --extract-dacpac D:\out\live.dacp
 |--------------|------|
 | `Sdk="Microsoft.Build.Sql"` | `dotnet build` (SDK version pinned in root `global.json` → `msbuild-sdks`) |
 | Classic SSDT (`SqlTasks.targets`) | Visual Studio `MSBuild.exe` via `vswhere` |
-| Live database extract | `SqlPackage.exe` `/Action:Extract` (VS SSDT or `dotnet tool install -g microsoft.sqlpackage`) |
+| Live database extract | `SqlPackage.exe` `/Action:Extract` |
+| Publish / deploy script | `SqlPackage.exe` `/Action:Publish` or `/Action:Script` |
 
 Classic builds pass `/p:TargetFrameworkVersion=v4.7.2`, `/p:LangVersion=latest`, and `/p:Nullable=disable` so modern VS MSBuild can compile SSDT projects.
+
+## Publish (SqlPackage)
+
+```powershell
+# Generate deploy script only (recommended first)
+.\Invoke-DacpacReady.ps1 -Publish -Output "D:\dacpac-out\ShowcaseDataService.Database.dacpac" -ScriptOnly
+
+# Apply (blocks possible data loss by default)
+.\Invoke-DacpacReady.ps1 -Publish -Output "D:\dacpac-out\ShowcaseDataService.Database.dacpac"
+
+dotnet run --project ..\..\src\MigrationTool.Host -- --publish-dacpac D:\out\app.dacpac --script-only
+dotnet run --project ..\..\src\MigrationTool.Host -- --publish-dacpac D:\out\app.dacpac
+```
 
 ## Fixture
 
 - `fixtures/DacpacFixture` — tiny **SDK-style** SQL project for smoke builds
 - `fixtures/ClassicSsdtFixture` — tiny **classic SSDT** SQL project (needs VS MSBuild + SSDT)
 
-Kit Showcase `.sqlproj` scripts often use `CREATE OR ALTER` and `GO`, which SSDT rejects with `SQL70001` until rewritten as SSDT Build objects (`CREATE PROCEDURE` / `CREATE TABLE` without batch separators). Prefer the fixtures to verify tooling.
+Showcase Build scripts are SSDT declarative (`CREATE …`, one object per file). PreDeploy/PostDeploy/Cutover may still use `GO`.
 
 ## Safety
 
-- Build and extract only. This tool does **not** publish/deploy a dacpac.
-- Do not point Extract at production without DBA approval.
+- Prefer `-ScriptOnly` / `--script-only` before a live publish.
+- Publish blocks possible data loss by default; pass `-AllowDataLoss` / `--allow-data-loss` only with DBA approval.
+- Do not point Extract/Publish at production without DBA approval.
 - Do not commit connection strings.

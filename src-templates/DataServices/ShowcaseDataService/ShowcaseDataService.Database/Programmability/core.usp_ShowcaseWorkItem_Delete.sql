@@ -1,5 +1,5 @@
--- Ownership: SqlProject — behavior clone of dbo.usp_ShowcaseWorkItem_Delete.
-CREATE OR ALTER PROCEDURE [core].[usp_ShowcaseWorkItem_Delete]
+﻿-- Ownership: SqlProject â€” behavior clone of dbo.usp_ShowcaseWorkItem_Delete.
+CREATE PROCEDURE [core].[usp_ShowcaseWorkItem_Delete]
     @ExternalId uniqueidentifier
 AS
 BEGIN
@@ -7,4 +7,3 @@ BEGIN
     SET XACT_ABORT ON;
     DELETE FROM [core].[ShowcaseWorkItem] WHERE [ExternalId] = @ExternalId;
 END;
-GO
