@@ -14,6 +14,22 @@ public class JournalSchemaSqlTests
     }
 
     [Fact]
+    public void SqlServerEnsureTableSql_CreatesTheJournalTableInDynamicSql()
+    {
+        Assert.Contains("EXEC(@sql)", JournalSchemaEnsurer.SqlServerEnsureTableSql, StringComparison.Ordinal);
+        Assert.Contains("[ScriptName] nvarchar(255) NOT NULL", JournalSchemaEnsurer.SqlServerEnsureTableSql, StringComparison.Ordinal);
+        Assert.Contains("[Applied] datetime NOT NULL", JournalSchemaEnsurer.SqlServerEnsureTableSql, StringComparison.Ordinal);
+        Assert.DoesNotContain("[migration]", JournalSchemaEnsurer.SqlServerEnsureTableSql, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SqlServerSchemaExistsSql_OnlyChecksForTheSchema()
+    {
+        Assert.Contains("sys.schemas", JournalSchemaEnsurer.SqlServerSchemaExistsSql, StringComparison.Ordinal);
+        Assert.DoesNotContain("CREATE", JournalSchemaEnsurer.SqlServerSchemaExistsSql, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void PostgreSqlEnsureSql_QuotesTheSchemaName()
     {
         Assert.Contains("information_schema.schemata", JournalSchemaEnsurer.PostgreSqlExistsSql, StringComparison.Ordinal);

@@ -80,40 +80,49 @@ public sealed class DbUpChangeScriptRunner : IChangeScriptRunner
             return ScriptRunResult.Fail(message);
         }
 
-        _logger.LogInformation(
-            "DbUp executing on target database {Database} (journal {Journal})",
-            currentDatabase,
-            useJournal);
-
         if (useJournal)
         {
             try
             {
-                JournalSchemaEnsurer.Ensure(
+                var schemaPresent = JournalSchemaEnsurer.Exists(
                     _options.Provider,
                     _options.ConnectionString,
                     _options.JournalSchema,
-                    commandTimeoutSeconds,
-                    _logger);
+                    commandTimeoutSeconds);
+                if (!schemaPresent)
+                {
+                    _logger.LogWarning(
+                        "Journal schema {Schema} is missing on {Database}. Skipping the journal and running the script.",
+                        _options.JournalSchema,
+                        currentDatabase);
+                    useJournal = false;
+                }
+                else
+                {
+                    JournalSchemaEnsurer.Ensure(
+                        _options.Provider,
+                        _options.ConnectionString,
+                        _options.JournalSchema,
+                        _options.JournalTable,
+                        commandTimeoutSeconds,
+                        _logger);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Could not ensure journal schema {Schema}", _options.JournalSchema);
-                var mapped = DatabaseErrorMapper.From(ex);
-                var schema = string.IsNullOrWhiteSpace(_options.JournalSchema) ? "dbo" : _options.JournalSchema.Trim();
-                var table = string.IsNullOrWhiteSpace(_options.JournalTable) ? "schema_versions" : _options.JournalTable.Trim();
-                return mapped with
-                {
-                    ErrorText =
-                        $"Could not create journal schema '{schema}'. " +
-                        $"Applied scripts are recorded in [{schema}].[{table}]. " +
-                        "The login needs CREATE SCHEMA on this database, or a DBA must create the schema. " +
-                        "Set Migration:JournalSchema to dbo when the login cannot create schemas."
-                        + Environment.NewLine
-                        + mapped.ErrorText
-                };
+                _logger.LogWarning(
+                    ex,
+                    "Journal schema {Schema} could not be used on {Database}. Skipping the journal and running the script.",
+                    _options.JournalSchema,
+                    currentDatabase);
+                useJournal = false;
             }
         }
+
+        _logger.LogInformation(
+            "DbUp executing on target database {Database} (journal {Journal})",
+            currentDatabase,
+            useJournal);
 
         try
         {
