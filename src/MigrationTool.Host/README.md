@@ -104,9 +104,10 @@ BEGIN
 END
 ```
 
-You can leave SSDT-style `CREATE PROCEDURE` if you only run once; `CREATE OR ALTER` is recommended when you may drop the same script again.
+`CREATE PROCEDURE`, `CREATE PROC`, `CREATE FUNCTION`, `CREATE VIEW`, and `CREATE TRIGGER` are rewritten to `CREATE OR ALTER` on SQL Server (`CREATE OR REPLACE` on PostgreSQL) and run on every poll. Those files stay in the inbox. `CREATE TABLE` and other DDL still run once.
 
-- DDL, DML, and data run once, are journaled, and move to `scripts/success`.
+- Procedure, function, view, and trigger scripts stay in the inbox and run on every poll.
+- Other DDL, DML, and data run once, are journaled, and move to `scripts/success`.
 - Query scripts stay in the inbox and run every poll. Each run writes `scripts/success/{name}_{utc}.result.txt`.
 - A failure copies `001_{file}.sql` and `001_{file}.error.txt` into `scripts/failed`.
 - `GO` lines are removed from the file. Batches still run separately.

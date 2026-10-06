@@ -144,12 +144,14 @@ public sealed class ScriptPoller : IScriptPoller
         }
 
         var split = GoBatchSplitter.Split(script.Contents);
-        if (split.RemovedGo)
+        var rewritten = CreateOrAlterRewriter.RewriteBatches(split.Batches, _options.Provider);
+        var normalized = string.Join($"\n\n{GoBatchSplitter.BatchMarker}\n\n", rewritten.Batches).Trim();
+        if (split.RemovedGo || rewritten.Changed)
         {
-            _store.SaveContents(script.FullPath, split.NormalizedText);
+            _store.SaveContents(script.FullPath, normalized);
         }
 
-        var sql = split.NormalizedText;
+        var sql = normalized;
         var journalName = script.RelativePath.Replace('\\', '/');
         if (string.IsNullOrWhiteSpace(sql))
         {
@@ -165,8 +167,8 @@ public sealed class ScriptPoller : IScriptPoller
             return ScriptOutcome.Done(repaired: false);
         }
 
-        var result = await ExecuteAsync(kind, journalName, split.Batches, cancellationToken);
-        if (result.AlreadyApplied)
+        var result = await ExecuteAsync(kind, journalName, rewritten.Batches, rewritten.Repeatable, cancellationToken);
+        if (result.AlreadyApplied && !rewritten.Repeatable)
         {
             _store.MoveToSuccess(script);
             return ScriptOutcome.Done(repaired: false);
@@ -185,7 +187,7 @@ public sealed class ScriptPoller : IScriptPoller
                 if (repair.AlterApplied)
                 {
                     _logger.LogInformation("Applied column repair for {Script} and retrying", script.RelativePath);
-                    result = await ExecuteAsync(kind, journalName, split.Batches, cancellationToken);
+                    result = await ExecuteAsync(kind, journalName, rewritten.Batches, rewritten.Repeatable, cancellationToken);
                 }
                 else if (!string.IsNullOrWhiteSpace(repair.AlterError))
                 {
@@ -209,6 +211,12 @@ public sealed class ScriptPoller : IScriptPoller
             {
                 _store.WriteQueryResult(script.FileName, result.ResultText ?? "", DateTimeOffset.UtcNow);
             }
+            else if (rewritten.Repeatable)
+            {
+                _logger.LogInformation(
+                    "Reapplied {Script}; leaving it in the inbox so the next poll runs it again",
+                    script.RelativePath);
+            }
             else
             {
                 _store.MoveToSuccess(script);
@@ -225,6 +233,7 @@ public sealed class ScriptPoller : IScriptPoller
         ScriptKind kind,
         string journalName,
         IReadOnlyList<string> batches,
+        bool repeatable,
         CancellationToken cancellationToken)
     {
         if (kind == ScriptKind.Query)
@@ -252,7 +261,7 @@ public sealed class ScriptPoller : IScriptPoller
         }
 
         return await _changes.ExecuteAsync(
-            new ChangeScript(journalName, batches, _options.CommandTimeoutSeconds),
+            new ChangeScript(journalName, batches, _options.CommandTimeoutSeconds, UseJournal: !repeatable),
             cancellationToken);
     }
 

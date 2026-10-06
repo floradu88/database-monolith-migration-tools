@@ -2,7 +2,11 @@ namespace MigrationTool.Domain;
 
 public sealed record InboxScript(string FullPath, string RelativePath, string FileName, string Contents);
 
-public sealed record ChangeScript(string JournalName, IReadOnlyList<string> Batches, int CommandTimeoutSeconds);
+public sealed record ChangeScript(
+    string JournalName,
+    IReadOnlyList<string> Batches,
+    int CommandTimeoutSeconds,
+    bool UseJournal = true);
 
 public sealed record QueryScriptRequest(string Name, string Sql, int CommandTimeoutSeconds);
 

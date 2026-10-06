@@ -11,6 +11,26 @@ namespace MigrationTool.UnitTests;
 public class ScriptPollerTests
 {
     [Fact]
+    public async Task Poll_ReappliesCreateProcedureEveryPollAndRewritesIt()
+    {
+        using var fixture = new PollFixture();
+        fixture.Add("ddl/usp_example.sql", "CREATE PROCEDURE dbo.usp_example AS BEGIN SELECT 1; END");
+
+        var first = await fixture.Poller.PollAsync(CancellationToken.None);
+        var second = await fixture.Poller.PollAsync(CancellationToken.None);
+
+        Assert.Equal(1, first.Succeeded);
+        Assert.Equal(1, second.Succeeded);
+        Assert.True(File.Exists(Path.Combine(fixture.Inbox, "ddl", "usp_example.sql")));
+        Assert.False(File.Exists(Path.Combine(fixture.Success, "usp_example.sql")));
+        var saved = File.ReadAllText(Path.Combine(fixture.Inbox, "ddl", "usp_example.sql"));
+        Assert.Contains("CREATE OR ALTER PROCEDURE", saved, StringComparison.Ordinal);
+        Assert.Equal(2, fixture.Changes.Calls.Count);
+        Assert.All(fixture.Changes.Calls, call => Assert.False(call.UseJournal));
+        Assert.Contains("CREATE OR ALTER PROCEDURE", fixture.Changes.Calls[0].Batches[0], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Poll_MovesSuccessfulChangeScriptAndStripsGo()
     {
         using var fixture = new PollFixture();

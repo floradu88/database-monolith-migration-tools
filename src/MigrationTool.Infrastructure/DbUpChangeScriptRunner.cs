@@ -1,5 +1,6 @@
 using DbUp;
 using DbUp.Engine;
+using DbUp.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MigrationTool.Application;
@@ -26,10 +27,16 @@ public sealed class DbUpChangeScriptRunner : IChangeScriptRunner
             return Task.FromResult(ScriptRunResult.Ok());
         }
 
-        return Task.Run(() => Upgrade(script.JournalName, batches, script.CommandTimeoutSeconds), cancellationToken);
+        return Task.Run(
+            () => Upgrade(script.JournalName, batches, script.CommandTimeoutSeconds, script.UseJournal),
+            cancellationToken);
     }
 
-    private ScriptRunResult Upgrade(string journalName, IReadOnlyList<string> batches, int commandTimeoutSeconds)
+    private ScriptRunResult Upgrade(
+        string journalName,
+        IReadOnlyList<string> batches,
+        int commandTimeoutSeconds,
+        bool useJournal)
     {
         var scripts = batches
             .Select((sql, index) => new SqlScript(BatchName(journalName, index, batches.Count), sql))
@@ -73,54 +80,72 @@ public sealed class DbUpChangeScriptRunner : IChangeScriptRunner
             return ScriptRunResult.Fail(message);
         }
 
-        _logger.LogInformation("DbUp executing on target database {Database}", currentDatabase);
+        _logger.LogInformation(
+            "DbUp executing on target database {Database} (journal {Journal})",
+            currentDatabase,
+            useJournal);
 
-        try
+        if (useJournal)
         {
-            JournalSchemaEnsurer.Ensure(
-                _options.Provider,
-                _options.ConnectionString,
-                _options.JournalSchema,
-                commandTimeoutSeconds,
-                _logger);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Could not ensure journal schema {Schema}", _options.JournalSchema);
-            var mapped = DatabaseErrorMapper.From(ex);
-            var schema = string.IsNullOrWhiteSpace(_options.JournalSchema) ? "dbo" : _options.JournalSchema.Trim();
-            var table = string.IsNullOrWhiteSpace(_options.JournalTable) ? "schema_versions" : _options.JournalTable.Trim();
-            return mapped with
+            try
             {
-                ErrorText =
-                    $"Could not create journal schema '{schema}'. " +
-                    $"Applied scripts are recorded in [{schema}].[{table}]. " +
-                    "The login needs CREATE SCHEMA on this database, or a DBA must create the schema. " +
-                    "Set Migration:JournalSchema to dbo when the login cannot create schemas."
-                    + Environment.NewLine
-                    + mapped.ErrorText
-            };
+                JournalSchemaEnsurer.Ensure(
+                    _options.Provider,
+                    _options.ConnectionString,
+                    _options.JournalSchema,
+                    commandTimeoutSeconds,
+                    _logger);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not ensure journal schema {Schema}", _options.JournalSchema);
+                var mapped = DatabaseErrorMapper.From(ex);
+                var schema = string.IsNullOrWhiteSpace(_options.JournalSchema) ? "dbo" : _options.JournalSchema.Trim();
+                var table = string.IsNullOrWhiteSpace(_options.JournalTable) ? "schema_versions" : _options.JournalTable.Trim();
+                return mapped with
+                {
+                    ErrorText =
+                        $"Could not create journal schema '{schema}'. " +
+                        $"Applied scripts are recorded in [{schema}].[{table}]. " +
+                        "The login needs CREATE SCHEMA on this database, or a DBA must create the schema. " +
+                        "Set Migration:JournalSchema to dbo when the login cannot create schemas."
+                        + Environment.NewLine
+                        + mapped.ErrorText
+                };
+            }
         }
 
         try
         {
-            var builder = _options.Provider == DatabaseProviderKind.PostgreSql
-                ? DeployChanges.To
+            UpgradeEngine engine;
+            if (_options.Provider == DatabaseProviderKind.PostgreSql)
+            {
+                var builder = DeployChanges.To
                     .PostgresqlDatabase(_options.ConnectionString)
                     .WithScripts(scripts)
-                    .WithTransaction()
-                    .JournalToPostgresqlTable(_options.JournalSchema, _options.JournalTable)
+                    .WithTransaction();
+                engine = (useJournal
+                        ? builder.JournalToPostgresqlTable(_options.JournalSchema, _options.JournalTable)
+                        : builder.JournalTo(new NullJournal()))
                     .WithExecutionTimeout(timeout)
                     .LogTo(_logger)
-                : DeployChanges.To
+                    .Build();
+            }
+            else
+            {
+                var builder = DeployChanges.To
                     .SqlDatabase(_options.ConnectionString)
                     .WithScripts(scripts)
-                    .WithTransaction()
-                    .JournalToSqlTable(_options.JournalSchema, _options.JournalTable)
+                    .WithTransaction();
+                engine = (useJournal
+                        ? builder.JournalToSqlTable(_options.JournalSchema, _options.JournalTable)
+                        : builder.JournalTo(new NullJournal()))
                     .WithExecutionTimeout(timeout)
-                    .LogTo(_logger);
+                    .LogTo(_logger)
+                    .Build();
+            }
 
-            var result = builder.Build().PerformUpgrade();
+            var result = engine.PerformUpgrade();
             if (!result.Successful)
             {
                 var error = result.Error ?? new InvalidOperationException("DbUp upgrade failed.");
@@ -134,6 +159,15 @@ public sealed class DbUpChangeScriptRunner : IChangeScriptRunner
                 }
 
                 return mapped;
+            }
+
+            if (!useJournal)
+            {
+                _logger.LogInformation(
+                    "DbUp executed {Count} repeatable script(s) on target database {Database}",
+                    result.Scripts.Count(),
+                    shape.Database);
+                return ScriptRunResult.Ok();
             }
 
             var confirmed = ConfirmJournalOnTarget(scripts, commandTimeoutSeconds, shape.Database);
