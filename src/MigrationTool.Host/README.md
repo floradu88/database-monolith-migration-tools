@@ -85,7 +85,7 @@ Connection failures are classified with guidance (login failed, database missing
 | `PollCron` | Recurring poll. Default `*/1 * * * *` |
 | `CommandTimeoutSeconds` | Batch, query, diagnostic, and ALTER timeout. Default `600` |
 | `MaxRetries` | Failed copies `001`–`004`, then the inbox file is removed |
-| `JournalSchema` / `JournalTable` | DbUp journal on the target database |
+| `JournalSchema` / `JournalTable` | DbUp journal on the target database. Default `[migration].[schema_versions]`. The poller creates the schema before the first script when it is missing. The login needs `CREATE SCHEMA`, or set `JournalSchema` to `dbo` |
 
 ## Scripts
 

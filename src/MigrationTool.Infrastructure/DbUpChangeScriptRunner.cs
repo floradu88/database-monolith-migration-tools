@@ -38,6 +38,33 @@ public sealed class DbUpChangeScriptRunner : IChangeScriptRunner
 
         try
         {
+            JournalSchemaEnsurer.Ensure(
+                _options.Provider,
+                _options.ConnectionString,
+                _options.JournalSchema,
+                commandTimeoutSeconds,
+                _logger);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not ensure journal schema {Schema}", _options.JournalSchema);
+            var mapped = DatabaseErrorMapper.From(ex);
+            var schema = string.IsNullOrWhiteSpace(_options.JournalSchema) ? "dbo" : _options.JournalSchema.Trim();
+            var table = string.IsNullOrWhiteSpace(_options.JournalTable) ? "schema_versions" : _options.JournalTable.Trim();
+            return mapped with
+            {
+                ErrorText =
+                    $"Could not create journal schema '{schema}'. " +
+                    $"Applied scripts are recorded in [{schema}].[{table}]. " +
+                    "The login needs CREATE SCHEMA on this database, or a DBA must create the schema. " +
+                    "Set Migration:JournalSchema to dbo when the login cannot create schemas."
+                    + Environment.NewLine
+                    + mapped.ErrorText
+            };
+        }
+
+        try
+        {
             var builder = _options.Provider == DatabaseProviderKind.PostgreSql
                 ? DeployChanges.To
                     .PostgresqlDatabase(_options.ConnectionString)
