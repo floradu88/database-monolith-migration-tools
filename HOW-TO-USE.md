@@ -94,6 +94,8 @@ dotnet run --project src/MigrationTool.Host
 
 Inbox folders: `src/MigrationTool.Host/scripts/inbox/ddl`, `dml`, `data`, or `query` (or first line `-- kind: ddl|dml|data|query`). DDL, DML, and data move to `scripts/success` after one successful run. Query scripts stay in the inbox. Failures are copied to `scripts/failed` as `001_` through `004_`. `GO` batches are preserved; `CREATE OR ALTER` is allowed.
 
+PowerShell console output is colored: **green** success, **yellow** warning (including column repair), **red** failure, **cyan** while a script is running.
+
 DbIntelligence’s API also uses port **5088**. Change `Urls` in `appsettings.json` if both are running.
 
 Details: [`src/MigrationTool.Host/README.md`](src/MigrationTool.Host/README.md).

@@ -14,6 +14,8 @@ Kit how-to: [`../../HOW-TO-USE.md`](../../HOW-TO-USE.md).
 
 Most “run my SP scripts on the DB” work should use the poller, not dacpac publish.
 
+PowerShell / Windows console: success lines are **green**, warnings **yellow**, failures **red**. Each inbox script logs `Running` (cyan), then succeeded (green) or failed (red).
+
 ## Requirements
 
 - .NET 10 SDK, `10.0.203` or newer on the 10.0 line, including `10.0.401` (`global.json` uses `rollForward: latestFeature`; projects target `net10.0`)

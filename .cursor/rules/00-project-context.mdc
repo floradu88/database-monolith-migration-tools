@@ -18,5 +18,6 @@ This repo is a .NET 10 worker that polls an inbox of SQL scripts and applies the
 - `GO` lines are removed from the file and saved. Batches still run separately.
 - Providers are SQL Server and PostgreSQL, including cloud, via the connection string. Override it with `MIGRATION_CONNECTION_STRING`.
 - Hangfire storage is in-memory. The dashboard listens on localhost only.
+- CLI logs in PowerShell use console colors: green success, yellow warning, red failure, cyan while a script is running.
 - Do not commit connection strings, passwords, or tokens.
 - DACPAC (separate path): `--build-dacpac` / `--extract-dacpac` / `--publish-dacpac` via SqlPackage; prefer `--script-only` before publish. Prefer `tools/dacpac/Invoke-DacpacReady.ps1` and `Install-DacpacTools.ps1`.

@@ -8,7 +8,7 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration).WriteTo.Console());
+    configuration.ReadFrom.Configuration(context.Configuration).WriteTo.Sink(new ColoredConsoleSink()));
 
 builder.WebHost.UseUrls(builder.Configuration["Urls"] ?? "http://127.0.0.1:5088");
 
@@ -36,7 +36,9 @@ if (args.Contains("--check-network") || args.Contains("--ping"))
         .CheckNetworkAsync(connection, options.Provider, options.CommandTimeoutSeconds, CancellationToken.None);
     if (result.Network is not null)
     {
-        Console.WriteLine(result.Network.Format());
+        CliConsoleColor.Write(
+            result.Network.Format(),
+            result.Succeeded ? ConsoleColor.Green : ConsoleColor.Red);
     }
 
     if (result.Succeeded)
@@ -65,7 +67,9 @@ if (args.Contains("--validate-connection"))
         .ValidateAsync(connection, options.Provider, options.CommandTimeoutSeconds, CancellationToken.None);
     if (result.Network is not null)
     {
-        Console.WriteLine(result.Network.Format());
+        CliConsoleColor.Write(
+            result.Network.Format(),
+            result.Succeeded ? ConsoleColor.Green : ConsoleColor.Red);
     }
 
     if (result.Succeeded)
@@ -103,7 +107,9 @@ if (args.Contains("--validate-connection"))
 if (args.Contains("--dacpac-prereqs"))
 {
     var report = app.Services.GetRequiredService<IDacpacBuilder>().GetPrerequisites();
-    Console.WriteLine(report.Format());
+    CliConsoleColor.Write(
+        report.Format(),
+        report.CanBuildSdkStyle ? ConsoleColor.Green : ConsoleColor.Yellow);
     Environment.ExitCode = report.CanBuildSdkStyle ? 0 : 1;
     return;
 }
@@ -169,13 +175,9 @@ if (args.Contains("--poll-once"))
     var summary = await scope.ServiceProvider
         .GetRequiredService<IScriptPoller>()
         .PollAsync(CancellationToken.None);
-    Log.Information(
+    LogPollSummary(
         "Poll once finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}, connectionSkipped {ConnectionSkipped}",
-        summary.Processed,
-        summary.Succeeded,
-        summary.Failed,
-        summary.Repaired,
-        summary.ConnectionSkipped);
+        summary);
     if (summary.ConnectionSkipped && !string.IsNullOrWhiteSpace(summary.ConnectionError))
     {
         Log.Error("Connection issue: {ConnectionError}", summary.ConnectionError);
@@ -192,6 +194,41 @@ app.Services.GetRequiredService<IRecurringJobManager>().AddOrUpdate<ScriptPollJo
     pollOptions.PollCron);
 
 app.Run();
+
+static void LogPollSummary(string messageTemplate, PollSummary summary)
+{
+    if (summary.ConnectionSkipped || summary.Failed > 0)
+    {
+        Log.Error(
+            messageTemplate,
+            summary.Processed,
+            summary.Succeeded,
+            summary.Failed,
+            summary.Repaired,
+            summary.ConnectionSkipped);
+        return;
+    }
+
+    if (summary.Repaired > 0)
+    {
+        Log.Warning(
+            messageTemplate,
+            summary.Processed,
+            summary.Succeeded,
+            summary.Failed,
+            summary.Repaired,
+            summary.ConnectionSkipped);
+        return;
+    }
+
+    Log.Information(
+        messageTemplate,
+        summary.Processed,
+        summary.Succeeded,
+        summary.Failed,
+        summary.Repaired,
+        summary.ConnectionSkipped);
+}
 
 static void LogDacpacResult(DacpacOperationResult result)
 {

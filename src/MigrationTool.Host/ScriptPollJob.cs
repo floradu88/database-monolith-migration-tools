@@ -23,13 +23,36 @@ public sealed class ScriptPollJob
         try
         {
             var summary = await _poller.PollAsync(CancellationToken.None);
-            _logger.LogInformation(
-                "Script poll finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}, connectionSkipped {ConnectionSkipped}",
-                summary.Processed,
-                summary.Succeeded,
-                summary.Failed,
-                summary.Repaired,
-                summary.ConnectionSkipped);
+            if (summary.ConnectionSkipped || summary.Failed > 0)
+            {
+                _logger.LogError(
+                    "Script poll finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}, connectionSkipped {ConnectionSkipped}",
+                    summary.Processed,
+                    summary.Succeeded,
+                    summary.Failed,
+                    summary.Repaired,
+                    summary.ConnectionSkipped);
+            }
+            else if (summary.Repaired > 0)
+            {
+                _logger.LogWarning(
+                    "Script poll finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}, connectionSkipped {ConnectionSkipped}",
+                    summary.Processed,
+                    summary.Succeeded,
+                    summary.Failed,
+                    summary.Repaired,
+                    summary.ConnectionSkipped);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Script poll finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}, connectionSkipped {ConnectionSkipped}",
+                    summary.Processed,
+                    summary.Succeeded,
+                    summary.Failed,
+                    summary.Repaired,
+                    summary.ConnectionSkipped);
+            }
         }
         catch (Exception ex)
         {

@@ -81,6 +81,20 @@ public sealed class ScriptPoller : IScriptPoller
             if (outcome.Success)
             {
                 succeeded++;
+                if (outcome.Repaired)
+                {
+                    _logger.LogWarning(
+                        "Script {Script} succeeded after column repair ({Kind})",
+                        item.Script.RelativePath,
+                        item.Kind);
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "Script {Script} succeeded ({Kind})",
+                        item.Script.RelativePath,
+                        item.Kind);
+                }
             }
             else
             {
@@ -88,12 +102,33 @@ public sealed class ScriptPoller : IScriptPoller
             }
         }
 
-        _logger.LogInformation(
-            "Poll finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}",
-            processed,
-            succeeded,
-            failed,
-            repaired);
+        if (failed > 0)
+        {
+            _logger.LogError(
+                "Poll finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}",
+                processed,
+                succeeded,
+                failed,
+                repaired);
+        }
+        else if (repaired > 0)
+        {
+            _logger.LogWarning(
+                "Poll finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}",
+                processed,
+                succeeded,
+                failed,
+                repaired);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Poll finished. Processed {Processed}, succeeded {Succeeded}, failed {Failed}, repaired {Repaired}",
+                processed,
+                succeeded,
+                failed,
+                repaired);
+        }
 
         return new PollSummary(processed, succeeded, failed, repaired, false);
     }

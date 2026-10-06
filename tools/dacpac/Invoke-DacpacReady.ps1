@@ -154,7 +154,7 @@ if ($Extract) {
     & dotnet @runArgs
     if ($LASTEXITCODE -ne 0) { throw "Extract failed." }
     if ($Open) { Invoke-Item (Split-Path -Parent (Resolve-Path $Output)) }
-    Write-Host "DACPAC extracted: $Output"
+    Write-Host "DACPAC extracted: $Output" -ForegroundColor Green
     return
 }
 
@@ -169,7 +169,7 @@ if ($Publish) {
     if (-not [string]::IsNullOrWhiteSpace($ScriptOutput)) { $runArgs += @("--script-output", $ScriptOutput) }
     & dotnet @runArgs
     if ($LASTEXITCODE -ne 0) { throw "Publish/script failed." }
-    Write-Host "DACPAC publish finished for $Output"
+    Write-Host "DACPAC publish finished for $Output" -ForegroundColor Green
     return
 }
 
@@ -192,4 +192,4 @@ if ($Open -and -not [string]::IsNullOrWhiteSpace($Output) -and (Test-Path -Liter
     Invoke-Item $openTarget
 }
 
-Write-Host "DACPAC build finished for $sqlproj"
+Write-Host "DACPAC build finished for $sqlproj" -ForegroundColor Green
