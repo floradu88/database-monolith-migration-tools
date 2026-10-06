@@ -110,7 +110,18 @@ public sealed class ConnectionValidator : IConnectionValidator
                 command.CommandText = "SELECT @@VERSION;";
                 command.CommandTimeout = timeout;
                 var version = Convert.ToString(await command.ExecuteScalarAsync(cancellationToken));
-                _logger.LogInformation("SQL Server connection OK. Version: {Version}", version);
+                command.CommandText = TargetDatabaseProbe.SqlServerCurrentDatabaseSql;
+                var actualDatabase = Convert.ToString(await command.ExecuteScalarAsync(cancellationToken));
+                var mismatch = WrongDatabaseResult(shape, actualDatabase, version, network);
+                if (mismatch is not null)
+                {
+                    return mismatch;
+                }
+
+                _logger.LogInformation(
+                    "SQL Server connection OK. Database={Database} Version={Version}",
+                    actualDatabase,
+                    version);
                 return new ConnectionValidationResult(true, shape, version, null, null, network);
             }
 
@@ -120,7 +131,18 @@ public sealed class ConnectionValidator : IConnectionValidator
             pgCommand.CommandText = "SELECT version();";
             pgCommand.CommandTimeout = timeout;
             var pgVersion = Convert.ToString(await pgCommand.ExecuteScalarAsync(cancellationToken));
-            _logger.LogInformation("PostgreSQL connection OK. Version: {Version}", pgVersion);
+            pgCommand.CommandText = TargetDatabaseProbe.PostgreSqlCurrentDatabaseSql;
+            var pgDatabase = Convert.ToString(await pgCommand.ExecuteScalarAsync(cancellationToken));
+            var pgMismatch = WrongDatabaseResult(shape, pgDatabase, pgVersion, network);
+            if (pgMismatch is not null)
+            {
+                return pgMismatch;
+            }
+
+            _logger.LogInformation(
+                "PostgreSQL connection OK. Database={Database} Version={Version}",
+                pgDatabase,
+                pgVersion);
             return new ConnectionValidationResult(true, shape, pgVersion, null, null, network);
         }
         catch (Exception ex)
@@ -134,6 +156,24 @@ public sealed class ConnectionValidator : IConnectionValidator
                 mapped.Guidance);
             return new ConnectionValidationResult(false, shape, null, mapped.Format(), mapped, network);
         }
+    }
+
+    private ConnectionValidationResult? WrongDatabaseResult(
+        ConnectionStringShapeResult shape,
+        string? actualDatabase,
+        string? version,
+        NetworkReachabilityReport? network)
+    {
+        if (TargetDatabase.Matches(shape.Database, actualDatabase))
+        {
+            return null;
+        }
+
+        var error = DatabaseConnectionErrorClassifier.WrongDatabase(
+            shape.Database ?? "(missing)",
+            string.IsNullOrWhiteSpace(actualDatabase) ? "(none)" : actualDatabase);
+        _logger.LogError("{Detail}", error.Format());
+        return new ConnectionValidationResult(false, shape, version, error.Format(), error, network);
     }
 
     private static DatabaseEndpoint? ResolveEndpoint(

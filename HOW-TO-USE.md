@@ -94,7 +94,7 @@ dotnet run --project src/MigrationTool.Host
 
 Inbox folders: `src/MigrationTool.Host/scripts/inbox/ddl`, `dml`, `data`, or `query` (or first line `-- kind: ddl|dml|data|query`). DDL, DML, and data move to `scripts/success` after one successful run. Query scripts stay in the inbox. Failures are copied to `scripts/failed` as `001_` through `004_`. `GO` batches are preserved; `CREATE OR ALTER` is allowed.
 
-Applied scripts are recorded in `[migration].[schema_versions]` (`JournalSchema` / `JournalTable`). The poller creates that schema before the first script when it is missing. The login needs `CREATE SCHEMA` on the database. Set `JournalSchema` to `dbo` when the login cannot create schemas.
+Applied scripts are recorded in `[migration].[schema_versions]` (`JournalSchema` / `JournalTable`). The poller creates that schema before the first script when it is missing. The login needs `CREATE SCHEMA` on the database. Set `JournalSchema` to `dbo` when the login cannot create schemas. DbUp runs only when the session database matches `Initial Catalog` / `Database`, then confirms the journal row on that database.
 
 PowerShell console output is colored: **green** success, **yellow** warning (including column repair), **red** failure, **cyan** while a script is running.
 

@@ -35,6 +35,45 @@ public sealed class DbUpChangeScriptRunner : IChangeScriptRunner
             .Select((sql, index) => new SqlScript(BatchName(journalName, index, batches.Count), sql))
             .ToArray();
         var timeout = commandTimeoutSeconds < 0 ? (TimeSpan?)null : TimeSpan.FromSeconds(commandTimeoutSeconds);
+        var shape = ConnectionStringShape.Validate(_options.ConnectionString, _options.Provider);
+        if (!shape.IsValid || string.IsNullOrWhiteSpace(shape.Database))
+        {
+            var detail = shape.Errors.Count == 0
+                ? "Connection string has no target database."
+                : string.Join(" ", shape.Errors);
+            return ScriptRunResult.Fail(
+                "DbUp was not executed. " + detail);
+        }
+
+        string currentDatabase;
+        try
+        {
+            currentDatabase = TargetDatabaseProbe.ReadCurrentDatabase(
+                _options.Provider,
+                _options.ConnectionString,
+                commandTimeoutSeconds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not read the current database before DbUp");
+            var mapped = DatabaseErrorMapper.From(ex);
+            return mapped with
+            {
+                ErrorText = "DbUp was not executed. The current database could not be read."
+                    + Environment.NewLine
+                    + mapped.ErrorText
+            };
+        }
+
+        if (!TargetDatabase.Matches(shape.Database, currentDatabase))
+        {
+            var message =
+                $"DbUp was not executed. Connected database is '{currentDatabase}', target database is '{shape.Database}'.";
+            _logger.LogError("{Message}", message);
+            return ScriptRunResult.Fail(message);
+        }
+
+        _logger.LogInformation("DbUp executing on target database {Database}", currentDatabase);
 
         try
         {
@@ -97,13 +136,106 @@ public sealed class DbUpChangeScriptRunner : IChangeScriptRunner
                 return mapped;
             }
 
-            return result.Scripts.Any() ? ScriptRunResult.Ok() : ScriptRunResult.Applied();
+            var confirmed = ConfirmJournalOnTarget(scripts, commandTimeoutSeconds, shape.Database);
+            if (confirmed is not null)
+            {
+                return confirmed;
+            }
+
+            if (result.Scripts.Any())
+            {
+                _logger.LogInformation(
+                    "DbUp executed {Count} script(s) on target database {Database}",
+                    result.Scripts.Count(),
+                    shape.Database);
+                return ScriptRunResult.Ok();
+            }
+
+            _logger.LogInformation(
+                "DbUp confirmed {Count} script(s) already recorded on target database {Database}",
+                scripts.Length,
+                shape.Database);
+            return ScriptRunResult.Applied();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "DbUp failed for {Script}", journalName);
             return DatabaseErrorMapper.From(ex);
         }
+    }
+
+    private ScriptRunResult? ConfirmJournalOnTarget(
+        IReadOnlyList<SqlScript> scripts,
+        int commandTimeoutSeconds,
+        string expectedDatabase)
+    {
+        string actual;
+        try
+        {
+            actual = TargetDatabaseProbe.ReadCurrentDatabase(
+                _options.Provider,
+                _options.ConnectionString,
+                commandTimeoutSeconds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not read the current database after DbUp");
+            var mapped = DatabaseErrorMapper.From(ex);
+            return mapped with
+            {
+                ErrorText =
+                    $"DbUp finished, but the session database could not be confirmed as '{expectedDatabase}'."
+                    + Environment.NewLine
+                    + mapped.ErrorText
+            };
+        }
+
+        if (!TargetDatabase.Matches(expectedDatabase, actual))
+        {
+            var message =
+                $"DbUp finished on '{actual}' instead of target database '{expectedDatabase}'.";
+            _logger.LogError("{Message}", message);
+            return ScriptRunResult.Fail(message);
+        }
+
+        var schema = _options.JournalSchema;
+        var table = string.IsNullOrWhiteSpace(_options.JournalTable) ? "schema_versions" : _options.JournalTable.Trim();
+        foreach (var script in scripts)
+        {
+            bool recorded;
+            try
+            {
+                recorded = TargetDatabaseProbe.JournalContains(
+                    _options.Provider,
+                    _options.ConnectionString,
+                    schema,
+                    table,
+                    script.Name,
+                    commandTimeoutSeconds);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not read the DbUp journal on {Database}", actual);
+                var mapped = DatabaseErrorMapper.From(ex);
+                return mapped with
+                {
+                    ErrorText =
+                        $"DbUp finished on target database '{actual}', but [{schema}].[{table}] could not be read."
+                        + Environment.NewLine
+                        + mapped.ErrorText
+                };
+            }
+
+            if (!recorded)
+            {
+                var message =
+                    $"DbUp finished on target database '{actual}', but [{schema}].[{table}] has no row for '{script.Name}'.";
+                _logger.LogError("{Message}", message);
+                return ScriptRunResult.Fail(message);
+            }
+        }
+
+        return null;
     }
 
     private static string BatchName(string journalName, int index, int count) =>

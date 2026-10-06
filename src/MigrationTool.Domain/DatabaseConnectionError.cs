@@ -12,7 +12,8 @@ public enum DatabaseConnectionErrorKind
     FirewallOrSecurity,
     TlsOrEncrypt,
     HostNotFound,
-    ConnectionRefused
+    ConnectionRefused,
+    WrongDatabase
 }
 
 public sealed record DatabaseConnectionError(
@@ -161,6 +162,12 @@ public static class DatabaseConnectionErrorClassifier
             DatabaseConnectionErrorKind.InvalidConnectionString,
             "Connection string shape is invalid.",
             details);
+
+    public static DatabaseConnectionError WrongDatabase(string expected, string actual) =>
+        new(
+            DatabaseConnectionErrorKind.WrongDatabase,
+            $"Connected to '{actual}' instead of target database '{expected}'.",
+            "DbUp does not run until the session database matches Initial Catalog / Database in the connection string.");
 
     private static DatabaseConnectionError Error(
         DatabaseConnectionErrorKind kind,
