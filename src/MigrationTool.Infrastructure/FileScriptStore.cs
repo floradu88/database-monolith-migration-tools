@@ -81,11 +81,21 @@ public sealed class FileScriptStore : IScriptStore
 
     public void WritePreStep(string fileName, string sql, string? diagnostics)
     {
-        File.WriteAllText(Path.Combine(_success, fileName), sql, Utf8);
+        WriteSqlArtifact(fileName, sql, diagnostics);
+    }
+
+    public void WriteUpdateScript(string fileName, string sql, string? diagnostics)
+    {
+        WriteSqlArtifact(fileName, sql, diagnostics);
+    }
+
+    private void WriteSqlArtifact(string fileName, string sql, string? diagnostics)
+    {
+        File.WriteAllText(UniquePath(Path.Combine(_success, fileName)), sql, Utf8);
         if (!string.IsNullOrWhiteSpace(diagnostics))
         {
             var diagnosticsName = Path.GetFileNameWithoutExtension(fileName) + ".diagnostics.txt";
-            File.WriteAllText(Path.Combine(_success, diagnosticsName), diagnostics, Utf8);
+            File.WriteAllText(UniquePath(Path.Combine(_success, diagnosticsName)), diagnostics, Utf8);
         }
     }
 

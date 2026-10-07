@@ -163,10 +163,15 @@ public class ScriptPollerTests
         Assert.Equal(1, summary.Repaired);
         Assert.DoesNotContain(fixture.Changes.Calls, call => call.JournalName == "ddl/create_city.sql");
         var alter = Assert.Single(fixture.Changes.Calls);
-        Assert.StartsWith("pre_add_", alter.JournalName, StringComparison.Ordinal);
+        Assert.Equal("update_dbo_City.sql", alter.JournalName);
         Assert.Contains("ADD [Code] nvarchar(10) NULL", alter.Batches[0], StringComparison.Ordinal);
         Assert.False(File.Exists(Path.Combine(fixture.Inbox, "ddl", "create_city.sql")));
         Assert.True(File.Exists(Path.Combine(fixture.Success, "create_city.sql")));
+        var updatePath = Path.Combine(fixture.Success, "update_dbo_City.sql");
+        Assert.True(File.Exists(updatePath));
+        var updateSql = File.ReadAllText(updatePath);
+        Assert.Contains("-- Update script for [dbo].[City]", updateSql, StringComparison.Ordinal);
+        Assert.Contains("ALTER TABLE [dbo].[City] ADD [Code] nvarchar(10) NULL;", updateSql, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -393,17 +393,35 @@ public sealed class ScriptPoller : IScriptPoller
                 $"-- live {schema}.{definition.Table} columns: {(liveColumns.Count == 0 ? "(none)" : string.Join(", ", liveColumns))}");
 
             var missing = TableColumnInventory.MissingColumns(definition, liveColumns);
-            foreach (var column in missing)
+            var updateScript = CreateTableUpdateScriptBuilder.Build(
+                _options.Provider,
+                schema,
+                definition.Table,
+                missing,
+                definition.Columns.Select(column => column.Name).ToList(),
+                liveColumns);
+            var updateFileName = CreateTableUpdateScriptBuilder.FileName(schema, definition.Table);
+            _store.WriteUpdateScript(updateFileName, updateScript, diagnostics.ToString());
+            diagnostics.AppendLine($"-- wrote update script {updateFileName}");
+            _logger.LogInformation(
+                "Created update table script {Script} for {Schema}.{Table} ({Missing} column(s) to add)",
+                updateFileName,
+                schema,
+                definition.Table,
+                missing.Count);
+
+            if (missing.Count > 0)
             {
-                var alterSql = AlterScriptBuilder.Build(
-                    _options.Provider,
-                    schema,
-                    definition.Table,
-                    column,
-                    "taken from CREATE TABLE source");
-                var preStepName = AlterScriptBuilder.FileName(schema, definition.Table, column.Name);
+                var alterBatches = missing
+                    .Select(column => AlterScriptBuilder.Build(
+                        _options.Provider,
+                        schema,
+                        definition.Table,
+                        column,
+                        "taken from CREATE TABLE source"))
+                    .ToList();
                 var alter = await _changes.ExecuteAsync(
-                    new ChangeScript(preStepName, [alterSql], _options.CommandTimeoutSeconds),
+                    new ChangeScript(updateFileName, alterBatches, _options.CommandTimeoutSeconds),
                     cancellationToken);
                 if (!alter.Success)
                 {
@@ -412,16 +430,18 @@ public sealed class ScriptPoller : IScriptPoller
                         columnsAdded,
                         skippedCreate,
                         diagnostics.ToString(),
-                        alter.ErrorText ?? $"ALTER ADD for {column.Name} failed.");
+                        alter.ErrorText ?? $"Update script {updateFileName} failed.");
                 }
 
-                _store.WritePreStep(preStepName, alterSql, diagnostics.ToString());
-                columnsAdded++;
-                _logger.LogInformation(
-                    "Added missing column {Schema}.{Table}.{Column} from CREATE TABLE source",
-                    schema,
-                    definition.Table,
-                    column.Name);
+                columnsAdded += missing.Count;
+                foreach (var column in missing)
+                {
+                    _logger.LogInformation(
+                        "Added missing column {Schema}.{Table}.{Column} from CREATE TABLE source",
+                        schema,
+                        definition.Table,
+                        column.Name);
+                }
             }
 
             remaining = remaining

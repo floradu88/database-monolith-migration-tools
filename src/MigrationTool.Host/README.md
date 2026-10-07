@@ -113,7 +113,7 @@ END
 - A failure copies `001_{file}.sql` and `001_{file}.error.txt` into `scripts/failed`.
 - `GO` lines are removed from the file. Batches still run separately.
 - A missing column runs a diagnostic query, adds the column, and retries that attempt once.
-- `CREATE TABLE` scripts compare source columns to the live table. Missing columns are added with the types from the script; existing columns are left alone.
+- `CREATE TABLE` scripts compare source columns to the live table. The poller writes `scripts/success/update_{schema}_{table}.sql` with the ALTER ADD statements, then applies that update script. Existing columns are left alone. Manual SQL generator: [`scripts/manual/002_generate_create_table_update.sql`](scripts/manual/002_generate_create_table_update.sql).
 
 ## DACPAC from SQL projects
 

@@ -19,6 +19,8 @@ public interface IScriptStore
     void WriteQueryResult(string fileName, string resultText, DateTimeOffset utc);
 
     void WritePreStep(string fileName, string sql, string? diagnostics);
+
+    void WriteUpdateScript(string fileName, string sql, string? diagnostics);
 }
 
 public interface IChangeScriptRunner
