@@ -92,7 +92,7 @@ dotnet run --project src/MigrationTool.Host -- --poll-once
 dotnet run --project src/MigrationTool.Host
 ```
 
-Inbox folders: `src/MigrationTool.Host/scripts/inbox/ddl`, `dml`, `data`, or `query` (or first line `-- kind: ddl|dml|data|query`). `CREATE PROCEDURE` / `FUNCTION` / `VIEW` / `TRIGGER` are rewritten to `CREATE OR ALTER` (SQL Server) or `CREATE OR REPLACE` (PostgreSQL) and run on every poll; those files stay in the inbox. Other DDL, DML, and data move to `scripts/success` after one successful run. Query scripts stay in the inbox. Failures are copied to `scripts/failed` as `001_` through `004_`. `GO` batches are preserved.
+Inbox folders: `src/MigrationTool.Host/scripts/inbox/ddl`, `dml`, `data`, or `query` (or first line `-- kind: ddl|dml|data|query`). `CREATE PROCEDURE` / `FUNCTION` / `VIEW` / `TRIGGER` are rewritten to `CREATE OR ALTER` (SQL Server) or `CREATE OR REPLACE` (PostgreSQL) and run on every poll; those files stay in the inbox. Other DDL, DML, and data move to `scripts/success` after one successful run. `CREATE TABLE` scripts compare source columns to the live table and `ALTER TABLE ... ADD` only missing columns (types taken from the script). Query scripts stay in the inbox. Failures are copied to `scripts/failed` as `001_` through `004_`. `GO` batches are preserved.
 
 Applied scripts are recorded in `[migration].[schema_versions]` when that schema exists. If `migration` is missing, the poller skips the journal and runs the script. Optional one-time create: [`src/MigrationTool.Host/scripts/manual/001_create_migration_journal.sql`](src/MigrationTool.Host/scripts/manual/001_create_migration_journal.sql). DbUp runs only when the session database matches `Initial Catalog` / `Database`.
 

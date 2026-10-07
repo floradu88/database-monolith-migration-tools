@@ -86,6 +86,7 @@ Connection failures are classified with guidance (login failed, database missing
 | `CommandTimeoutSeconds` | Batch, query, diagnostic, and ALTER timeout. Default `600` |
 | `MaxRetries` | Failed copies `001`–`004`, then the inbox file is removed |
 | `JournalSchema` / `JournalTable` | DbUp journal on the target database. Default `[migration].[schema_versions]`. If that schema is missing, the poller skips the journal and runs the script. Optional manual create: [`scripts/manual/001_create_migration_journal.sql`](scripts/manual/001_create_migration_journal.sql). DbUp runs only when `DB_NAME()` / `current_database()` matches `Initial Catalog` / `Database`. When the journal schema exists, the poller confirms the journal row on that database |
+| `SyncCreateTableColumns` | When a script contains `CREATE TABLE`, list its columns, compare them to the live table, and `ALTER TABLE ... ADD` only the missing ones (default `true`). Never drops or rewrites columns |
 
 ## Scripts
 
@@ -112,6 +113,7 @@ END
 - A failure copies `001_{file}.sql` and `001_{file}.error.txt` into `scripts/failed`.
 - `GO` lines are removed from the file. Batches still run separately.
 - A missing column runs a diagnostic query, adds the column, and retries that attempt once.
+- `CREATE TABLE` scripts compare source columns to the live table. Missing columns are added with the types from the script; existing columns are left alone.
 
 ## DACPAC from SQL projects
 

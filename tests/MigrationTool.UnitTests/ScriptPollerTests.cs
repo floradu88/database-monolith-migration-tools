@@ -128,6 +128,65 @@ public class ScriptPollerTests
         Assert.Equal("query/q.sql", Assert.Single(fixture.Queries.Calls).Name);
     }
 
+    [Fact]
+    public async Task Poll_SyncsMissingCreateTableColumnsAgainstLiveTable()
+    {
+        using var fixture = new PollFixture();
+        fixture.Add(
+            "ddl/create_city.sql",
+            """
+            CREATE TABLE dbo.City (
+                Id int NOT NULL,
+                Name nvarchar(100) NULL,
+                Code nvarchar(10) NULL
+            );
+            """);
+
+        fixture.Queries.Handler = request =>
+        {
+            if (request.Name.StartsWith("table-exists:", StringComparison.Ordinal))
+            {
+                return ScriptRunResult.Ok("table_exists\n1\n(1 row)");
+            }
+
+            if (request.Name.StartsWith("table-columns:", StringComparison.Ordinal))
+            {
+                return ScriptRunResult.Ok("COLUMN_NAME\nId\nName\n(2 rows)");
+            }
+
+            return ScriptRunResult.Ok("ok");
+        };
+
+        var summary = await fixture.Poller.PollAsync(CancellationToken.None);
+
+        Assert.Equal(1, summary.Succeeded);
+        Assert.Equal(1, summary.Repaired);
+        Assert.DoesNotContain(fixture.Changes.Calls, call => call.JournalName == "ddl/create_city.sql");
+        var alter = Assert.Single(fixture.Changes.Calls);
+        Assert.StartsWith("pre_add_", alter.JournalName, StringComparison.Ordinal);
+        Assert.Contains("ADD [Code] nvarchar(10) NULL", alter.Batches[0], StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(fixture.Inbox, "ddl", "create_city.sql")));
+        Assert.True(File.Exists(Path.Combine(fixture.Success, "create_city.sql")));
+    }
+
+    [Fact]
+    public async Task Poll_RunsCreateTableWhenLiveTableIsMissing()
+    {
+        using var fixture = new PollFixture();
+        fixture.Add("ddl/create_city.sql", "CREATE TABLE dbo.City (Id int NOT NULL);");
+        fixture.Queries.Handler = request =>
+            request.Name.StartsWith("table-exists:", StringComparison.Ordinal)
+                ? ScriptRunResult.Ok("table_exists\n0\n(1 row)")
+                : ScriptRunResult.Ok("ok");
+
+        var summary = await fixture.Poller.PollAsync(CancellationToken.None);
+
+        Assert.Equal(1, summary.Succeeded);
+        Assert.Equal(0, summary.Repaired);
+        Assert.Contains(fixture.Changes.Calls, call => call.JournalName == "ddl/create_city.sql");
+        Assert.DoesNotContain(fixture.Changes.Calls, call => call.JournalName.StartsWith("pre_add_", StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData(DatabaseProviderKind.SqlServer, "ADD [Title] nvarchar(max) NULL", "INFORMATION_SCHEMA.COLUMNS")]
     [InlineData(DatabaseProviderKind.PostgreSql, "ADD COLUMN \"title\" text NULL", "information_schema.columns")]
@@ -224,7 +283,8 @@ public class ScriptPollerTests
                 FailedPath = Failed,
                 MaxRetries = 4,
                 CommandTimeoutSeconds = 42,
-                RepairMissingColumns = true
+                RepairMissingColumns = true,
+                SyncCreateTableColumns = true
             };
             Store = new FileScriptStore(Microsoft.Extensions.Options.Options.Create(Options), new TestEnvironment(Root));
             Connections = new FakeConnectionValidator();

@@ -167,27 +167,93 @@ public sealed class ScriptPoller : IScriptPoller
             return ScriptOutcome.Done(repaired: false);
         }
 
-        var result = await ExecuteAsync(kind, journalName, rewritten.Batches, rewritten.Repeatable, cancellationToken);
+        string? diagnostics = null;
+        var repaired = false;
+        var batchesToRun = rewritten.Batches;
+        if (kind != ScriptKind.Query && _options.SyncCreateTableColumns)
+        {
+            var createTables = CreateTableDefinitionParser.ParseAll(sql);
+            if (createTables.Count > 0)
+            {
+                var sync = await SyncCreateTableColumnsAsync(createTables, batchesToRun, cancellationToken);
+                diagnostics = sync.Diagnostics;
+                repaired = sync.ColumnsAdded > 0;
+                batchesToRun = sync.BatchesToRun;
+                if (!string.IsNullOrWhiteSpace(sync.Error))
+                {
+                    RecordFailure(
+                        script,
+                        sql,
+                        ScriptRunResult.Fail(sync.Error),
+                        diagnostics);
+                    return new ScriptOutcome(false, repaired);
+                }
+
+                _logger.LogInformation(
+                    "CREATE TABLE sync for {Script}: source columns compared; added {Added}; skipped existing tables {Skipped}",
+                    script.RelativePath,
+                    sync.ColumnsAdded,
+                    sync.SkippedCreateCount);
+            }
+        }
+
+        ScriptRunResult result;
+        if (batchesToRun.All(string.IsNullOrWhiteSpace))
+        {
+            result = ScriptRunResult.Ok();
+        }
+        else
+        {
+            result = await ExecuteAsync(kind, journalName, batchesToRun, rewritten.Repeatable, cancellationToken);
+        }
+
         if (result.AlreadyApplied && !rewritten.Repeatable)
         {
             _store.MoveToSuccess(script);
-            return ScriptOutcome.Done(repaired: false);
+            return ScriptOutcome.Done(repaired: repaired);
         }
 
-        string? diagnostics = null;
-        var repaired = false;
+        if (!result.Success
+            && kind != ScriptKind.Query
+            && _options.SyncCreateTableColumns
+            && TableAlreadyExistsParser.Matches(result.ErrorText, result.ErrorNumber, result.SqlState))
+        {
+            var createTables = CreateTableDefinitionParser.ParseAll(sql);
+            if (createTables.Count > 0)
+            {
+                var sync = await SyncCreateTableColumnsAsync(createTables, Array.Empty<string>(), cancellationToken);
+                diagnostics = ConcatDiagnostics(diagnostics, sync.Diagnostics);
+                repaired |= sync.ColumnsAdded > 0;
+                if (string.IsNullOrWhiteSpace(sync.Error))
+                {
+                    _logger.LogInformation(
+                        "CREATE TABLE already existed for {Script}; compared columns and added {Added}",
+                        script.RelativePath,
+                        sync.ColumnsAdded);
+                    result = ScriptRunResult.Ok();
+                }
+                else
+                {
+                    result = result with
+                    {
+                        ErrorText = (result.ErrorText ?? "") + Environment.NewLine + sync.Error
+                    };
+                }
+            }
+        }
+
         if (!result.Success && _options.RepairMissingColumns)
         {
             var fault = MissingColumnParser.Parse(result.ErrorText, result.ErrorNumber, result.SqlState, sql);
             if (fault is { Table: not null })
             {
                 var repair = await RepairAsync(fault, sql, cancellationToken);
-                diagnostics = repair.Diagnostics;
-                repaired = repair.AlterApplied;
+                diagnostics = ConcatDiagnostics(diagnostics, repair.Diagnostics);
+                repaired |= repair.AlterApplied;
                 if (repair.AlterApplied)
                 {
                     _logger.LogInformation("Applied column repair for {Script} and retrying", script.RelativePath);
-                    result = await ExecuteAsync(kind, journalName, rewritten.Batches, rewritten.Repeatable, cancellationToken);
+                    result = await ExecuteAsync(kind, journalName, batchesToRun, rewritten.Repeatable, cancellationToken);
                 }
                 else if (!string.IsNullOrWhiteSpace(repair.AlterError))
                 {
@@ -265,6 +331,122 @@ public sealed class ScriptPoller : IScriptPoller
             cancellationToken);
     }
 
+    private async Task<CreateTableSyncOutcome> SyncCreateTableColumnsAsync(
+        IReadOnlyList<CreateTableDefinition> definitions,
+        IReadOnlyList<string> batches,
+        CancellationToken cancellationToken)
+    {
+        var diagnostics = new StringBuilder();
+        var remaining = batches.ToList();
+        var columnsAdded = 0;
+        var skippedCreate = 0;
+
+        foreach (var definition in definitions)
+        {
+            var schema = string.IsNullOrWhiteSpace(definition.Schema)
+                ? SqlIdentifier.DefaultSchema(_options.Provider)
+                : definition.Schema;
+            var sourceNames = string.Join(", ", definition.Columns.Select(column => column.Name));
+            diagnostics.AppendLine($"-- source {schema}.{definition.Table} columns: {sourceNames}");
+
+            var existsSql = TableColumnInventory.ExistsSql(_options.Provider, schema, definition.Table);
+            var existsResult = await _queries.ExecuteAsync(
+                new QueryScriptRequest($"table-exists:{schema}.{definition.Table}", existsSql, _options.CommandTimeoutSeconds),
+                cancellationToken);
+            diagnostics.AppendLine(existsSql);
+            diagnostics.AppendLine(existsResult.ResultText ?? existsResult.ErrorText ?? "");
+            if (!existsResult.Success)
+            {
+                return new CreateTableSyncOutcome(
+                    remaining,
+                    columnsAdded,
+                    skippedCreate,
+                    diagnostics.ToString(),
+                    existsResult.ErrorText ?? "Could not check whether the CREATE TABLE target exists.");
+            }
+
+            if (!TableColumnInventory.ParseExists(existsResult.ResultText))
+            {
+                diagnostics.AppendLine($"-- live table {schema}.{definition.Table} is missing; CREATE TABLE will run.");
+                continue;
+            }
+
+            skippedCreate++;
+            var columnsSql = TableColumnInventory.ColumnsSql(_options.Provider, schema, definition.Table);
+            var columnsResult = await _queries.ExecuteAsync(
+                new QueryScriptRequest($"table-columns:{schema}.{definition.Table}", columnsSql, _options.CommandTimeoutSeconds),
+                cancellationToken);
+            diagnostics.AppendLine(columnsSql);
+            diagnostics.AppendLine(columnsResult.ResultText ?? columnsResult.ErrorText ?? "");
+            if (!columnsResult.Success)
+            {
+                return new CreateTableSyncOutcome(
+                    remaining,
+                    columnsAdded,
+                    skippedCreate,
+                    diagnostics.ToString(),
+                    columnsResult.ErrorText ?? "Could not list live columns for CREATE TABLE sync.");
+            }
+
+            var liveColumns = TableColumnInventory.ParseColumnNames(columnsResult.ResultText);
+            diagnostics.AppendLine(
+                $"-- live {schema}.{definition.Table} columns: {(liveColumns.Count == 0 ? "(none)" : string.Join(", ", liveColumns))}");
+
+            var missing = TableColumnInventory.MissingColumns(definition, liveColumns);
+            foreach (var column in missing)
+            {
+                var alterSql = AlterScriptBuilder.Build(
+                    _options.Provider,
+                    schema,
+                    definition.Table,
+                    column,
+                    "taken from CREATE TABLE source");
+                var preStepName = AlterScriptBuilder.FileName(schema, definition.Table, column.Name);
+                var alter = await _changes.ExecuteAsync(
+                    new ChangeScript(preStepName, [alterSql], _options.CommandTimeoutSeconds),
+                    cancellationToken);
+                if (!alter.Success)
+                {
+                    return new CreateTableSyncOutcome(
+                        remaining,
+                        columnsAdded,
+                        skippedCreate,
+                        diagnostics.ToString(),
+                        alter.ErrorText ?? $"ALTER ADD for {column.Name} failed.");
+                }
+
+                _store.WritePreStep(preStepName, alterSql, diagnostics.ToString());
+                columnsAdded++;
+                _logger.LogInformation(
+                    "Added missing column {Schema}.{Table}.{Column} from CREATE TABLE source",
+                    schema,
+                    definition.Table,
+                    column.Name);
+            }
+
+            remaining = remaining
+                .Where(batch => !CreateTableDefinitionParser.BatchIsCreateTableFor(batch, definition))
+                .ToList();
+        }
+
+        return new CreateTableSyncOutcome(remaining, columnsAdded, skippedCreate, diagnostics.ToString(), null);
+    }
+
+    private static string? ConcatDiagnostics(string? left, string? right)
+    {
+        if (string.IsNullOrWhiteSpace(left))
+        {
+            return right;
+        }
+
+        if (string.IsNullOrWhiteSpace(right))
+        {
+            return left;
+        }
+
+        return left + Environment.NewLine + right;
+    }
+
     private async Task<RepairOutcome> RepairAsync(MissingColumnFault fault, string sql, CancellationToken cancellationToken)
     {
         var schema = string.IsNullOrWhiteSpace(fault.Schema)
@@ -327,4 +509,11 @@ public sealed class ScriptPoller : IScriptPoller
     }
 
     private sealed record RepairOutcome(bool AlterApplied, string Diagnostics, string? AlterError);
+
+    private sealed record CreateTableSyncOutcome(
+        IReadOnlyList<string> BatchesToRun,
+        int ColumnsAdded,
+        int SkippedCreateCount,
+        string Diagnostics,
+        string? Error);
 }

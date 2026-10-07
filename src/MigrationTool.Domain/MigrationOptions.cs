@@ -25,4 +25,10 @@ public sealed class MigrationOptions
     public int CommandTimeoutSeconds { get; set; } = 600;
 
     public bool RepairMissingColumns { get; set; } = true;
+
+    /// <summary>
+    /// When a script contains CREATE TABLE, compare its columns to the live table and
+    /// ADD only the missing ones. Never drops or rewrites columns.
+    /// </summary>
+    public bool SyncCreateTableColumns { get; set; } = true;
 }
